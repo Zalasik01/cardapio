@@ -31,14 +31,31 @@ services:
       - "8080:8080"
 
   frontend:
+    # modo desenvolvimento: Vite com hot reload. Use `docker compose watch` (ou `up --watch`):
+    # os arquivos alterados em frontend/ sao copiados para o container e a tela recarrega.
+    # A imagem de producao (nginx) continua em frontend/Dockerfile.
     build:
       context: ./frontend
-      args:
-        VITE_API_URL: http://localhost:8080/api
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_URL: http://localhost:8080/api
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: sync
+          path: ./frontend/index.html
+          target: /app/index.html
+        - action: sync+restart
+          path: ./frontend/vite.config.js
+          target: /app/vite.config.js
+        - action: rebuild
+          path: ./frontend/package.json
     depends_on:
       - backend
     ports:
-      - "5173:80"
+      - "5173:5173"
 
 
 volumes:

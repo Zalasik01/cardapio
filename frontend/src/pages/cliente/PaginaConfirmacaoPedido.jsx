@@ -4,15 +4,15 @@ import { buscarPedido } from '../../api/cardapioApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
 export default function PaginaConfirmacaoPedido() {
-  const { slug, pedidoId } = useParams()
+  const { slug, pedidoGuid } = useParams()
   const [pedido, setPedido] = useState(null)
   const [erro, setErro] = useState(null)
 
   useEffect(() => {
-    buscarPedido(pedidoId)
+    buscarPedido(pedidoGuid)
       .then(setPedido)
       .catch((e) => setErro(e.mensagem || 'Pedido nao encontrado'))
-  }, [pedidoId])
+  }, [pedidoGuid])
 
   if (erro) return <div className="pagina-centralizada pagina-centralizada--erro">{erro}</div>
   if (!pedido) return <div className="pagina-centralizada">Carregando pedido...</div>
@@ -20,12 +20,12 @@ export default function PaginaConfirmacaoPedido() {
   return (
     <div className="pagina-confirmacao">
       <h1>Pedido confirmado!</h1>
-      <p>Numero do pedido: #{pedido.id}</p>
+      <p>Numero do pedido: #{pedido.guid.slice(0, 8)}</p>
       <p>Status: {pedido.status}</p>
 
       <ul className="lista-itens-carrinho">
         {pedido.itens.map((item) => (
-          <li key={item.id} className="item-carrinho">
+          <li key={item.guid} className="item-carrinho">
             <span>{item.quantidade}x {item.nomeProduto}</span>
             <span>{formatarMoeda(item.totalItem)}</span>
           </li>

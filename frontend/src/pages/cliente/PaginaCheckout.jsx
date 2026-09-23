@@ -9,7 +9,7 @@ export default function PaginaCheckout() {
   const navigate = useNavigate()
   const { itens, subtotal, limparCarrinho } = useCarrinho()
 
-  const [restaurante, setRestaurante] = useState(null)
+  const [loja, setLoja] = useState(null)
   const [tipoEntrega, setTipoEntrega] = useState('ENTREGA')
   const [form, setForm] = useState({
     nomeCliente: '',
@@ -29,7 +29,7 @@ export default function PaginaCheckout() {
   const [erro, setErro] = useState(null)
 
   useEffect(() => {
-    buscarCardapio(slug).then((c) => setRestaurante(c.restaurante))
+    buscarCardapio(slug).then((c) => setLoja(c.loja))
   }, [slug])
 
   function atualizarCampo(campo, valor) {
@@ -37,11 +37,11 @@ export default function PaginaCheckout() {
   }
 
   async function handleCalcularFrete() {
-    if (!restaurante || !form.enderecoBairro) return
+    if (!loja || !form.enderecoBairro) return
     setCalculandoFrete(true)
     setErro(null)
     try {
-      const resultado = await calcularFrete({ restauranteId: restaurante.id, bairro: form.enderecoBairro })
+      const resultado = await calcularFrete({ tenant: loja.tenant, bairro: form.enderecoBairro })
       setFrete(resultado)
       if (!resultado.entregavel) {
         setErro(resultado.mensagem)
@@ -65,7 +65,7 @@ export default function PaginaCheckout() {
     setEnviando(true)
     try {
       const pedido = await criarPedido({
-        restauranteId: restaurante.id,
+        tenant: loja.tenant,
         nomeCliente: form.nomeCliente,
         telefoneCliente: form.telefoneCliente,
         tipoEntrega,
@@ -74,13 +74,13 @@ export default function PaginaCheckout() {
         enderecoComplemento: tipoEntrega === 'ENTREGA' ? form.enderecoComplemento : null,
         enderecoBairro: tipoEntrega === 'ENTREGA' ? form.enderecoBairro : null,
         enderecoCidade: tipoEntrega === 'ENTREGA' ? form.enderecoCidade : null,
-        itens: itens.map((i) => ({ produtoId: i.produtoId, quantidade: i.quantidade, observacoes: i.observacoes })),
+        itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade, observacoes: i.observacoes })),
         formaPagamento: form.formaPagamento,
         observacoes: form.observacoes,
       })
 
       limparCarrinho()
-      navigate(`/${slug}/pedido/${pedido.id}`)
+      navigate(`/${slug}/pedido/${pedido.guid}`)
     } catch (e) {
       setErro(e.mensagem || 'Nao foi possivel enviar o pedido')
     } finally {

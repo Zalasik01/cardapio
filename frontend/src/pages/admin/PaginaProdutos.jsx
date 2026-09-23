@@ -3,37 +3,37 @@ import { useAuth } from '../../context/AuthContext'
 import { atualizarProduto, criarProduto, excluirProduto, listarCategorias, listarProdutos } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
-const FORM_VAZIO = { categoriaId: '', nome: '', descricao: '', preco: '', imagemUrl: '', disponivel: true }
+const FORM_VAZIO = { categoriaGuid: '', nome: '', descricao: '', preco: '', imagemUrl: '', disponivel: true }
 
 export default function PaginaProdutos() {
   const { usuario } = useAuth()
-  const restauranteId = usuario.restauranteId
+  const tenant = usuario.tenant
 
   const [produtos, setProdutos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
-  const [editandoId, setEditandoId] = useState(null)
+  const [editandoGuid, setEditandoGuid] = useState(null)
   const [erro, setErro] = useState(null)
 
   function carregar() {
-    listarProdutos(restauranteId).then(setProdutos).catch((e) => setErro(e.mensagem))
-    listarCategorias(restauranteId).then(setCategorias).catch((e) => setErro(e.mensagem))
+    listarProdutos(tenant).then(setProdutos).catch((e) => setErro(e.mensagem))
+    listarCategorias(tenant).then(setCategorias).catch((e) => setErro(e.mensagem))
   }
 
-  useEffect(carregar, [restauranteId])
+  useEffect(carregar, [tenant])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErro(null)
-    const dados = { ...form, categoriaId: Number(form.categoriaId), preco: Number(form.preco) }
+    const dados = { ...form, preco: Number(form.preco) }
     try {
-      if (editandoId) {
-        await atualizarProduto(restauranteId, editandoId, dados)
+      if (editandoGuid) {
+        await atualizarProduto(tenant, editandoGuid, dados)
       } else {
-        await criarProduto(restauranteId, dados)
+        await criarProduto(tenant, dados)
       }
       setForm(FORM_VAZIO)
-      setEditandoId(null)
+      setEditandoGuid(null)
       carregar()
     } catch (e) {
       setErro(e.mensagem)
@@ -41,9 +41,9 @@ export default function PaginaProdutos() {
   }
 
   function handleEditar(produto) {
-    setEditandoId(produto.id)
+    setEditandoGuid(produto.guid)
     setForm({
-      categoriaId: produto.categoriaId,
+      categoriaGuid: produto.categoriaGuid,
       nome: produto.nome,
       descricao: produto.descricao || '',
       preco: produto.preco,
@@ -52,9 +52,9 @@ export default function PaginaProdutos() {
     })
   }
 
-  async function handleExcluir(id) {
+  async function handleExcluir(guid) {
     if (!confirm('Excluir este produto?')) return
-    await excluirProduto(restauranteId, id)
+    await excluirProduto(tenant, guid)
     carregar()
   }
 
@@ -63,10 +63,10 @@ export default function PaginaProdutos() {
       <h1>Produtos</h1>
 
       <form onSubmit={handleSubmit} className="formulario-produto">
-        <select required value={form.categoriaId} onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}>
+        <select required value={form.categoriaGuid} onChange={(e) => setForm({ ...form, categoriaGuid: e.target.value })}>
           <option value="">Categoria</option>
           {categorias.map((c) => (
-            <option key={c.id} value={c.id}>{c.nome}</option>
+            <option key={c.guid} value={c.guid}>{c.nome}</option>
           ))}
         </select>
         <input placeholder="Nome" required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
@@ -80,9 +80,9 @@ export default function PaginaProdutos() {
           <input type="checkbox" checked={form.disponivel} onChange={(e) => setForm({ ...form, disponivel: e.target.checked })} />
           Disponivel
         </label>
-        <button type="submit">{editandoId ? 'Salvar' : 'Adicionar'}</button>
-        {editandoId && (
-          <button type="button" onClick={() => { setEditandoId(null); setForm(FORM_VAZIO) }}>
+        <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
+        {editandoGuid && (
+          <button type="button" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
             Cancelar
           </button>
         )}
@@ -102,14 +102,14 @@ export default function PaginaProdutos() {
         </thead>
         <tbody>
           {produtos.map((produto) => (
-            <tr key={produto.id}>
+            <tr key={produto.guid}>
               <td>{produto.nome}</td>
               <td>{produto.categoriaNome}</td>
               <td>{formatarMoeda(produto.preco)}</td>
               <td>{produto.disponivel ? 'Sim' : 'Nao'}</td>
               <td>
                 <button type="button" onClick={() => handleEditar(produto)}>Editar</button>
-                <button type="button" onClick={() => handleExcluir(produto.id)}>Excluir</button>
+                <button type="button" onClick={() => handleExcluir(produto.guid)}>Excluir</button>
               </td>
             </tr>
           ))}

@@ -6,30 +6,30 @@ const FORM_VAZIO = { nome: '', ordemExibicao: 0, ativo: true }
 
 export default function PaginaCategorias() {
   const { usuario } = useAuth()
-  const restauranteId = usuario.restauranteId
+  const tenant = usuario.tenant
 
   const [categorias, setCategorias] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
-  const [editandoId, setEditandoId] = useState(null)
+  const [editandoGuid, setEditandoGuid] = useState(null)
   const [erro, setErro] = useState(null)
 
   function carregar() {
-    listarCategorias(restauranteId).then(setCategorias).catch((e) => setErro(e.mensagem))
+    listarCategorias(tenant).then(setCategorias).catch((e) => setErro(e.mensagem))
   }
 
-  useEffect(carregar, [restauranteId])
+  useEffect(carregar, [tenant])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErro(null)
     try {
-      if (editandoId) {
-        await atualizarCategoria(restauranteId, editandoId, form)
+      if (editandoGuid) {
+        await atualizarCategoria(tenant, editandoGuid, form)
       } else {
-        await criarCategoria(restauranteId, form)
+        await criarCategoria(tenant, form)
       }
       setForm(FORM_VAZIO)
-      setEditandoId(null)
+      setEditandoGuid(null)
       carregar()
     } catch (e) {
       setErro(e.mensagem)
@@ -37,13 +37,13 @@ export default function PaginaCategorias() {
   }
 
   function handleEditar(categoria) {
-    setEditandoId(categoria.id)
+    setEditandoGuid(categoria.guid)
     setForm({ nome: categoria.nome, ordemExibicao: categoria.ordemExibicao, ativo: categoria.ativo })
   }
 
-  async function handleExcluir(id) {
+  async function handleExcluir(guid) {
     if (!confirm('Excluir esta categoria?')) return
-    await excluirCategoria(restauranteId, id)
+    await excluirCategoria(tenant, guid)
     carregar()
   }
 
@@ -68,9 +68,9 @@ export default function PaginaCategorias() {
           <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
           Ativa
         </label>
-        <button type="submit">{editandoId ? 'Salvar' : 'Adicionar'}</button>
-        {editandoId && (
-          <button type="button" onClick={() => { setEditandoId(null); setForm(FORM_VAZIO) }}>
+        <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
+        {editandoGuid && (
+          <button type="button" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
             Cancelar
           </button>
         )}
@@ -89,13 +89,13 @@ export default function PaginaCategorias() {
         </thead>
         <tbody>
           {categorias.map((categoria) => (
-            <tr key={categoria.id}>
+            <tr key={categoria.guid}>
               <td>{categoria.nome}</td>
               <td>{categoria.ordemExibicao}</td>
               <td>{categoria.ativo ? 'Sim' : 'Nao'}</td>
               <td>
                 <button type="button" onClick={() => handleEditar(categoria)}>Editar</button>
-                <button type="button" onClick={() => handleExcluir(categoria.id)}>Excluir</button>
+                <button type="button" onClick={() => handleExcluir(categoria.guid)}>Excluir</button>
               </td>
             </tr>
           ))}

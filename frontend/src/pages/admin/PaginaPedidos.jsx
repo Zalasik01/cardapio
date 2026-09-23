@@ -1,29 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { atualizarStatusPedido, listarPedidosDoRestaurante } from '../../api/adminApi'
+import { atualizarStatusPedido, listarPedidosDaLoja } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
 const STATUS_OPCOES = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE', 'CANCELADO']
 
 export default function PaginaPedidos() {
   const { usuario } = useAuth()
-  const restauranteId = usuario.restauranteId
+  const tenant = usuario.tenant
 
   const [pedidos, setPedidos] = useState([])
   const [erro, setErro] = useState(null)
 
   function carregar() {
-    listarPedidosDoRestaurante(restauranteId).then(setPedidos).catch((e) => setErro(e.mensagem))
+    listarPedidosDaLoja(tenant).then(setPedidos).catch((e) => setErro(e.mensagem))
   }
 
   useEffect(() => {
     carregar()
     const intervalo = setInterval(carregar, 15000)
     return () => clearInterval(intervalo)
-  }, [restauranteId])
+  }, [tenant])
 
-  async function handleAlterarStatus(pedidoId, status) {
-    await atualizarStatusPedido(pedidoId, status)
+  async function handleAlterarStatus(pedidoGuid, status) {
+    await atualizarStatusPedido(pedidoGuid, status)
     carregar()
   }
 
@@ -44,13 +44,13 @@ export default function PaginaPedidos() {
         </thead>
         <tbody>
           {pedidos.map((pedido) => (
-            <tr key={pedido.id}>
-              <td>{pedido.id}</td>
+            <tr key={pedido.guid}>
+              <td>{pedido.guid.slice(0, 8)}</td>
               <td>{pedido.nomeCliente} — {pedido.telefoneCliente}</td>
               <td>{pedido.tipoEntrega === 'ENTREGA' ? 'Entrega' : 'Retirada'}</td>
               <td>{formatarMoeda(pedido.total)}</td>
               <td>
-                <select value={pedido.status} onChange={(e) => handleAlterarStatus(pedido.id, e.target.value)}>
+                <select value={pedido.status} onChange={(e) => handleAlterarStatus(pedido.guid, e.target.value)}>
                   {STATUS_OPCOES.map((status) => (
                     <option key={status} value={status}>{status}</option>
                   ))}

@@ -19,7 +19,7 @@ export default function LayoutAdmin() {
           <NavLink to="/admin/categorias">Categorias</NavLink>
           <NavLink to="/admin/produtos">Produtos</NavLink>
           <NavLink to="/admin/zonas-entrega">Zonas de entrega</NavLink>
-          <NavLink to="/admin/restaurante">Meu restaurante</NavLink>
+          <NavLink to="/admin/loja">Minha loja</NavLink>
         </nav>
         <div className="menu-admin__rodape">
           <span>{usuario?.nome}</span>

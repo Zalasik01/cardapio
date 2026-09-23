@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { atualizarRestaurante, buscarRestaurante } from '../../api/adminApi'
+import { atualizarLoja, buscarLoja } from '../../api/adminApi'
 
-export default function PaginaRestaurante() {
+export default function PaginaLoja() {
   const { usuario } = useAuth()
-  const restauranteId = usuario.restauranteId
+  const tenant = usuario.tenant
 
   const [form, setForm] = useState(null)
   const [mensagem, setMensagem] = useState(null)
   const [erro, setErro] = useState(null)
 
   useEffect(() => {
-    buscarRestaurante(restauranteId).then(setForm).catch((e) => setErro(e.mensagem))
-  }, [restauranteId])
+    buscarLoja(tenant).then(setForm).catch((e) => setErro(e.mensagem))
+  }, [tenant])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErro(null)
     setMensagem(null)
     try {
-      await atualizarRestaurante(restauranteId, form)
+      await atualizarLoja(tenant, form)
       setMensagem('Dados atualizados com sucesso')
     } catch (e) {
       setErro(e.mensagem)
@@ -30,7 +30,7 @@ export default function PaginaRestaurante() {
 
   return (
     <div className="pagina-admin">
-      <h1>Meu restaurante</h1>
+      <h1>Minha loja</h1>
       <form onSubmit={handleSubmit} className="formulario-restaurante">
         <label>
           Nome

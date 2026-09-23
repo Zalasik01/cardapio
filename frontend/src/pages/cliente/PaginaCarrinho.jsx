@@ -22,7 +22,7 @@ export default function PaginaCarrinho() {
 
       <ul className="lista-itens-carrinho">
         {itens.map((item) => (
-          <li key={`${item.produtoId}-${item.observacoes}`} className="item-carrinho">
+          <li key={`${item.produtoGuid}-${item.observacoes}`} className="item-carrinho">
             <div>
               <strong>{item.nome}</strong>
               {item.observacoes && <p className="item-carrinho__obs">{item.observacoes}</p>}
@@ -33,9 +33,9 @@ export default function PaginaCarrinho() {
                 type="number"
                 min="0"
                 value={item.quantidade}
-                onChange={(e) => alterarQuantidade(item.produtoId, item.observacoes, Number(e.target.value))}
+                onChange={(e) => alterarQuantidade(item.produtoGuid, item.observacoes, Number(e.target.value))}
               />
-              <button type="button" onClick={() => removerItem(item.produtoId, item.observacoes)}>
+              <button type="button" onClick={() => removerItem(item.produtoGuid, item.observacoes)}>
                 Remover
               </button>
             </div>

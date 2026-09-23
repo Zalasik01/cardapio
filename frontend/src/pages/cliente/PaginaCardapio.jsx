@@ -22,17 +22,17 @@ export default function PaginaCardapio() {
   if (erro) return <div className="pagina-centralizada pagina-centralizada--erro">{erro}</div>
   if (!cardapio) return null
 
-  const { restaurante, categorias } = cardapio
+  const { loja, categorias } = cardapio
 
   return (
     <div className="pagina-cardapio">
       <header className="cabecalho-restaurante">
-        {restaurante.logoUrl && <img src={restaurante.logoUrl} alt={restaurante.nome} />}
+        {loja.logoUrl && <img src={loja.logoUrl} alt={loja.nome} />}
         <div>
-          <h1>{restaurante.nome}</h1>
-          {restaurante.descricao && <p>{restaurante.descricao}</p>}
+          <h1>{loja.nome}</h1>
+          {loja.descricao && <p>{loja.descricao}</p>}
           <p className="cabecalho-restaurante__detalhes">
-            Pedido minimo: {Number(restaurante.valorMinimoPedido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            Pedido minimo: {Number(loja.valorMinimoPedido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
         </div>
       </header>
@@ -40,11 +40,11 @@ export default function PaginaCardapio() {
       {categorias.length === 0 && <p className="pagina-centralizada">Nenhum produto disponivel no momento.</p>}
 
       {categorias.map((categoria) => (
-        <section key={categoria.id} className="secao-categoria">
+        <section key={categoria.guid} className="secao-categoria">
           <h2>{categoria.nome}</h2>
           <div className="grade-produtos">
             {categoria.produtos.map((produto) => (
-              <CartaoProduto key={produto.id} produto={produto} />
+              <CartaoProduto key={produto.guid} produto={produto} />
             ))}
           </div>
         </section>

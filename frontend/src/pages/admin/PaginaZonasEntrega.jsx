@@ -7,31 +7,31 @@ const FORM_VAZIO = { bairro: '', taxa: '', tempoEstimadoMinutos: 45, ativo: true
 
 export default function PaginaZonasEntrega() {
   const { usuario } = useAuth()
-  const restauranteId = usuario.restauranteId
+  const tenant = usuario.tenant
 
   const [zonas, setZonas] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
-  const [editandoId, setEditandoId] = useState(null)
+  const [editandoGuid, setEditandoGuid] = useState(null)
   const [erro, setErro] = useState(null)
 
   function carregar() {
-    listarZonasEntrega(restauranteId).then(setZonas).catch((e) => setErro(e.mensagem))
+    listarZonasEntrega(tenant).then(setZonas).catch((e) => setErro(e.mensagem))
   }
 
-  useEffect(carregar, [restauranteId])
+  useEffect(carregar, [tenant])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErro(null)
     const dados = { ...form, taxa: Number(form.taxa), tempoEstimadoMinutos: Number(form.tempoEstimadoMinutos) }
     try {
-      if (editandoId) {
-        await atualizarZonaEntrega(restauranteId, editandoId, dados)
+      if (editandoGuid) {
+        await atualizarZonaEntrega(tenant, editandoGuid, dados)
       } else {
-        await criarZonaEntrega(restauranteId, dados)
+        await criarZonaEntrega(tenant, dados)
       }
       setForm(FORM_VAZIO)
-      setEditandoId(null)
+      setEditandoGuid(null)
       carregar()
     } catch (e) {
       setErro(e.mensagem)
@@ -39,7 +39,7 @@ export default function PaginaZonasEntrega() {
   }
 
   function handleEditar(zona) {
-    setEditandoId(zona.id)
+    setEditandoGuid(zona.guid)
     setForm({
       bairro: zona.bairro,
       taxa: zona.taxa,
@@ -48,9 +48,9 @@ export default function PaginaZonasEntrega() {
     })
   }
 
-  async function handleExcluir(id) {
+  async function handleExcluir(guid) {
     if (!confirm('Excluir esta zona de entrega?')) return
-    await excluirZonaEntrega(restauranteId, id)
+    await excluirZonaEntrega(tenant, guid)
     carregar()
   }
 
@@ -59,7 +59,7 @@ export default function PaginaZonasEntrega() {
       <h1>Zonas de entrega</h1>
       <p className="texto-auxiliar">
         Cadastre uma taxa fixa por bairro. Bairros nao cadastrados usam o calculo por distancia
-        configurado no restaurante.
+        configurado na loja.
       </p>
 
       <form onSubmit={handleSubmit} className="formulario-inline">
@@ -76,9 +76,9 @@ export default function PaginaZonasEntrega() {
           <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
           Ativa
         </label>
-        <button type="submit">{editandoId ? 'Salvar' : 'Adicionar'}</button>
-        {editandoId && (
-          <button type="button" onClick={() => { setEditandoId(null); setForm(FORM_VAZIO) }}>
+        <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
+        {editandoGuid && (
+          <button type="button" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
             Cancelar
           </button>
         )}
@@ -98,14 +98,14 @@ export default function PaginaZonasEntrega() {
         </thead>
         <tbody>
           {zonas.map((zona) => (
-            <tr key={zona.id}>
+            <tr key={zona.guid}>
               <td>{zona.bairro}</td>
               <td>{formatarMoeda(zona.taxa)}</td>
               <td>{zona.tempoEstimadoMinutos} min</td>
               <td>{zona.ativo ? 'Sim' : 'Nao'}</td>
               <td>
                 <button type="button" onClick={() => handleEditar(zona)}>Editar</button>
-                <button type="button" onClick={() => handleExcluir(zona.id)}>Excluir</button>
+                <button type="button" onClick={() => handleExcluir(zona.guid)}>Excluir</button>
               </td>
             </tr>
           ))}

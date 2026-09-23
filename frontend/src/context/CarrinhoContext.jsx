@@ -18,7 +18,7 @@ export function CarrinhoProvider({ slug, children }) {
 
   function adicionarItem(produto, quantidade = 1, observacoes = '') {
     setItens((atual) => {
-      const existente = atual.find((i) => i.produtoId === produto.id && i.observacoes === observacoes)
+      const existente = atual.find((i) => i.produtoGuid === produto.guid && i.observacoes === observacoes)
       if (existente) {
         return atual.map((i) =>
           i === existente ? { ...i, quantidade: i.quantidade + quantidade } : i
@@ -27,7 +27,7 @@ export function CarrinhoProvider({ slug, children }) {
       return [
         ...atual,
         {
-          produtoId: produto.id,
+          produtoGuid: produto.guid,
           nome: produto.nome,
           preco: produto.preco,
           quantidade,
@@ -37,19 +37,19 @@ export function CarrinhoProvider({ slug, children }) {
     })
   }
 
-  function alterarQuantidade(produtoId, observacoes, quantidade) {
+  function alterarQuantidade(produtoGuid, observacoes, quantidade) {
     setItens((atual) => {
       if (quantidade <= 0) {
-        return atual.filter((i) => !(i.produtoId === produtoId && i.observacoes === observacoes))
+        return atual.filter((i) => !(i.produtoGuid === produtoGuid && i.observacoes === observacoes))
       }
       return atual.map((i) =>
-        i.produtoId === produtoId && i.observacoes === observacoes ? { ...i, quantidade } : i
+        i.produtoGuid === produtoGuid && i.observacoes === observacoes ? { ...i, quantidade } : i
       )
     })
   }
 
-  function removerItem(produtoId, observacoes) {
-    setItens((atual) => atual.filter((i) => !(i.produtoId === produtoId && i.observacoes === observacoes)))
+  function removerItem(produtoGuid, observacoes) {
+    setItens((atual) => atual.filter((i) => !(i.produtoGuid === produtoGuid && i.observacoes === observacoes)))
   }
 
   function limparCarrinho() {

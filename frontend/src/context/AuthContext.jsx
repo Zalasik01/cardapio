@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
     setUsuario(null)
   }
 
-  const ehAdmin = usuario?.perfil === 'ROLE_SUPER_ADMIN' || usuario?.perfil === 'ROLE_ADMIN_RESTAURANTE'
+  const ehAdmin = usuario?.perfil === 'ROLE_SUPER_ADMIN' || usuario?.perfil === 'ROLE_ADMIN_LOJA'
 
   return (
     <AuthContext.Provider value={{ usuario, entrar, sair, carregando, erro, ehAdmin }}>

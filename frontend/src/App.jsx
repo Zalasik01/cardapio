@@ -16,7 +16,7 @@ import PaginaCategorias from './pages/admin/PaginaCategorias'
 import PaginaProdutos from './pages/admin/PaginaProdutos'
 import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
 import PaginaPedidos from './pages/admin/PaginaPedidos'
-import PaginaRestaurante from './pages/admin/PaginaRestaurante'
+import PaginaLoja from './pages/admin/PaginaLoja'
 
 export default function App() {
   return (
@@ -38,14 +38,14 @@ export default function App() {
             <Route path="categorias" element={<PaginaCategorias />} />
             <Route path="produtos" element={<PaginaProdutos />} />
             <Route path="zonas-entrega" element={<PaginaZonasEntrega />} />
-            <Route path="restaurante" element={<PaginaRestaurante />} />
+            <Route path="loja" element={<PaginaLoja />} />
           </Route>
 
           <Route path="/:slug" element={<LayoutCliente />}>
             <Route index element={<PaginaCardapio />} />
             <Route path="carrinho" element={<PaginaCarrinho />} />
             <Route path="checkout" element={<PaginaCheckout />} />
-            <Route path="pedido/:pedidoId" element={<PaginaConfirmacaoPedido />} />
+            <Route path="pedido/:pedidoGuid" element={<PaginaConfirmacaoPedido />} />
           </Route>
         </Routes>
       </AuthProvider>

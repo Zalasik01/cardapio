@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FormularioSkeleton } from '../../components/Skeleton'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { atualizarLoja, buscarLoja } from '../../api/adminApi'
 
 export default function PaginaLoja() {
@@ -8,22 +9,24 @@ export default function PaginaLoja() {
   const tenant = loja.tenant
 
   const [form, setForm] = useState(null)
-  const [mensagem, setMensagem] = useState(null)
   const [erro, setErro] = useState(null)
 
   useEffect(() => {
-    buscarLoja(tenant).then(setForm).catch((e) => setErro(e.mensagem))
+    buscarLoja(tenant)
+      .then(setForm)
+      .catch((e) => {
+        setErro(e.mensagem) // a tela mostra o estado de falha no lugar do formulario
+        dispatchMsgError(e.mensagem)
+      })
   }, [tenant])
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setErro(null)
-    setMensagem(null)
     try {
       await atualizarLoja(tenant, form)
-      setMensagem('Dados atualizados com sucesso')
+      dispatchMsgSuccess('Dados atualizados com sucesso')
     } catch (e) {
-      setErro(e.mensagem)
+      dispatchMsgError(e.mensagem)
     }
   }
 
@@ -83,8 +86,6 @@ export default function PaginaLoja() {
           <input type="number" step="0.01" value={form.valorMinimoPedido} onChange={(e) => setForm({ ...form, valorMinimoPedido: Number(e.target.value) })} />
         </label>
 
-        {mensagem && <p className="mensagem-sucesso">{mensagem}</p>}
-        {erro && <p className="mensagem-erro">{erro}</p>}
 
         <button type="submit" className="botao-principal">Salvar</button>
       </form>

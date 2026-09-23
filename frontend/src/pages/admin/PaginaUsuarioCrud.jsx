@@ -5,6 +5,8 @@ import { Button } from 'primereact/button'
 import { Checkbox } from 'primereact/checkbox'
 import { InputText } from 'primereact/inputtext'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
 import {
   atualizarUsuario, criarUsuario, enviarFotoUsuario, excluirUsuario, gerarNovoLinkUsuario, obterFotoUsuario,
   obterUsuario, removerFotoUsuario,
@@ -31,8 +33,6 @@ export default function PaginaUsuarioCrud() {
   const [sugestoes, setSugestoes] = useState([])
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState(null)
-  const [mensagem, setMensagem] = useState(null)
   const [convite, setConvite] = useState(null) // { token, expiraEm, nome }
   const [copiado, setCopiado] = useState(false)
 
@@ -59,7 +59,7 @@ export default function PaginaUsuarioCrud() {
           setPreviaFoto(URL.createObjectURL(blob))
         }
       })
-      .catch((e) => setErro(e.mensagem))
+      .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }, [editando, guid, loja.tenant])
 
@@ -81,14 +81,13 @@ export default function PaginaUsuarioCrud() {
     e.target.value = '' // permite escolher o mesmo arquivo de novo
     if (!arquivo) return
     if (!TIPOS_FOTO.includes(arquivo.type)) {
-      setErro('Formato de imagem não suportado. Use PNG, JPEG ou WEBP.')
+      dispatchMsgWarn('Formato de imagem não suportado. Use PNG, JPEG ou WEBP.')
       return
     }
     if (arquivo.size > TAMANHO_MAXIMO_FOTO) {
-      setErro('A imagem deve ter no máximo 2 MB.')
+      dispatchMsgWarn('A imagem deve ter no máximo 2 MB.')
       return
     }
-    setErro(null)
     setArquivoFoto(arquivo)
     setRemoverFoto(false)
     setPreviaFoto(URL.createObjectURL(arquivo))
@@ -110,10 +109,8 @@ export default function PaginaUsuarioCrud() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setErro(null)
-    setMensagem(null)
     if (!funcionario?.guid) {
-      setErro('Selecione um funcionário da lista.')
+      dispatchMsgWarn('Selecione um funcionário da lista.')
       return
     }
 
@@ -129,13 +126,14 @@ export default function PaginaUsuarioCrud() {
         setArquivoFoto(null)
         setTinhaFoto(!!previaFoto)
         setRemoverFoto(false)
-        setMensagem('Usuário atualizado com sucesso')
+        dispatchMsgSuccess('Usuário atualizado com sucesso')
       } else {
         const resposta = await criarUsuario(loja.tenant, dados)
+        dispatchMsgSuccess('Usuário cadastrado com sucesso')
         try {
           await sincronizarFoto(resposta.usuario.guid)
         } catch (erroFoto) {
-          setErro(`Usuário criado, mas a foto não foi enviada: ${erroFoto.mensagem}`)
+          dispatchMsgWarn(`Usuário criado, mas a foto não foi enviada: ${erroFoto.mensagem}`)
         }
         if (resposta.token) {
           setConvite({ token: resposta.token, expiraEm: resposta.expiraEm, nome: resposta.usuario.nome })
@@ -144,29 +142,33 @@ export default function PaginaUsuarioCrud() {
         }
       }
     } catch (e2) {
-      setErro(e2.mensagem)
+      dispatchMsgError(e2.mensagem)
     } finally {
       setSalvando(false)
     }
   }
 
-  async function handleExcluir() {
-    if (!confirm('Excluir este usuário da loja? A conta dele em outras lojas não é afetada.')) return
-    try {
-      await excluirUsuario(loja.tenant, guid)
-      navigate(ROTA_LISTA)
-    } catch (e) {
-      setErro(e.mensagem)
-    }
+  function handleExcluir() {
+    confirmar({
+      mensagem: 'Excluir este usuário da loja? A conta dele em outras lojas não é afetada.',
+      aoConfirmar: async () => {
+        try {
+          await excluirUsuario(loja.tenant, guid)
+          dispatchMsgSuccess('Usuário excluído com sucesso')
+          navigate(ROTA_LISTA)
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
   }
 
   async function handleNovoLink() {
-    setErro(null)
     try {
       const resposta = await gerarNovoLinkUsuario(loja.tenant, guid)
       setConvite({ token: resposta.token, expiraEm: resposta.expiraEm, nome: resposta.usuario.nome })
     } catch (e) {
-      setErro(e.mensagem)
+      dispatchMsgError(e.mensagem)
     }
   }
 
@@ -178,7 +180,7 @@ export default function PaginaUsuarioCrud() {
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2000)
     } catch {
-      setErro('Não foi possível copiar. Selecione o link e copie manualmente.')
+      dispatchMsgError('Não foi possível copiar. Selecione o link e copie manualmente.')
     }
   }
 
@@ -281,8 +283,6 @@ export default function PaginaUsuarioCrud() {
         ]}
         rodape={(
           <>
-            {erro && <p className="mensagem-erro crud__mensagem" role="alert">{erro}</p>}
-            {mensagem && <p className="mensagem-sucesso crud__mensagem" role="status">{mensagem}</p>}
             <div className="crud__acoes">
               {editando && (
                 <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined

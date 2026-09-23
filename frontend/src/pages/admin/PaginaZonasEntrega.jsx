@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
 import { atualizarZonaEntrega, criarZonaEntrega, excluirZonaEntrega, listarZonasEntrega } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
@@ -13,13 +15,12 @@ export default function PaginaZonasEntrega() {
   const [zonas, setZonas] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editandoGuid, setEditandoGuid] = useState(null)
-  const [erro, setErro] = useState(null)
   const [carregando, setCarregando] = useState(true)
 
   function carregar() {
     listarZonasEntrega(tenant)
       .then(setZonas)
-      .catch((e) => setErro(e.mensagem))
+      .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }
 
@@ -27,7 +28,6 @@ export default function PaginaZonasEntrega() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setErro(null)
     const dados = { ...form, taxa: Number(form.taxa), tempoEstimadoMinutos: Number(form.tempoEstimadoMinutos) }
     try {
       if (editandoGuid) {
@@ -35,11 +35,12 @@ export default function PaginaZonasEntrega() {
       } else {
         await criarZonaEntrega(tenant, dados)
       }
+      dispatchMsgSuccess(editandoGuid ? 'Zona de entrega atualizada com sucesso' : 'Zona de entrega criada com sucesso')
       setForm(FORM_VAZIO)
       setEditandoGuid(null)
       carregar()
     } catch (e) {
-      setErro(e.mensagem)
+      dispatchMsgError(e.mensagem)
     }
   }
 
@@ -53,10 +54,19 @@ export default function PaginaZonasEntrega() {
     })
   }
 
-  async function handleExcluir(guid) {
-    if (!confirm('Excluir esta zona de entrega?')) return
-    await excluirZonaEntrega(tenant, guid)
-    carregar()
+  function handleExcluir(guid) {
+    confirmar({
+      mensagem: 'Excluir esta zona de entrega?',
+      aoConfirmar: async () => {
+        try {
+          await excluirZonaEntrega(tenant, guid)
+          dispatchMsgSuccess('Zona de entrega excluída com sucesso')
+          carregar()
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
   }
 
   return (
@@ -89,7 +99,6 @@ export default function PaginaZonasEntrega() {
         )}
       </form>
 
-      {erro && <p className="mensagem-erro">{erro}</p>}
 
       <TabelaDados
         dados={zonas}

@@ -6,6 +6,62 @@ import { MenuSkeleton } from '../../components/Skeleton'
 
 const CHAVE_MENU_RECOLHIDO = 'cardapio_menu_recolhido'
 
+/** A pagina (ou alguma descendente dela) e a rota aberta agora? */
+function contemRota(pagina, pathname) {
+  if (pagina.rota && pathname.startsWith(pagina.rota)) return true
+  return (pagina.filhas ?? []).some((filha) => contemRota(filha, pathname))
+}
+
+/** Marca como abertos, em `destino`, os grupos (categorias e paginas) no caminho da rota atual. */
+function abrirCaminhoAtual(destino, paginas, pathname) {
+  let algumaAtiva = false
+  paginas.forEach((pagina) => {
+    if (contemRota(pagina, pathname)) {
+      algumaAtiva = true
+      destino[pagina.guid] = true
+      abrirCaminhoAtual(destino, pagina.filhas ?? [], pathname)
+    }
+  })
+  return algumaAtiva
+}
+
+/** Item do submenu: link, ou grupo expansivel quando a pagina tem paginas filhas (qualquer profundidade). */
+function ItemMenu({ pagina, abertas, aoAlternar, pathname }) {
+  const filhas = pagina.filhas ?? []
+
+  if (filhas.length === 0) {
+    return pagina.rota ? (
+      <li>
+        <NavLink to={pagina.rota}>{pagina.nome}</NavLink>
+      </li>
+    ) : null
+  }
+
+  const aberta = !!abertas[pagina.guid]
+  const idSubmenu = `submenu-${pagina.guid}`
+  return (
+    <li>
+      <button
+        type="button"
+        className={`menu-subgrupo__titulo ${contemRota(pagina, pathname) ? 'menu-subgrupo__titulo--ativo' : ''}`}
+        aria-expanded={aberta}
+        aria-controls={idSubmenu}
+        onClick={() => aoAlternar(pagina.guid)}
+      >
+        <span>{pagina.nome}</span>
+        <i className={`fa-solid fa-chevron-down menu-grupo__seta ${aberta ? 'menu-grupo__seta--aberta' : ''}`} aria-hidden="true" />
+      </button>
+      {aberta && (
+        <ul id={idSubmenu} className="menu-grupo__paginas menu-grupo__paginas--aninhada">
+          {filhas.map((filha) => (
+            <ItemMenu key={filha.guid} pagina={filha} abertas={abertas} aoAlternar={aoAlternar} pathname={pathname} />
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
+
 export default function LayoutAdmin() {
   const { usuarioLogado, loja, sair } = useAuth()
   const navigate = useNavigate()
@@ -37,12 +93,12 @@ export default function LayoutAdmin() {
     setMenuMobileAberto(false)
   }, [pathname])
 
-  // mantem aberta a categoria da pagina atual (inclui o redirecionamento de /admin para o dashboard)
+  // mantem abertos a categoria e os submenus da pagina atual (inclui o redirecionamento de /admin para o dashboard)
   useEffect(() => {
     setAbertas((atual) => {
       const proximo = { ...atual }
       menu.forEach((categoria) => {
-        if (categoria.paginas.some((pagina) => pathname.startsWith(pagina.rota))) {
+        if (abrirCaminhoAtual(proximo, categoria.paginas, pathname)) {
           proximo[categoria.guid] = true
         }
       })
@@ -61,6 +117,10 @@ export default function LayoutAdmin() {
     })
   }
 
+  function alternar(guid) {
+    setAbertas((atual) => ({ ...atual, [guid]: !atual[guid] }))
+  }
+
   function alternarCategoria(guid) {
     // com o menu recolhido, clicar num icone expande o menu e abre a categoria
     if (recolhido) {
@@ -68,7 +128,7 @@ export default function LayoutAdmin() {
       setAbertas((atual) => ({ ...atual, [guid]: true }))
       return
     }
-    setAbertas((atual) => ({ ...atual, [guid]: !atual[guid] }))
+    alternar(guid)
   }
 
   function handleSair() {
@@ -151,11 +211,7 @@ export default function LayoutAdmin() {
                 {aberta && (
                   <ul id={idSubmenu} className="menu-grupo__paginas">
                     {categoria.paginas.map((pagina) => (
-                      <li key={pagina.guid}>
-                        <NavLink to={pagina.rota}>
-                          {pagina.nome}
-                        </NavLink>
-                      </li>
+                      <ItemMenu key={pagina.guid} pagina={pagina} abertas={abertas} aoAlternar={alternar} pathname={pathname} />
                     ))}
                   </ul>
                 )}

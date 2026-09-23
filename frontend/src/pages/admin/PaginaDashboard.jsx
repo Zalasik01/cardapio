@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError } from '../../store/dispatchMsg'
 import { listarPedidosDaLoja } from '../../api/adminApi'
 import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -22,7 +23,10 @@ export default function PaginaDashboard() {
   useEffect(() => {
     listarPedidosDaLoja(loja.tenant)
       .then(setPedidos)
-      .catch((e) => setErro(e.mensagem))
+      .catch((e) => {
+        setErro(e.mensagem)
+        dispatchMsgError(e.mensagem)
+      })
   }, [loja.tenant])
 
   const doDia = (pedidos ?? []).filter((pedido) => String(pedido.dataCriacao).startsWith(hoje()))
@@ -53,8 +57,6 @@ export default function PaginaDashboard() {
       <p className="texto-auxiliar">
         Olá, {usuarioLogado.nome}. Resumo de hoje em <strong>{loja.nome}</strong>.
       </p>
-
-      {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
 
       <div className="cartoes-resumo" aria-busy={pedidos === null && !erro}>
         {cartoes.map((cartao) => (

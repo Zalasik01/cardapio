@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { atualizarStatusPedido, listarPedidosDaLoja } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
@@ -11,13 +12,19 @@ export default function PaginaPedidos() {
   const tenant = loja.tenant
 
   const [pedidos, setPedidos] = useState([])
-  const [erro, setErro] = useState(null)
+  const erroAvisado = useRef(false)
   const [carregando, setCarregando] = useState(true)
 
   function carregar() {
     listarPedidosDaLoja(tenant)
-      .then(setPedidos)
-      .catch((e) => setErro(e.mensagem))
+      .then((lista) => {
+        setPedidos(lista)
+        erroAvisado.current = false
+      })
+      .catch((e) => {
+        if (!erroAvisado.current) dispatchMsgError(e.mensagem)
+        erroAvisado.current = true
+      })
       .finally(() => setCarregando(false))
   }
 
@@ -28,14 +35,18 @@ export default function PaginaPedidos() {
   }, [tenant])
 
   async function handleAlterarStatus(pedidoGuid, status) {
-    await atualizarStatusPedido(pedidoGuid, status)
-    carregar()
+    try {
+      await atualizarStatusPedido(pedidoGuid, status)
+      dispatchMsgSuccess('Status do pedido atualizado')
+      carregar()
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
   }
 
   return (
     <div className="pagina-admin">
       <h1>Pedidos</h1>
-      {erro && <p className="mensagem-erro">{erro}</p>}
 
       <TabelaDados
         dados={pedidos}

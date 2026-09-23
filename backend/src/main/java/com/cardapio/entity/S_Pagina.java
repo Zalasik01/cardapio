@@ -15,8 +15,9 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Tabela de sistema: paginas do painel administrativo, exibidas como submenu
- * de uma {@link S_CategoriaMenu}.
+ * Tabela de sistema: paginas do painel administrativo, exibidas como submenu de uma
+ * {@link S_CategoriaMenu}. Uma pagina pode ter uma pagina pai, formando niveis de submenu
+ * (ex.: Geral > Pessoas > Funcionarios).
  */
 @Entity
 @Table(name = "s_pagina")
@@ -32,14 +33,18 @@ public class S_Pagina extends SystemAbstract {
     @JoinColumn(name = "id_categoria_menu", nullable = false)
     private S_CategoriaMenu categoriaMenu;
 
+    /** Pagina "anterior" no menu; nula para paginas no primeiro nivel da categoria. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_pagina_pai")
+    private S_Pagina paginaPai;
+
     @Column(nullable = false)
     private String nome;
 
-    /** Rota do frontend que a pagina abre, ex.: "/admin/produtos". */
-    @Column(nullable = false)
+    /** Rota do frontend que a pagina abre, ex.: "/admin/produtos". Nula quando a pagina so agrupa outras. */
     private String rota;
 
-    /** Posicao da pagina dentro da categoria. */
+    /** Posicao da pagina entre as irmas (mesma categoria e mesma pagina pai). */
     @Column(nullable = false)
     @Builder.Default
     private Integer ordem = 0;

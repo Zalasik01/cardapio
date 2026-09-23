@@ -1,23 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
 import { Calendar } from 'primereact/calendar'
 import { Checkbox } from 'primereact/checkbox'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
+import { Dialog } from 'primereact/dialog'
 import { Dropdown } from 'primereact/dropdown'
 import { InputMask } from 'primereact/inputmask'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { RadioButton } from 'primereact/radiobutton'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
+import { buscarEnderecoPorCep } from '../../api/cepApi'
 import {
   atualizarFuncionario, criarFuncionario, excluirFuncionario, obterFuncionario,
 } from '../../api/funcionariosApi'
 import CrudPagina from '../../components/crud/CrudPagina'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import { FormularioSkeleton } from '../../components/Skeleton'
-import { dataParaIso, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
+import { dataParaIso, formatarCpf, isoParaData, linkWhatsapp, soDigitos } from '../../utils/formatadores'
 
 const ROTA_LISTA = '/admin/funcionarios'
 
@@ -45,6 +49,9 @@ const TIPOS_TELEFONE = [
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
   'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map((uf) => ({ valor: uf, rotulo: uf }))
+
+const rotuloTipoTelefone = (tipo) => TIPOS_TELEFONE.find((t) => t.valor === tipo)?.rotulo ?? tipo
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const ENDERECO_VAZIO = { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: null }
 
@@ -125,15 +132,19 @@ export default function PaginaFuncionarioCrud() {
   const [form, setForm] = useState(FORM_VAZIO)
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState(null)
-  const [mensagem, setMensagem] = useState(null)
+  const [buscandoCep, setBuscandoCep] = useState(false)
+  const [avisoCep, setAvisoCep] = useState(null)
+  const numeroRef = useRef(null)
+  const [dialogoTelefone, setDialogoTelefone] = useState(null) // { _id?, tipo, numero, observacao }
+  const [dialogoEmail, setDialogoEmail] = useState(null) // { _id?, email, observacao }
+  const consultaCep = useRef(0) // ignora respostas de consultas antigas
 
   useEffect(() => {
     if (!editando) return
     setCarregando(true)
     obterFuncionario(loja.tenant, guid)
       .then((funcionario) => setForm(paraFormulario(funcionario)))
-      .catch((e) => setErro(e.mensagem))
+      .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }, [editando, guid, loja.tenant])
 
@@ -141,47 +152,114 @@ export default function PaginaFuncionarioCrud() {
   const definirTexto = (campo) => (e) => definir(campo)(e.target.value)
   const definirEndereco = (campo) => (valor) => setForm((atual) => ({ ...atual, endereco: { ...atual.endereco, [campo]: valor } }))
 
-  function alterarLinha(lista, id, campo, valor) {
-    setForm((atual) => ({ ...atual, [lista]: atual[lista].map((linha) => (linha._id === id ? { ...linha, [campo]: valor } : linha)) }))
-  }
   function removerLinha(lista, id) {
     setForm((atual) => ({ ...atual, [lista]: atual[lista].filter((linha) => linha._id !== id) }))
   }
-  function adicionarTelefone() {
-    setForm((atual) => ({ ...atual, telefones: [...atual.telefones, { _id: idLocal(), tipo: 'CELULAR', numero: '', observacao: '' }] }))
+
+  /** Inclui ou substitui (quando ja tem _id) uma linha de contato. */
+  function salvarLinha(lista, linha) {
+    setForm((atual) => {
+      const existe = linha._id && atual[lista].some((item) => item._id === linha._id)
+      return {
+        ...atual,
+        [lista]: existe
+          ? atual[lista].map((item) => (item._id === linha._id ? linha : item))
+          : [...atual[lista], { ...linha, _id: idLocal() }],
+      }
+    })
   }
-  function adicionarEmail() {
-    setForm((atual) => ({ ...atual, emails: [...atual.emails, { _id: idLocal(), email: '', observacao: '' }] }))
+
+  function confirmarTelefone() {
+    if (soDigitos(dialogoTelefone.numero).length < 10) {
+      dispatchMsgWarn('Informe o número completo, com DDD.')
+      return
+    }
+    salvarLinha('telefones', dialogoTelefone)
+    setDialogoTelefone(null)
+  }
+
+  function confirmarEmail() {
+    if (!REGEX_EMAIL.test(dialogoEmail.email.trim())) {
+      dispatchMsgWarn('Informe um e-mail válido.')
+      return
+    }
+    salvarLinha('emails', { ...dialogoEmail, email: dialogoEmail.email.trim() })
+    setDialogoEmail(null)
+  }
+
+  /** Enter dentro do modal confirma (o modal nao usa <form> para nao disparar o envio do cadastro). */
+  const aoTeclarDialogo = (confirmar) => (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      confirmar()
+    }
+  }
+
+  /** Preenche logradouro, bairro, cidade e UF a partir do CEP (ViaCEP). O numero e o complemento continuam manuais. */
+  async function preencherPorCep(cep) {
+    const consulta = ++consultaCep.current
+    setAvisoCep(null)
+    setBuscandoCep(true)
+    try {
+      const endereco = await buscarEnderecoPorCep(cep)
+      if (consulta !== consultaCep.current) return
+      if (!endereco) {
+        setAvisoCep('CEP não encontrado. Preencha o endereço manualmente.')
+        return
+      }
+      setForm((atual) => ({
+        ...atual,
+        endereco: {
+          ...atual.endereco,
+          logradouro: endereco.logradouro || atual.endereco.logradouro,
+          bairro: endereco.bairro || atual.endereco.bairro,
+          cidade: endereco.cidade || atual.endereco.cidade,
+          estado: endereco.estado || atual.endereco.estado,
+          complemento: atual.endereco.complemento || endereco.complemento,
+        },
+      }))
+      numeroRef.current?.focus()
+    } catch {
+      if (consulta === consultaCep.current) {
+        setAvisoCep('Não foi possível consultar o CEP agora. Preencha o endereço manualmente.')
+      }
+    } finally {
+      if (consulta === consultaCep.current) setBuscandoCep(false)
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setErro(null)
-    setMensagem(null)
     setSalvando(true)
     try {
       if (editando) {
         await atualizarFuncionario(loja.tenant, guid, paraRequisicao(form))
-        setMensagem('Funcionário atualizado com sucesso')
+        dispatchMsgSuccess('Funcionário atualizado com sucesso')
       } else {
         await criarFuncionario(loja.tenant, paraRequisicao(form))
+        dispatchMsgSuccess('Funcionário cadastrado com sucesso')
         navigate(ROTA_LISTA)
       }
     } catch (e2) {
-      setErro(e2.mensagem)
+      dispatchMsgError(e2.mensagem)
     } finally {
       setSalvando(false)
     }
   }
 
-  async function handleExcluir() {
-    if (!confirm('Excluir este funcionário?')) return
-    try {
-      await excluirFuncionario(loja.tenant, guid)
-      navigate(ROTA_LISTA)
-    } catch (e) {
-      setErro(e.mensagem)
-    }
+  function handleExcluir() {
+    confirmar({
+      mensagem: 'Excluir este funcionário?',
+      aoConfirmar: async () => {
+        try {
+          await excluirFuncionario(loja.tenant, guid)
+          dispatchMsgSuccess('Funcionário excluído com sucesso')
+          navigate(ROTA_LISTA)
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
   }
 
   const conteudo = (
@@ -258,16 +336,17 @@ export default function PaginaFuncionarioCrud() {
 
       <SecaoCrud titulo="Endereço">
         <GradeCampos>
-          <Campo id="cep" rotulo="CEP" tamanho={2}>
+          <Campo id="cep" rotulo="CEP" tamanho={2} ajuda={buscandoCep ? 'Buscando endereço...' : avisoCep}>
             <InputMask id="cep" mask="99999-999" autoClear={false} value={form.endereco.cep}
-                       onChange={(e) => definirEndereco('cep')(e.target.value ?? '')} />
+                       onChange={(e) => definirEndereco('cep')(e.target.value ?? '')}
+                       onComplete={(e) => preencherPorCep(e.value)} />
           </Campo>
           <Campo id="logradouro" rotulo="Logradouro" tamanho={5}>
             <InputText id="logradouro" maxLength={255} value={form.endereco.logradouro}
                        onChange={(e) => definirEndereco('logradouro')(e.target.value)} />
           </Campo>
           <Campo id="numero" rotulo="Número" tamanho={2}>
-            <InputText id="numero" maxLength={20} value={form.endereco.numero}
+            <InputText id="numero" ref={numeroRef} maxLength={20} value={form.endereco.numero}
                        onChange={(e) => definirEndereco('numero')(e.target.value)} />
           </Campo>
           <Campo id="complemento" rotulo="Complemento" tamanho={3}>
@@ -293,45 +372,109 @@ export default function PaginaFuncionarioCrud() {
         <div className="contatos">
           <div className="contatos__lista">
             <DataTable value={form.telefones} dataKey="_id" emptyMessage="Nenhum telefone cadastrado." className="tabela-dados">
-              <Column header="Tipo do telefone" style={{ width: '30%' }} body={(t) => (
-                <Dropdown value={t.tipo} options={TIPOS_TELEFONE} optionLabel="rotulo" optionValue="valor"
-                          aria-label="Tipo do telefone" onChange={(e) => alterarLinha('telefones', t._id, 'tipo', e.value)} />
+              <Column header="Tipo do telefone" body={(t) => rotuloTipoTelefone(t.tipo)} />
+              <Column header="Número" body={(t) => (
+                <span className="contato-numero">
+                  {t.numero}
+                  {t.tipo === 'CELULAR' && linkWhatsapp(t.numero) && (
+                    <a className="contato-whatsapp" href={linkWhatsapp(t.numero)} target="_blank" rel="noopener noreferrer"
+                       title="Abrir no WhatsApp" aria-label={`Abrir ${t.numero} no WhatsApp`}>
+                      <i className="fa-brands fa-whatsapp" aria-hidden="true" />
+                    </a>
+                  )}
+                </span>
               )} />
-              <Column header="Número" style={{ width: '30%' }} body={(t) => (
-                <InputMask key={t.tipo} mask={t.tipo === 'CELULAR' ? '(99) 99999-9999' : '(99) 9999-9999'} autoClear={false}
-                           aria-label="Número" value={t.numero} onChange={(e) => alterarLinha('telefones', t._id, 'numero', e.target.value ?? '')} />
-              )} />
-              <Column header="Observação" body={(t) => (
-                <InputText aria-label="Observação do telefone" maxLength={255} value={t.observacao}
-                           onChange={(e) => alterarLinha('telefones', t._id, 'observacao', e.target.value)} />
-              )} />
-              <Column style={{ width: '3.5rem' }} body={(t) => (
-                <Button type="button" icon="pi pi-trash" rounded text severity="danger" aria-label="Remover telefone"
-                        onClick={() => removerLinha('telefones', t._id)} />
+              <Column header="Observação" field="observacao" />
+              <Column style={{ width: '6.5rem', textAlign: 'right' }} body={(t) => (
+                <span className="contato-acoes">
+                  <Button type="button" icon="pi pi-pencil" rounded text severity="secondary" aria-label="Editar telefone"
+                          onClick={() => { setDialogoTelefone({ ...t }) }} />
+                  <Button type="button" icon="pi pi-trash" rounded text severity="danger" aria-label="Remover telefone"
+                          onClick={() => removerLinha('telefones', t._id)} />
+                </span>
               )} />
             </DataTable>
-            <Button type="button" label="Novo telefone" icon="pi pi-plus" size="small" outlined onClick={adicionarTelefone} />
+            <Button type="button" label="Novo telefone" icon="pi pi-plus" size="small" outlined
+                    onClick={() => { setDialogoTelefone({ tipo: 'CELULAR', numero: '', observacao: '' }) }} />
           </div>
 
           <div className="contatos__lista">
             <DataTable value={form.emails} dataKey="_id" emptyMessage="Nenhum e-mail cadastrado." className="tabela-dados">
-              <Column header="E-mail" body={(m) => (
-                <InputText type="email" aria-label="E-mail" maxLength={255} value={m.email}
-                           onChange={(e) => alterarLinha('emails', m._id, 'email', e.target.value)} />
-              )} />
-              <Column header="Observação" body={(m) => (
-                <InputText aria-label="Observação do e-mail" maxLength={255} value={m.observacao}
-                           onChange={(e) => alterarLinha('emails', m._id, 'observacao', e.target.value)} />
-              )} />
-              <Column style={{ width: '3.5rem' }} body={(m) => (
-                <Button type="button" icon="pi pi-trash" rounded text severity="danger" aria-label="Remover e-mail"
-                        onClick={() => removerLinha('emails', m._id)} />
+              <Column header="E-mail" field="email" />
+              <Column header="Observação" field="observacao" />
+              <Column style={{ width: '6.5rem', textAlign: 'right' }} body={(m) => (
+                <span className="contato-acoes">
+                  <Button type="button" icon="pi pi-pencil" rounded text severity="secondary" aria-label="Editar e-mail"
+                          onClick={() => { setDialogoEmail({ ...m }) }} />
+                  <Button type="button" icon="pi pi-trash" rounded text severity="danger" aria-label="Remover e-mail"
+                          onClick={() => removerLinha('emails', m._id)} />
+                </span>
               )} />
             </DataTable>
-            <Button type="button" label="Novo e-mail" icon="pi pi-plus" size="small" outlined onClick={adicionarEmail} />
+            <Button type="button" label="Novo e-mail" icon="pi pi-plus" size="small" outlined
+                    onClick={() => { setDialogoEmail({ email: '', observacao: '' }) }} />
           </div>
         </div>
       </SecaoCrud>
+
+      <Dialog
+        header={dialogoTelefone?._id ? 'Editar telefone' : 'Novo telefone'}
+        visible={!!dialogoTelefone}
+        onHide={() => setDialogoTelefone(null)}
+        style={{ width: 'min(28rem, 92vw)' }}
+        footer={(
+          <>
+            <Button type="button" label="Cancelar" severity="secondary" outlined onClick={() => setDialogoTelefone(null)} />
+            <Button type="button" label="Confirmar" onClick={confirmarTelefone} />
+          </>
+        )}
+      >
+        {dialogoTelefone && (
+          <div className="dialogo-campos" onKeyDown={aoTeclarDialogo(confirmarTelefone)}>
+            <Campo id="dlg-tipo" rotulo="Tipo do telefone" obrigatorio>
+              <Dropdown inputId="dlg-tipo" value={dialogoTelefone.tipo} options={TIPOS_TELEFONE} optionLabel="rotulo"
+                        optionValue="valor" onChange={(e) => setDialogoTelefone({ ...dialogoTelefone, tipo: e.value })} />
+            </Campo>
+            <Campo id="dlg-numero" rotulo="Número" obrigatorio
+                   ajuda={dialogoTelefone.tipo === 'CELULAR' ? 'Celulares mostram um atalho para abrir o WhatsApp.' : undefined}>
+              <InputMask key={dialogoTelefone.tipo} id="dlg-numero" autoFocus autoClear={false}
+                         mask={dialogoTelefone.tipo === 'CELULAR' ? '(99) 99999-9999' : '(99) 9999-9999'}
+                         value={dialogoTelefone.numero}
+                         onChange={(e) => setDialogoTelefone({ ...dialogoTelefone, numero: e.target.value ?? '' })} />
+            </Campo>
+            <Campo id="dlg-obs-tel" rotulo="Observação">
+              <InputText id="dlg-obs-tel" maxLength={255} value={dialogoTelefone.observacao}
+                         onChange={(e) => setDialogoTelefone({ ...dialogoTelefone, observacao: e.target.value })} />
+            </Campo>
+          </div>
+        )}
+      </Dialog>
+
+      <Dialog
+        header={dialogoEmail?._id ? 'Editar e-mail' : 'Novo e-mail'}
+        visible={!!dialogoEmail}
+        onHide={() => setDialogoEmail(null)}
+        style={{ width: 'min(28rem, 92vw)' }}
+        footer={(
+          <>
+            <Button type="button" label="Cancelar" severity="secondary" outlined onClick={() => setDialogoEmail(null)} />
+            <Button type="button" label="Confirmar" onClick={confirmarEmail} />
+          </>
+        )}
+      >
+        {dialogoEmail && (
+          <div className="dialogo-campos" onKeyDown={aoTeclarDialogo(confirmarEmail)}>
+            <Campo id="dlg-email" rotulo="E-mail" obrigatorio>
+              <InputText id="dlg-email" type="email" autoFocus maxLength={255} value={dialogoEmail.email}
+                         onChange={(e) => setDialogoEmail({ ...dialogoEmail, email: e.target.value })} />
+            </Campo>
+            <Campo id="dlg-obs-email" rotulo="Observação">
+              <InputText id="dlg-obs-email" maxLength={255} value={dialogoEmail.observacao}
+                         onChange={(e) => setDialogoEmail({ ...dialogoEmail, observacao: e.target.value })} />
+            </Campo>
+          </div>
+        )}
+      </Dialog>
     </>
   )
 
@@ -343,8 +486,6 @@ export default function PaginaFuncionarioCrud() {
         aoVoltar={() => navigate(ROTA_LISTA)}
         rodape={(
           <>
-            {erro && <p className="mensagem-erro crud__mensagem" role="alert">{erro}</p>}
-            {mensagem && <p className="mensagem-sucesso crud__mensagem" role="status">{mensagem}</p>}
             <div className="crud__acoes">
               {editando && (
                 <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined

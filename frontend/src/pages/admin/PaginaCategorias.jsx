@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
 import { atualizarCategoria, criarCategoria, excluirCategoria, listarCategorias } from '../../api/adminApi'
 
 const FORM_VAZIO = { nome: '', ordemExibicao: 0, ativo: true }
@@ -12,13 +14,12 @@ export default function PaginaCategorias() {
   const [categorias, setCategorias] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editandoGuid, setEditandoGuid] = useState(null)
-  const [erro, setErro] = useState(null)
   const [carregando, setCarregando] = useState(true)
 
   function carregar() {
     listarCategorias(tenant)
       .then(setCategorias)
-      .catch((e) => setErro(e.mensagem))
+      .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }
 
@@ -26,18 +27,18 @@ export default function PaginaCategorias() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setErro(null)
     try {
       if (editandoGuid) {
         await atualizarCategoria(tenant, editandoGuid, form)
       } else {
         await criarCategoria(tenant, form)
       }
+      dispatchMsgSuccess(editandoGuid ? 'Categoria atualizada com sucesso' : 'Categoria criada com sucesso')
       setForm(FORM_VAZIO)
       setEditandoGuid(null)
       carregar()
     } catch (e) {
-      setErro(e.mensagem)
+      dispatchMsgError(e.mensagem)
     }
   }
 
@@ -46,10 +47,19 @@ export default function PaginaCategorias() {
     setForm({ nome: categoria.nome, ordemExibicao: categoria.ordemExibicao, ativo: categoria.ativo })
   }
 
-  async function handleExcluir(guid) {
-    if (!confirm('Excluir esta categoria?')) return
-    await excluirCategoria(tenant, guid)
-    carregar()
+  function handleExcluir(guid) {
+    confirmar({
+      mensagem: 'Excluir esta categoria?',
+      aoConfirmar: async () => {
+        try {
+          await excluirCategoria(tenant, guid)
+          dispatchMsgSuccess('Categoria excluída com sucesso')
+          carregar()
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
   }
 
   return (
@@ -81,7 +91,6 @@ export default function PaginaCategorias() {
         )}
       </form>
 
-      {erro && <p className="mensagem-erro">{erro}</p>}
 
       <TabelaDados
         dados={categorias}

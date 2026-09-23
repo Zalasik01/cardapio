@@ -26,3 +26,11 @@ export function dataParaIso(data) {
   const dois = (n) => String(n).padStart(2, '0')
   return `${data.getFullYear()}-${dois(data.getMonth() + 1)}-${dois(data.getDate())}`
 }
+
+/** Link para abrir uma conversa no WhatsApp (assume Brasil, +55, quando o DDI nao foi informado). */
+export function linkWhatsapp(numero) {
+  const digitos = soDigitos(numero)
+  if (digitos.length < 10) return null
+  const comPais = digitos.startsWith('55') && digitos.length >= 12 ? digitos : `55${digitos}`
+  return `https://wa.me/${comPais}`
+}

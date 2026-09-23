@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Drawer from '../Drawer'
+import { dispatchMsgError } from '../../store/dispatchMsg'
 import TabelaDados from '../TabelaDados'
 
 /**
@@ -35,7 +36,6 @@ export default function TelaBusca({
 
   const [dados, setDados] = useState(null)
   const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState(null)
 
   // a funcao de busca pode mudar a cada render do pai; a ref evita refazer a consulta por isso
   const buscarRef = useRef(buscar)
@@ -49,9 +49,8 @@ export default function TelaBusca({
       .then((resposta) => {
         if (descartada) return
         setDados(resposta)
-        setErro(null)
       })
-      .catch((e) => !descartada && setErro(e.mensagem))
+      .catch((e) => !descartada && dispatchMsgError(e.mensagem))
       .finally(() => !descartada && setCarregando(false))
     return () => {
       descartada = true
@@ -126,8 +125,6 @@ export default function TelaBusca({
           </button>
         )}
       </form>
-
-      {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
 
       <TabelaDados
         dados={linhas}

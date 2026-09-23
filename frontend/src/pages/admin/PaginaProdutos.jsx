@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
 import { atualizarProduto, criarProduto, excluirProduto, listarCategorias, listarProdutos } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
@@ -14,7 +16,6 @@ export default function PaginaProdutos() {
   const [categorias, setCategorias] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editandoGuid, setEditandoGuid] = useState(null)
-  const [erro, setErro] = useState(null)
   const [carregando, setCarregando] = useState(true)
 
   function carregar() {
@@ -23,7 +24,7 @@ export default function PaginaProdutos() {
         setProdutos(listaProdutos)
         setCategorias(listaCategorias)
       })
-      .catch((e) => setErro(e.mensagem))
+      .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }
 
@@ -31,7 +32,6 @@ export default function PaginaProdutos() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setErro(null)
     const dados = { ...form, preco: Number(form.preco) }
     try {
       if (editandoGuid) {
@@ -39,11 +39,12 @@ export default function PaginaProdutos() {
       } else {
         await criarProduto(tenant, dados)
       }
+      dispatchMsgSuccess(editandoGuid ? 'Produto atualizado com sucesso' : 'Produto criado com sucesso')
       setForm(FORM_VAZIO)
       setEditandoGuid(null)
       carregar()
     } catch (e) {
-      setErro(e.mensagem)
+      dispatchMsgError(e.mensagem)
     }
   }
 
@@ -59,10 +60,19 @@ export default function PaginaProdutos() {
     })
   }
 
-  async function handleExcluir(guid) {
-    if (!confirm('Excluir este produto?')) return
-    await excluirProduto(tenant, guid)
-    carregar()
+  function handleExcluir(guid) {
+    confirmar({
+      mensagem: 'Excluir este produto?',
+      aoConfirmar: async () => {
+        try {
+          await excluirProduto(tenant, guid)
+          dispatchMsgSuccess('Produto excluído com sucesso')
+          carregar()
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
   }
 
   return (
@@ -95,7 +105,6 @@ export default function PaginaProdutos() {
         )}
       </form>
 
-      {erro && <p className="mensagem-erro">{erro}</p>}
 
       <TabelaDados
         dados={produtos}

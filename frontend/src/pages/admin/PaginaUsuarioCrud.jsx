@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Button } from 'primereact/button'
+import { Menu } from 'primereact/menu'
 import { Checkbox } from 'primereact/checkbox'
 import { InputText } from 'primereact/inputtext'
 import { useAuth } from '../../context/AuthContext'
@@ -15,6 +16,7 @@ import { buscarFuncionarios } from '../../api/funcionariosApi'
 import CrudBlocos from '../../components/crud/CrudBlocos'
 import { Campo, GradeCampos } from '../../components/crud/Campo'
 import { FormularioSkeleton } from '../../components/Skeleton'
+import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import { formatarCpf } from '../../utils/formatadores'
 
 const ROTA_LISTA = '/admin/usuarios'
@@ -43,6 +45,8 @@ export default function PaginaUsuarioCrud() {
   const [tinhaFoto, setTinhaFoto] = useState(false)
   const [removerFoto, setRemoverFoto] = useState(false)
   const inputArquivo = useRef(null)
+  const menuMaisOpcoes = useRef(null)
+  const [alterandoEmail, setAlterandoEmail] = useState(false)
 
   useEffect(() => {
     definirMigalha(editando ? 'Editando usuário' : 'Novo usuário')
@@ -195,6 +199,12 @@ export default function PaginaUsuarioCrud() {
     if (!editando) navigate(ROTA_LISTA)
   }
 
+  // "Mais opcoes" do cadastro (so na edicao)
+  const itensMaisOpcoes = [
+    { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setAlterandoEmail(true) },
+    ...(form.exigeTrocarSenha ? [{ label: 'Gerar novo link de acesso', icon: 'pi pi-link', command: handleNovoLink }] : []),
+  ]
+
   const dadosBasicos = (
     <GradeCampos>
       {editando && (
@@ -210,8 +220,8 @@ export default function PaginaUsuarioCrud() {
         <InputText id="nome" required maxLength={255} value={form.nome} onChange={(e) => definir('nome')(e.target.value)} />
       </Campo>
       <Campo id="email" rotulo="E-mail" obrigatorio tamanho={6}
-             ajuda={editando ? 'O e-mail não pode ser alterado depois do cadastro.' : undefined}>
-        <InputText id="email" type="email" required maxLength={255} readOnly={editando} value={form.email}
+             ajuda={editando ? 'Para alterar o e-mail, use "Mais opções" (seta ao lado de Fechar).' : undefined}>
+        <InputText id="email" type="email" required maxLength={255} disabled={editando} value={form.email}
                    onChange={(e) => definir('email')(e.target.value)} />
       </Campo>
 
@@ -226,6 +236,7 @@ export default function PaginaUsuarioCrud() {
           forceSelection
           delay={300}
           placeholder="Digite para buscar"
+          disabled={editando}
           itemTemplate={(item) => (
             <span>{item.nome}{item.cpf && <small className="campo__ajuda"> · {formatarCpf(item.cpf)}</small>}</span>
           )}
@@ -294,16 +305,25 @@ export default function PaginaUsuarioCrud() {
                 <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined
                         disabled={carregando} onClick={handleExcluir} />
               )}
-              {editando && form.exigeTrocarSenha && (
-                <Button type="button" label="Gerar novo link" icon="pi pi-link" severity="secondary" outlined
-                        onClick={handleNovoLink} />
-              )}
               <span className="crud__espaco" />
+              {editando && (
+                <>
+                  <Button type="button" icon="pi pi-angle-up" severity="secondary" outlined aria-label="Mais opções"
+                          title="Mais opções" aria-haspopup="menu" onClick={(e) => menuMaisOpcoes.current.toggle(e)} />
+                  <Menu model={itensMaisOpcoes} popup ref={menuMaisOpcoes} />
+                </>
+              )}
               <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
               <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
             </div>
           </>
         )}
+      />
+
+      <DialogoAlterarEmail
+        usuario={alterandoEmail ? { id: Number(id), nome: form.nome, email: form.email } : null}
+        aoFechar={() => setAlterandoEmail(false)}
+        aoAlterado={(atualizado) => setForm((atual) => ({ ...atual, email: atualizado.email }))}
       />
 
       {convite && (

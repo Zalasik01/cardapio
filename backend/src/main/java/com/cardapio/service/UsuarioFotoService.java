@@ -5,6 +5,7 @@ import com.cardapio.entity.S_UsuarioFoto;
 import com.cardapio.exception.RecursoNaoEncontradoException;
 import com.cardapio.exception.RegraNegocioException;
 import com.cardapio.repository.S_UsuarioFotoRepository;
+import com.cardapio.repository.S_UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +26,17 @@ public class UsuarioFotoService {
 
     private final UsuarioLojaService usuarioLojaService;
     private final S_UsuarioFotoRepository fotoRepository;
+    private final S_UsuarioRepository usuarioRepository;
 
     @Transactional
     public void salvar(UUID tenant, Long usuarioId, MultipartFile arquivo) {
-        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario();
+        salvarDoUsuario(usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario().getId(), arquivo);
+    }
+
+    @Transactional
+    public void salvarDoUsuario(Long usuarioId, MultipartFile arquivo) {
+        S_Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
 
         if (arquivo == null || arquivo.isEmpty()) {
             throw new RegraNegocioException("Selecione uma imagem");
@@ -56,16 +64,24 @@ public class UsuarioFotoService {
 
     @Transactional(readOnly = true)
     public Foto obter(UUID tenant, Long usuarioId) {
-        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario();
-        return fotoRepository.findByUsuarioId(usuario.getId())
+        return obterDoUsuario(usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario().getId());
+    }
+
+    @Transactional(readOnly = true)
+    public Foto obterDoUsuario(Long usuarioId) {
+        return fotoRepository.findByUsuarioId(usuarioId)
                 .map(foto -> new Foto(foto.getTipoConteudo(), foto.getConteudo()))
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario sem foto"));
     }
 
     @Transactional
     public void remover(UUID tenant, Long usuarioId) {
-        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario();
-        fotoRepository.findByUsuarioId(usuario.getId()).ifPresent(fotoRepository::delete);
+        removerDoUsuario(usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario().getId());
+    }
+
+    @Transactional
+    public void removerDoUsuario(Long usuarioId) {
+        fotoRepository.findByUsuarioId(usuarioId).ifPresent(fotoRepository::delete);
     }
 
     private String detectarTipo(byte[] b) {

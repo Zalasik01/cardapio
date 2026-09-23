@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarUsuarios } from '../../api/usuariosApi'
 import TelaBusca from '../../components/crud/TelaBusca'
+import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import { STATUS_USUARIO } from './statusUsuario'
 
 const FILTROS = [
@@ -50,8 +52,11 @@ const COLUNAS = [
 export default function PaginaUsuarios() {
   const { loja } = useAuth()
   const navigate = useNavigate()
+  const [usuarioEmail, setUsuarioEmail] = useState(null)
+  const [versao, setVersao] = useState(0)
 
   return (
+    <>
     <TelaBusca
       titulo="Usuários"
       placeholder="Buscar por nome ou e-mail"
@@ -61,6 +66,16 @@ export default function PaginaUsuarios() {
       buscar={({ busca, filtros, page, size }) => buscarUsuarios(loja.tenant, { busca, ...filtros, page, size })}
       aoNovo={() => navigate('/admin/usuarios/novo')}
       aoAbrir={(usuario) => navigate(`/admin/usuarios/${usuario.id}`)}
+      chaveAtualizacao={versao}
+      acoesExtras={(usuario) => [
+        { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setUsuarioEmail(usuario) },
+      ]}
     />
+    <DialogoAlterarEmail
+      usuario={usuarioEmail}
+      aoFechar={() => setUsuarioEmail(null)}
+      aoAlterado={() => setVersao((atual) => atual + 1)}
+    />
+    </>
   )
 }

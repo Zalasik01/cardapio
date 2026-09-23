@@ -67,6 +67,13 @@ h1, h2, h3 {
   outline-offset: 2px;
 }
 
+/* Campos de formulario mostram o foco pela borda + anel suave (input:focus); sem contorno extra por fora */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
 /* ==========================================================================
    Controles basicos
    ========================================================================== */

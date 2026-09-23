@@ -40,7 +40,7 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
     if (!usuarioLogado?.temFoto || !usuarioLogado?.id) return undefined
     let url = null
     let cancelado = false
-    obterFotoUsuario(loja.tenant, usuarioLogado.guid)
+    obterFotoUsuario(loja.tenant, usuarioLogado.id)
       .then((blob) => {
         if (cancelado) return
         url = URL.createObjectURL(blob)

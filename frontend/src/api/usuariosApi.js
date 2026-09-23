@@ -37,3 +37,7 @@ export const enviarFotoUsuario = (tenant, id, arquivo) => {
 }
 
 export const removerFotoUsuario = (tenant, id) => http.delete(`${base(tenant)}/${id}/foto`)
+
+/** Altera o e-mail de login (unico caminho para isso). Devolve o usuario atualizado. */
+export const alterarEmailUsuario = (tenant, id, email) =>
+  http.put(`${base(tenant)}/${id}/email`, { email }).then((res) => res.data)

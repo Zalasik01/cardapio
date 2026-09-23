@@ -14,6 +14,8 @@ import TabelaDados from '../TabelaDados'
  *  - buscar({ busca, filtros, page, size }) -> Promise<{ content, page, totalElements, totalPages }>
  *  - filtros: [{ nome, rotulo, tipo: 'texto' | 'selecao', opcoes?: [{ valor, rotulo }] }]
  *  - aoNovo(), aoAbrir(linha), chaveLinha(linha)
+ *  - acoesExtras?(linha) -> itens extras do menu "..." ({ label, icon, command })
+ *  - chaveAtualizacao: mude o valor para recarregar a listagem (ex.: apos alterar um registro)
  */
 export default function TelaBusca({
   titulo,
@@ -22,6 +24,8 @@ export default function TelaBusca({
   filtros = [],
   aoNovo,
   aoAbrir,
+  acoesExtras,
+  chaveAtualizacao,
   chaveLinha,
   rotuloNovo = 'Novo',
   placeholder = 'Buscar',
@@ -55,7 +59,7 @@ export default function TelaBusca({
     return () => {
       descartada = true
     }
-  }, [termoAplicado, aplicados, pagina, tamanhoPagina])
+  }, [termoAplicado, aplicados, pagina, tamanhoPagina, chaveAtualizacao])
 
   const fecharDrawer = useCallback(() => setDrawerAberto(false), [])
 
@@ -132,7 +136,12 @@ export default function TelaBusca({
         carregando={carregando}
         colunas={colunas.map((coluna) => ({ campo: coluna.chave, cabecalho: coluna.cabecalho, corpo: coluna.render }))}
         aoClicarLinha={aoAbrir}
-        acoes={aoAbrir ? (linha) => [{ label: 'Abrir', icon: 'pi pi-pencil', command: () => aoAbrir(linha) }] : undefined}
+        acoes={aoAbrir || acoesExtras
+          ? (linha) => [
+            ...(aoAbrir ? [{ label: 'Abrir', icon: 'pi pi-pencil', command: () => aoAbrir(linha) }] : []),
+            ...(acoesExtras ? acoesExtras(linha) : []),
+          ]
+          : undefined}
         paginacao={dados ? { pagina: dados.page, tamanho: dados.size, total: dados.totalElements, aoMudar: setPagina } : undefined}
       />
 

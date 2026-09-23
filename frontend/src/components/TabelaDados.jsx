@@ -38,7 +38,7 @@ function AcoesLinha({ itens }) {
  * carregamento inicial, mensagem de vazio e menu de acoes por linha.
  *
  * Props:
- *  - dados: linhas; chave: nome do campo unico de cada linha (ex.: 'guid')
+ *  - dados: linhas; chave: nome do campo unico de cada linha (ex.: 'id')
  *  - colunas: [{ campo, cabecalho, corpo?(linha) }]
  *  - carregando: mostra skeleton (sem dados ainda) ou indicador de carregamento (ja com dados)
  *  - acoes?(linha) -> [{ label, icon, command, className }]: menu "..." da linha

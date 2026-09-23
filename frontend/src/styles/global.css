@@ -1189,14 +1189,16 @@ button.cartao-loja:hover {
 
 /* A tela ocupa a altura toda e a barra de acoes fica presa na base, rente as bordas da area de conteudo */
 .conteudo-admin:has(.crud) {
+  padding-top: 0;
   padding-bottom: 0;
 }
 
 .crud {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--altura-cabecalho) - 2rem);
-  min-height: calc(100dvh - var(--altura-cabecalho) - 2rem);
+  padding-top: 2rem;
+  min-height: calc(100vh - var(--altura-cabecalho));
+  min-height: calc(100dvh - var(--altura-cabecalho));
 }
 
 .crud__corpo {
@@ -2027,4 +2029,47 @@ button.cartao-loja:hover .cartao-loja__avatar {
 .dialogo-campos__texto {
   margin: 0;
   color: var(--cor-texto-suave);
+}
+
+@media (max-width: 860px) {
+  .crud {
+    padding-top: 1rem;
+  }
+}
+
+/* Fundo das telas de acesso: fotos que se alternam (fade) atras do cartao */
+.pagina-login {
+  position: relative;
+  overflow: hidden;
+}
+
+.fundo-login {
+  position: absolute;
+  inset: 0;
+}
+
+.fundo-login__foto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1400ms ease-in-out;
+}
+
+.fundo-login__foto--ativa {
+  opacity: 1;
+}
+
+.fundo-login__veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.65), rgba(17, 24, 39, 0.3));
+}
+
+.pagina-login .formulario-login {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }

@@ -45,3 +45,7 @@ export const alterarEmailUsuario = (tenant, id, email) =>
 /** Define uma senha temporaria; o usuario sera obrigado a troca-la no proximo acesso. */
 export const redefinirSenhaUsuario = (tenant, id, senhaTemporaria) =>
   http.put(`${base(tenant)}/${id}/senha`, { senhaTemporaria }).then((res) => res.data)
+
+/** Ativa ou inativa o usuario nesta loja. */
+export const alterarAtivoUsuario = (tenant, id, ativo) =>
+  http.put(`${base(tenant)}/${id}/ativo`, { ativo }).then((res) => res.data)

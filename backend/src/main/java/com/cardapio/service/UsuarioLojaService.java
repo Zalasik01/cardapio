@@ -223,6 +223,17 @@ public class UsuarioLojaService {
         return resposta(vinculo);
     }
 
+    /** Ativa/inativa o usuario nesta loja. Ninguem inativa o proprio usuario (perderia o acesso na hora). */
+    @Transactional
+    public UsuarioLojaResponse alterarAtivo(UUID tenant, Long usuarioId, boolean ativo, Long usuarioLogadoId) {
+        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
+        if (!ativo && vinculo.getUsuario().getId().equals(usuarioLogadoId)) {
+            throw new RegraNegocioException("Voce nao pode inativar o proprio usuario");
+        }
+        vinculo.setAtivo(ativo);
+        return resposta(perfilUsuarioRepository.save(vinculo));
+    }
+
     /** Exclusao logica do vinculo com a loja; a conta do usuario (e suas outras lojas) nao e afetada. */
     @Transactional
     public void excluir(UUID tenant, Long usuarioId, Long usuarioLogadoId) {

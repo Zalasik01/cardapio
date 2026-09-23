@@ -1,6 +1,7 @@
 package com.cardapio.controller.admin;
 
 import com.cardapio.dto.PaginaResponse;
+import com.cardapio.dto.usuario.AlterarAtivoRequest;
 import com.cardapio.dto.usuario.AlterarEmailRequest;
 import com.cardapio.dto.usuario.FiltroUsuario;
 import com.cardapio.dto.usuario.RedefinirSenhaRequest;
@@ -67,6 +68,13 @@ public class AdminUsuarioController {
                                         @AuthenticationPrincipal AppUserDetails logado) {
         usuarioLojaService.excluir(tenant, usuarioId, logado.getUsuarioId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{usuarioId}/ativo")
+    public UsuarioLojaResponse alterarAtivo(@PathVariable UUID tenant, @PathVariable Long usuarioId,
+                                            @RequestBody AlterarAtivoRequest request,
+                                            @AuthenticationPrincipal AppUserDetails logado) {
+        return usuarioLojaService.alterarAtivo(tenant, usuarioId, request.ativo(), logado.getUsuarioId());
     }
 
     @PutMapping("/{usuarioId}/email")

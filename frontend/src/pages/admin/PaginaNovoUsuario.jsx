@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { consultarConvite, definirSenhaNovoUsuario } from '../../api/authApi'
 import CampoSenha from '../../components/CampoSenha'
+import FundoLogin from '../../components/FundoLogin'
 import ForcaSenha from '../../components/ForcaSenha'
 import { Skeleton } from '../../components/Skeleton'
 import { avaliarSenha } from '../../utils/senha'
@@ -53,6 +54,7 @@ export default function PaginaNovoUsuario() {
 
   return (
     <div className="pagina-login">
+      <FundoLogin />
       <div className="formulario-login formulario-login--largo">
         {carregando && (
           <div aria-busy="true" aria-label="Carregando convite" className="convite__esqueleto">

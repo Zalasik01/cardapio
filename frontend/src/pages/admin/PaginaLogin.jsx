@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import CampoSenha from '../../components/CampoSenha'
+import FundoLogin from '../../components/FundoLogin'
 import ModalSelecionarLoja from '../../components/ModalSelecionarLoja'
 
 export default function PaginaLogin() {
@@ -25,6 +26,7 @@ export default function PaginaLogin() {
 
   return (
     <div className="pagina-login">
+      <FundoLogin />
       <form onSubmit={handleSubmit} className="formulario-login">
         <h1>Painel administrativo</h1>
         <label>

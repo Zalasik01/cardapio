@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { buscarUsuarios } from '../../api/usuariosApi'
+import { alterarAtivoUsuario, buscarUsuarios } from '../../api/usuariosApi'
 import TelaBusca from '../../components/crud/TelaBusca'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
 import { STATUS_USUARIO } from './statusUsuario'
 
 const FILTROS = [
@@ -30,10 +32,7 @@ function formatarData(iso) {
 }
 
 const COLUNAS = [
-  { chave: 'nome', cabecalho: 'Nome' },
-  { chave: 'email', cabecalho: 'E-mail' },
-  { chave: 'funcionarioNome', cabecalho: 'Funcionário', render: (usuario) => usuario.funcionarioNome || '—' },
-  { chave: 'administrador', cabecalho: 'Administrador', render: (usuario) => (usuario.administrador ? 'Sim' : 'Não') },
+  { chave: 'ativo', cabecalho: 'Ativo', render: (usuario) => (usuario.ativo ? 'Sim' : 'Não') },
   {
     chave: 'status',
     cabecalho: 'Acesso',
@@ -42,11 +41,9 @@ const COLUNAS = [
       return <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
     },
   },
-  {
-    chave: 'ativo',
-    cabecalho: 'Ativo',
-    render: (usuario) => (usuario.ativo ? 'Sim' : 'Não'),
-  },
+  { chave: 'nome', cabecalho: 'Nome' },
+  { chave: 'email', cabecalho: 'E-mail' },
+  { chave: 'funcionarioNome', cabecalho: 'Funcionário', render: (usuario) => usuario.funcionarioNome || '—' },
   { chave: 'dataUltimoAcesso', cabecalho: 'Último acesso', render: (usuario) => formatarData(usuario.dataUltimoAcesso) },
 ]
 
@@ -56,6 +53,27 @@ export default function PaginaUsuarios() {
   const [usuarioEmail, setUsuarioEmail] = useState(null)
   const [usuarioSenha, setUsuarioSenha] = useState(null)
   const [versao, setVersao] = useState(0)
+
+  function alterarAtivo(usuario, ativo) {
+    const executar = async () => {
+      try {
+        await alterarAtivoUsuario(loja.tenant, usuario.id, ativo)
+        dispatchMsgSuccess(ativo ? 'Usuário ativado com sucesso' : 'Usuário inativado com sucesso')
+        setVersao((atual) => atual + 1)
+      } catch (e) {
+        dispatchMsgError(e.mensagem)
+      }
+    }
+    if (ativo) {
+      executar()
+      return
+    }
+    confirmar({
+      mensagem: `Inativar ${usuario.nome}? Ele deixa de acessar esta loja até ser ativado novamente.`,
+      rotuloConfirmar: 'Inativar',
+      aoConfirmar: executar,
+    })
+  }
 
   return (
     <>
@@ -71,6 +89,9 @@ export default function PaginaUsuarios() {
       chaveAtualizacao={versao}
       acoesExtras={(usuario) => [
         { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setUsuarioEmail(usuario) },
+        usuario.ativo
+          ? { label: 'Inativar usuário', icon: 'pi pi-ban', command: () => alterarAtivo(usuario, false) }
+          : { label: 'Ativar usuário', icon: 'pi pi-check-circle', command: () => alterarAtivo(usuario, true) },
         // quem ainda nao definiu a senha usa o link de acesso (dentro do cadastro)
         ...(usuario.status !== 'PENDENTE'
           ? [{ label: 'Redefinir senha', icon: 'pi pi-key', command: () => setUsuarioSenha(usuario) }]

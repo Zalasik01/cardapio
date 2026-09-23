@@ -1,11 +1,24 @@
 package com.cardapio.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -13,26 +26,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "pedidos")
+@Table(name = "t_pedido")
+@AttributeOverride(name = "id", column = @Column(name = "id_pedido"))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Pedido {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "restaurante_id", nullable = false)
-    private Restaurante restaurante;
+@SuperBuilder
+public class T_Pedido extends SystemAbstract {
 
     /** Nulo quando o pedido e feito como convidado (guest checkout). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id")
-    private Usuario cliente;
+    @JoinColumn(name = "id_cliente")
+    private S_Usuario cliente;
 
     @Column(nullable = false)
     private String nomeCliente;
@@ -54,7 +60,7 @@ public class Pedido {
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ItemPedido> itens = new ArrayList<>();
+    private List<I_ItemPedido> itens = new ArrayList<>();
 
     @Column(nullable = false)
     private BigDecimal subtotal;
@@ -74,18 +80,18 @@ public class Pedido {
     private StatusPedido status = StatusPedido.PENDENTE;
 
     @Column(nullable = false, updatable = false)
-    private Instant criadoEm;
+    private Instant dataCriacao;
 
-    private Instant atualizadoEm;
+    private Instant dataAtualizacao;
 
     @PrePersist
     void aoCriar() {
-        this.criadoEm = Instant.now();
-        this.atualizadoEm = this.criadoEm;
+        this.dataCriacao = Instant.now();
+        this.dataAtualizacao = this.dataCriacao;
     }
 
     @PreUpdate
     void aoAtualizar() {
-        this.atualizadoEm = Instant.now();
+        this.dataAtualizacao = Instant.now();
     }
 }

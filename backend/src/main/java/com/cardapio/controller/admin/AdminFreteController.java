@@ -10,35 +10,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/restaurantes/{restauranteId}/zonas-entrega")
+@RequestMapping("/api/admin/lojas/{tenant}/zonas-entrega")
 @RequiredArgsConstructor
 public class AdminFreteController {
 
     private final FreteService freteService;
 
     @GetMapping
-    public List<ZonaEntregaResponse> listar(@PathVariable Long restauranteId) {
-        return freteService.listarZonas(restauranteId).stream().map(ZonaEntregaResponse::of).toList();
+    public List<ZonaEntregaResponse> listar(@PathVariable UUID tenant) {
+        return freteService.listarZonas(tenant).stream().map(ZonaEntregaResponse::of).toList();
     }
 
     @PostMapping
-    public ResponseEntity<ZonaEntregaResponse> criar(@PathVariable Long restauranteId,
+    public ResponseEntity<ZonaEntregaResponse> criar(@PathVariable UUID tenant,
                                                        @Valid @RequestBody ZonaEntregaRequest request) {
-        var zona = freteService.criarZona(restauranteId, request);
+        var zona = freteService.criarZona(tenant, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ZonaEntregaResponse.of(zona));
     }
 
-    @PutMapping("/{zonaId}")
-    public ZonaEntregaResponse atualizar(@PathVariable Long restauranteId, @PathVariable Long zonaId,
+    @PutMapping("/{zonaGuid}")
+    public ZonaEntregaResponse atualizar(@PathVariable UUID tenant, @PathVariable UUID zonaGuid,
                                           @Valid @RequestBody ZonaEntregaRequest request) {
-        return ZonaEntregaResponse.of(freteService.atualizarZona(restauranteId, zonaId, request));
+        return ZonaEntregaResponse.of(freteService.atualizarZona(tenant, zonaGuid, request));
     }
 
-    @DeleteMapping("/{zonaId}")
-    public ResponseEntity<Void> excluir(@PathVariable Long restauranteId, @PathVariable Long zonaId) {
-        freteService.excluirZona(restauranteId, zonaId);
+    @DeleteMapping("/{zonaGuid}")
+    public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable UUID zonaGuid) {
+        freteService.excluirZona(tenant, zonaGuid);
         return ResponseEntity.noContent().build();
     }
 }

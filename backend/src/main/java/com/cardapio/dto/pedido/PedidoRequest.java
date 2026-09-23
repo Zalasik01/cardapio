@@ -7,9 +7,10 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
+import java.util.UUID;
 
 public record PedidoRequest(
-        @NotNull Long restauranteId,
+        @NotNull UUID tenant,
         @NotBlank String nomeCliente,
         @NotBlank String telefoneCliente,
         @NotNull TipoEntrega tipoEntrega,

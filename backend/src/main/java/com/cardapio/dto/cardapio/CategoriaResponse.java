@@ -1,14 +1,16 @@
 package com.cardapio.dto.cardapio;
 
-import com.cardapio.entity.Categoria;
+import com.cardapio.entity.T_Categoria;
+
+import java.util.UUID;
 
 public record CategoriaResponse(
-        Long id,
+        UUID guid,
         String nome,
         Integer ordemExibicao,
         boolean ativo
 ) {
-    public static CategoriaResponse of(Categoria c) {
-        return new CategoriaResponse(c.getId(), c.getNome(), c.getOrdemExibicao(), c.isAtivo());
+    public static CategoriaResponse of(T_Categoria c) {
+        return new CategoriaResponse(c.getGuid(), c.getNome(), c.getOrdemExibicao(), c.isAtivo());
     }
 }

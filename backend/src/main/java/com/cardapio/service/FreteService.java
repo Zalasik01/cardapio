@@ -3,10 +3,10 @@ package com.cardapio.service;
 import com.cardapio.dto.frete.CalculoFreteRequest;
 import com.cardapio.dto.frete.CalculoFreteResponse;
 import com.cardapio.dto.frete.ZonaEntregaRequest;
-import com.cardapio.entity.Restaurante;
-import com.cardapio.entity.ZonaEntrega;
+import com.cardapio.entity.S_Loja;
+import com.cardapio.entity.T_ZonaEntrega;
 import com.cardapio.exception.RecursoNaoEncontradoException;
-import com.cardapio.repository.ZonaEntregaRepository;
+import com.cardapio.repository.T_ZonaEntregaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,40 +22,41 @@ public class FreteService {
 
     private static final int RAIO_TERRA_KM = 6371;
 
-    private final ZonaEntregaRepository zonaEntregaRepository;
-    private final RestauranteService restauranteService;
+    private final T_ZonaEntregaRepository zonaEntregaRepository;
+    private final LojaService lojaService;
 
+    @Transactional(readOnly = true)
     public CalculoFreteResponse calcular(CalculoFreteRequest request) {
-        Restaurante restaurante = restauranteService.buscarPorId(request.restauranteId());
+        S_Loja loja = lojaService.buscarPorTenant(request.tenant());
 
         if (request.bairro() != null && !request.bairro().isBlank()) {
             var zona = zonaEntregaRepository
-                    .findByRestauranteIdAndBairroIgnoreCaseAndAtivoTrue(restaurante.getId(), request.bairro());
+                    .findByTenantAndBairroIgnoreCaseAndAtivoTrue(loja.getGuid(), request.bairro());
 
             if (zona.isPresent()) {
-                ZonaEntrega z = zona.get();
+                T_ZonaEntrega z = zona.get();
                 return new CalculoFreteResponse(true, z.getTaxa(), z.getTempoEstimadoMinutos(), null,
                         "ZONA_FIXA", "Frete calculado pela zona de entrega: " + z.getBairro());
             }
         }
 
         if (request.latitude() == null || request.longitude() == null
-                || restaurante.getLatitude() == null || restaurante.getLongitude() == null) {
+                || loja.getLatitude() == null || loja.getLongitude() == null) {
             return new CalculoFreteResponse(false, null, null, null, "INDISPONIVEL",
                     "Nao foi possivel calcular o frete: informe um bairro cadastrado ou a localizacao");
         }
 
         double distanciaKm = calcularDistanciaHaversine(
-                restaurante.getLatitude(), restaurante.getLongitude(),
+                loja.getLatitude(), loja.getLongitude(),
                 request.latitude(), request.longitude());
 
-        if (distanciaKm > restaurante.getDistanciaMaximaEntregaKm()) {
+        if (distanciaKm > loja.getDistanciaMaximaEntregaKm()) {
             return new CalculoFreteResponse(false, null, null, distanciaKm, "DISTANCIA",
-                    "Endereco fora da area de entrega do restaurante");
+                    "Endereco fora da area de entrega da loja");
         }
 
-        BigDecimal taxa = restaurante.getTaxaEntregaBase()
-                .add(restaurante.getTaxaEntregaPorKm().multiply(BigDecimal.valueOf(distanciaKm)))
+        BigDecimal taxa = loja.getTaxaEntregaBase()
+                .add(loja.getTaxaEntregaPorKm().multiply(BigDecimal.valueOf(distanciaKm)))
                 .setScale(2, RoundingMode.HALF_UP);
 
         int tempoEstimado = (int) Math.ceil(15 + distanciaKm * 4);
@@ -75,28 +77,28 @@ public class FreteService {
         return RAIO_TERRA_KM * c;
     }
 
-    public List<ZonaEntrega> listarZonas(Long restauranteId) {
-        return zonaEntregaRepository.findByRestauranteIdOrderByBairroAsc(restauranteId);
+    @Transactional(readOnly = true)
+    public List<T_ZonaEntrega> listarZonas(UUID tenant) {
+        return zonaEntregaRepository.findByTenantOrderByBairroAsc(tenant);
     }
 
     @Transactional
-    public ZonaEntrega criarZona(Long restauranteId, ZonaEntregaRequest request) {
-        Restaurante restaurante = restauranteService.buscarPorId(restauranteId);
-
-        ZonaEntrega zona = ZonaEntrega.builder()
-                .restaurante(restaurante)
+    public T_ZonaEntrega criarZona(UUID tenant, ZonaEntregaRequest request) {
+        T_ZonaEntrega zona = T_ZonaEntrega.builder()
+                .tenant(tenant)
                 .bairro(request.bairro())
                 .taxa(request.taxa())
                 .tempoEstimadoMinutos(request.tempoEstimadoMinutos() != null ? request.tempoEstimadoMinutos() : 45)
-                .ativo(request.ativo() == null || request.ativo())
                 .build();
+
+        if (request.ativo() != null) zona.setAtivo(request.ativo());
 
         return zonaEntregaRepository.save(zona);
     }
 
     @Transactional
-    public ZonaEntrega atualizarZona(Long restauranteId, Long zonaId, ZonaEntregaRequest request) {
-        ZonaEntrega zona = buscarZona(restauranteId, zonaId);
+    public T_ZonaEntrega atualizarZona(UUID tenant, UUID zonaGuid, ZonaEntregaRequest request) {
+        T_ZonaEntrega zona = buscarZona(tenant, zonaGuid);
         zona.setBairro(request.bairro());
         zona.setTaxa(request.taxa());
         if (request.tempoEstimadoMinutos() != null) zona.setTempoEstimadoMinutos(request.tempoEstimadoMinutos());
@@ -105,16 +107,15 @@ public class FreteService {
     }
 
     @Transactional
-    public void excluirZona(Long restauranteId, Long zonaId) {
-        zonaEntregaRepository.delete(buscarZona(restauranteId, zonaId));
+    public void excluirZona(UUID tenant, UUID zonaGuid) {
+        T_ZonaEntrega zona = buscarZona(tenant, zonaGuid);
+        zona.setDeletado(true);
+        zona.setAtivo(false);
+        zonaEntregaRepository.save(zona);
     }
 
-    private ZonaEntrega buscarZona(Long restauranteId, Long zonaId) {
-        ZonaEntrega zona = zonaEntregaRepository.findById(zonaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Zona de entrega nao encontrada: " + zonaId));
-        if (!zona.getRestaurante().getId().equals(restauranteId)) {
-            throw new RecursoNaoEncontradoException("Zona de entrega nao pertence a este restaurante");
-        }
-        return zona;
+    private T_ZonaEntrega buscarZona(UUID tenant, UUID zonaGuid) {
+        return zonaEntregaRepository.findByGuidAndTenant(zonaGuid, tenant)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Zona de entrega nao encontrada: " + zonaGuid));
     }
 }

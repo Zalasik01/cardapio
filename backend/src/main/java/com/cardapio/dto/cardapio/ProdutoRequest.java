@@ -5,9 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record ProdutoRequest(
-        @NotNull Long categoriaId,
+        @NotNull UUID categoriaGuid,
         @NotBlank String nome,
         String descricao,
         @NotNull @Positive BigDecimal preco,

@@ -1,30 +1,46 @@
 package com.cardapio.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
+/**
+ * Tabela de sistema: cadastro das lojas da plataforma. E a propria "loja"
+ * quem define um tenant — o guid desta entidade e usado como tenant nas
+ * tabelas t_ (e opcionalmente h_) que pertencem a ela.
+ */
 @Entity
-@Table(name = "restaurantes")
+@Table(name = "s_loja")
+@AttributeOverride(name = "id", column = @Column(name = "id_loja"))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Restaurante {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@SuperBuilder
+public class S_Loja extends SystemAbstract {
 
     @Column(nullable = false)
     private String nome;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private SituacaoConta situacaoConta = SituacaoConta.TRIAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoOrganizacao tipoOrganizacao;
 
     @Column(nullable = false, unique = true)
     private String slug;
@@ -57,16 +73,4 @@ public class Restaurante {
     @Column(nullable = false)
     @Builder.Default
     private BigDecimal valorMinimoPedido = BigDecimal.ZERO;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean ativo = true;
-
-    @Column(nullable = false, updatable = false)
-    private Instant criadoEm;
-
-    @PrePersist
-    void aoCriar() {
-        this.criadoEm = Instant.now();
-    }
 }

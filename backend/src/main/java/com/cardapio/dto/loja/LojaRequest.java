@@ -1,13 +1,16 @@
-package com.cardapio.dto.restaurante;
+package com.cardapio.dto.loja;
 
+import com.cardapio.entity.TipoOrganizacao;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 
-public record RestauranteRequest(
+public record LojaRequest(
         @NotBlank String nome,
         @NotBlank String slug,
+        @NotNull TipoOrganizacao tipoOrganizacao,
         String descricao,
         String telefone,
         String logoUrl,

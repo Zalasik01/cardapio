@@ -15,22 +15,32 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
-    private final RestauranteRepository restauranteRepository;
-    private final UsuarioRepository usuarioRepository;
-    private final CategoriaRepository categoriaRepository;
-    private final ProdutoRepository produtoRepository;
-    private final ZonaEntregaRepository zonaEntregaRepository;
+    private final S_LojaRepository lojaRepository;
+    private final S_UsuarioRepository usuarioRepository;
+    private final S_PerfilRepository perfilRepository;
+    private final T_CategoriaRepository categoriaRepository;
+    private final T_ProdutoRepository produtoRepository;
+    private final T_ZonaEntregaRepository zonaEntregaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
-        if (restauranteRepository.count() > 0) {
+        if (perfilRepository.count() > 0) {
             return;
         }
 
-        Restaurante restaurante = restauranteRepository.save(Restaurante.builder()
+        S_Perfil perfilSuperAdmin = perfilRepository.save(S_Perfil.builder()
+                .nome("Super Administrador").codigo("ROLE_SUPER_ADMIN").build());
+        S_Perfil perfilAdminLoja = perfilRepository.save(S_Perfil.builder()
+                .nome("Administrador da Loja").codigo("ROLE_ADMIN_LOJA").build());
+        perfilRepository.save(S_Perfil.builder()
+                .nome("Cliente").codigo("ROLE_CLIENTE").build());
+
+        S_Loja loja = lojaRepository.save(S_Loja.builder()
                 .nome("Cantina da Nonna")
                 .slug("cantina-da-nonna")
+                .tipoOrganizacao(TipoOrganizacao.RESTAURANTE)
+                .situacaoConta(SituacaoConta.ATIVA)
                 .descricao("Comida italiana caseira")
                 .telefone("(11) 99999-0000")
                 .enderecoBairro("Centro")
@@ -43,46 +53,45 @@ public class DataSeeder implements CommandLineRunner {
                 .valorMinimoPedido(new BigDecimal("20.00"))
                 .build());
 
-        usuarioRepository.save(Usuario.builder()
+        usuarioRepository.save(S_Usuario.builder()
                 .nome("Super Admin")
                 .email("admin@cardapio.com")
                 .senha(passwordEncoder.encode("admin123"))
-                .telefone("(11) 90000-0000")
-                .perfil(Perfil.ROLE_SUPER_ADMIN)
+                .perfil(perfilSuperAdmin)
+                .usuarioSuporte(true)
                 .build());
 
-        usuarioRepository.save(Usuario.builder()
+        usuarioRepository.save(S_Usuario.builder()
                 .nome("Admin da Nonna")
                 .email("nonna@cardapio.com")
                 .senha(passwordEncoder.encode("nonna123"))
-                .telefone("(11) 90000-0001")
-                .perfil(Perfil.ROLE_ADMIN_RESTAURANTE)
-                .restaurante(restaurante)
+                .perfil(perfilAdminLoja)
+                .tenant(loja.getGuid())
                 .build());
 
-        Categoria massas = categoriaRepository.save(Categoria.builder()
-                .restaurante(restaurante).nome("Massas").ordemExibicao(1).build());
-        Categoria bebidas = categoriaRepository.save(Categoria.builder()
-                .restaurante(restaurante).nome("Bebidas").ordemExibicao(2).build());
+        T_Categoria massas = categoriaRepository.save(T_Categoria.builder()
+                .tenant(loja.getGuid()).nome("Massas").ordemExibicao(1).build());
+        T_Categoria bebidas = categoriaRepository.save(T_Categoria.builder()
+                .tenant(loja.getGuid()).nome("Bebidas").ordemExibicao(2).build());
 
-        produtoRepository.save(Produto.builder()
-                .restaurante(restaurante).categoria(massas)
+        produtoRepository.save(T_Produto.builder()
+                .tenant(loja.getGuid()).categoria(massas)
                 .nome("Lasanha a Bolonhesa").descricao("Camadas de massa, molho bolonhesa e queijo gratinado")
                 .preco(new BigDecimal("39.90")).ordemExibicao(1).build());
 
-        produtoRepository.save(Produto.builder()
-                .restaurante(restaurante).categoria(massas)
+        produtoRepository.save(T_Produto.builder()
+                .tenant(loja.getGuid()).categoria(massas)
                 .nome("Fettuccine Alfredo").descricao("Massa fresca ao molho branco cremoso")
                 .preco(new BigDecimal("34.90")).ordemExibicao(2).build());
 
-        produtoRepository.save(Produto.builder()
-                .restaurante(restaurante).categoria(bebidas)
+        produtoRepository.save(T_Produto.builder()
+                .tenant(loja.getGuid()).categoria(bebidas)
                 .nome("Suco Natural").descricao("Laranja, limao ou maracuja")
                 .preco(new BigDecimal("8.00")).ordemExibicao(1).build());
 
-        zonaEntregaRepository.save(ZonaEntrega.builder()
-                .restaurante(restaurante).bairro("Centro").taxa(new BigDecimal("4.00")).tempoEstimadoMinutos(30).build());
-        zonaEntregaRepository.save(ZonaEntrega.builder()
-                .restaurante(restaurante).bairro("Jardins").taxa(new BigDecimal("7.50")).tempoEstimadoMinutos(40).build());
+        zonaEntregaRepository.save(T_ZonaEntrega.builder()
+                .tenant(loja.getGuid()).bairro("Centro").taxa(new BigDecimal("4.00")).tempoEstimadoMinutos(30).build());
+        zonaEntregaRepository.save(T_ZonaEntrega.builder()
+                .tenant(loja.getGuid()).bairro("Jardins").taxa(new BigDecimal("7.50")).tempoEstimadoMinutos(40).build());
     }
 }

@@ -1,14 +1,15 @@
 package com.cardapio.dto.pedido;
 
-import com.cardapio.entity.Pedido;
+import com.cardapio.entity.T_Pedido;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public record PedidoResponse(
-        Long id,
-        Long restauranteId,
+        UUID guid,
+        UUID tenant,
         String nomeCliente,
         String telefoneCliente,
         String tipoEntrega,
@@ -24,15 +25,15 @@ public record PedidoResponse(
         String formaPagamento,
         String observacoes,
         String status,
-        Instant criadoEm
+        Instant dataCriacao
 ) {
-    public static PedidoResponse of(Pedido p) {
+    public static PedidoResponse of(T_Pedido p) {
         return new PedidoResponse(
-                p.getId(), p.getRestaurante().getId(), p.getNomeCliente(), p.getTelefoneCliente(),
+                p.getGuid(), p.getTenant(), p.getNomeCliente(), p.getTelefoneCliente(),
                 p.getTipoEntrega().name(), p.getEnderecoRua(), p.getEnderecoNumero(), p.getEnderecoComplemento(),
                 p.getEnderecoBairro(), p.getEnderecoCidade(),
                 p.getItens().stream().map(ItemPedidoResponse::of).toList(),
                 p.getSubtotal(), p.getTaxaEntrega(), p.getTotal(), p.getFormaPagamento(),
-                p.getObservacoes(), p.getStatus().name(), p.getCriadoEm());
+                p.getObservacoes(), p.getStatus().name(), p.getDataCriacao());
     }
 }

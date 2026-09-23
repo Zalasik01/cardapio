@@ -1,15 +1,16 @@
 package com.cardapio.dto.cardapio;
 
-import com.cardapio.dto.restaurante.RestauranteResponse;
+import com.cardapio.dto.loja.LojaResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public record CardapioResponse(
-        RestauranteResponse restaurante,
+        LojaResponse loja,
         List<CategoriaComProdutosResponse> categorias
 ) {
     public record CategoriaComProdutosResponse(
-            Long id,
+            UUID guid,
             String nome,
             List<ProdutoResponse> produtos
     ) {

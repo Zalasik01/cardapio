@@ -1,6 +1,6 @@
 package com.cardapio.security;
 
-import com.cardapio.entity.Usuario;
+import com.cardapio.entity.S_Usuario;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -8,13 +8,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class AppUserDetails implements UserDetails {
 
-    private final Usuario usuario;
+    private final S_Usuario usuario;
 
-    public AppUserDetails(Usuario usuario) {
+    public AppUserDetails(S_Usuario usuario) {
         this.usuario = usuario;
     }
 
@@ -22,13 +23,13 @@ public class AppUserDetails implements UserDetails {
         return usuario.getId();
     }
 
-    public Long getRestauranteId() {
-        return usuario.getRestaurante() != null ? usuario.getRestaurante().getId() : null;
+    public UUID getTenant() {
+        return usuario.getTenant();
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(usuario.getPerfil().name()));
+        return List.of(new SimpleGrantedAuthority(usuario.getPerfil().getCodigo()));
     }
 
     @Override
@@ -58,6 +59,6 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return usuario.isAtivo();
+        return usuario.isAtivo() && !usuario.isDeletado();
     }
 }

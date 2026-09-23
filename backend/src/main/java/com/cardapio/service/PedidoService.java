@@ -7,8 +7,8 @@ import com.cardapio.dto.pedido.PedidoRequest;
 import com.cardapio.entity.*;
 import com.cardapio.exception.RecursoNaoEncontradoException;
 import com.cardapio.exception.RegraNegocioException;
-import com.cardapio.repository.PedidoRepository;
-import com.cardapio.repository.ProdutoRepository;
+import com.cardapio.repository.T_PedidoRepository;
+import com.cardapio.repository.T_ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,22 +16,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PedidoService {
 
-    private final PedidoRepository pedidoRepository;
-    private final ProdutoRepository produtoRepository;
-    private final RestauranteService restauranteService;
+    private final T_PedidoRepository pedidoRepository;
+    private final T_ProdutoRepository produtoRepository;
+    private final LojaService lojaService;
     private final FreteService freteService;
 
     @Transactional
-    public Pedido criar(PedidoRequest request) {
-        Restaurante restaurante = restauranteService.buscarPorId(request.restauranteId());
+    public T_Pedido criar(PedidoRequest request) {
+        S_Loja loja = lojaService.buscarPorTenant(request.tenant());
+        UUID tenant = loja.getGuid();
 
-        Pedido pedido = Pedido.builder()
-                .restaurante(restaurante)
+        T_Pedido pedido = T_Pedido.builder()
+                .tenant(tenant)
                 .nomeCliente(request.nomeCliente())
                 .telefoneCliente(request.telefoneCliente())
                 .tipoEntrega(request.tipoEntrega())
@@ -48,12 +50,9 @@ public class PedidoService {
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (ItemPedidoRequest itemRequest : request.itens()) {
-            Produto produto = produtoRepository.findById(itemRequest.produtoId())
-                    .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado: " + itemRequest.produtoId()));
+            T_Produto produto = produtoRepository.findByGuidAndTenant(itemRequest.produtoGuid(), tenant)
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado: " + itemRequest.produtoGuid()));
 
-            if (!produto.getRestaurante().getId().equals(restaurante.getId())) {
-                throw new RegraNegocioException("Produto " + produto.getNome() + " nao pertence a este restaurante");
-            }
             if (!produto.isDisponivel()) {
                 throw new RegraNegocioException("Produto indisponivel: " + produto.getNome());
             }
@@ -61,7 +60,8 @@ public class PedidoService {
             BigDecimal totalItem = produto.getPreco().multiply(BigDecimal.valueOf(itemRequest.quantidade()))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            ItemPedido item = ItemPedido.builder()
+            I_ItemPedido item = I_ItemPedido.builder()
+                    .tenant(tenant)
                     .pedido(pedido)
                     .produto(produto)
                     .nomeProduto(produto.getNome())
@@ -75,15 +75,14 @@ public class PedidoService {
             subtotal = subtotal.add(totalItem);
         }
 
-        if (subtotal.compareTo(restaurante.getValorMinimoPedido()) < 0) {
-            throw new RegraNegocioException(
-                    "Valor minimo do pedido e R$ " + restaurante.getValorMinimoPedido());
+        if (subtotal.compareTo(loja.getValorMinimoPedido()) < 0) {
+            throw new RegraNegocioException("Valor minimo do pedido e R$ " + loja.getValorMinimoPedido());
         }
 
         BigDecimal taxaEntrega = BigDecimal.ZERO;
         if (request.tipoEntrega() == TipoEntrega.ENTREGA) {
             CalculoFreteResponse frete = freteService.calcular(new CalculoFreteRequest(
-                    restaurante.getId(), request.enderecoBairro(), request.latitude(), request.longitude()));
+                    tenant, request.enderecoBairro(), request.latitude(), request.longitude()));
 
             if (!frete.entregavel()) {
                 throw new RegraNegocioException(frete.mensagem());
@@ -99,24 +98,24 @@ public class PedidoService {
     }
 
     @Transactional(readOnly = true)
-    public Pedido buscarPorId(Long id) {
-        return pedidoRepository.buscarComItensPorId(id)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido nao encontrado: " + id));
+    public T_Pedido buscarPorGuid(UUID guid) {
+        return pedidoRepository.buscarComItensPorGuid(guid)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido nao encontrado: " + guid));
     }
 
     @Transactional(readOnly = true)
-    public List<Pedido> listarPorRestaurante(Long restauranteId) {
-        return pedidoRepository.buscarComItensPorRestaurante(restauranteId);
+    public List<T_Pedido> listarPorTenant(UUID tenant) {
+        return pedidoRepository.buscarComItensPorTenant(tenant);
     }
 
     @Transactional(readOnly = true)
-    public List<Pedido> listarPorCliente(Long clienteId) {
+    public List<T_Pedido> listarPorCliente(Long clienteId) {
         return pedidoRepository.buscarComItensPorCliente(clienteId);
     }
 
     @Transactional
-    public Pedido atualizarStatus(Long id, StatusPedido novoStatus) {
-        Pedido pedido = buscarPorId(id);
+    public T_Pedido atualizarStatus(UUID guid, StatusPedido novoStatus) {
+        T_Pedido pedido = buscarPorGuid(guid);
         pedido.setStatus(novoStatus);
         return pedidoRepository.save(pedido);
     }

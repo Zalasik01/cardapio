@@ -5,39 +5,41 @@ import com.cardapio.dto.cardapio.CategoriaRequest;
 import com.cardapio.dto.cardapio.CategoriaResponse;
 import com.cardapio.dto.cardapio.ProdutoRequest;
 import com.cardapio.dto.cardapio.ProdutoResponse;
-import com.cardapio.dto.restaurante.RestauranteResponse;
-import com.cardapio.entity.Categoria;
-import com.cardapio.entity.Produto;
-import com.cardapio.entity.Restaurante;
+import com.cardapio.dto.loja.LojaResponse;
+import com.cardapio.entity.S_Loja;
+import com.cardapio.entity.T_Categoria;
+import com.cardapio.entity.T_Produto;
 import com.cardapio.exception.RecursoNaoEncontradoException;
-import com.cardapio.repository.CategoriaRepository;
-import com.cardapio.repository.ProdutoRepository;
+import com.cardapio.repository.T_CategoriaRepository;
+import com.cardapio.repository.T_ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CardapioService {
 
-    private final CategoriaRepository categoriaRepository;
-    private final ProdutoRepository produtoRepository;
-    private final RestauranteService restauranteService;
+    private final T_CategoriaRepository categoriaRepository;
+    private final T_ProdutoRepository produtoRepository;
+    private final LojaService lojaService;
 
     @Transactional(readOnly = true)
     public CardapioResponse buscarCardapioPublico(String slug) {
-        Restaurante restaurante = restauranteService.buscarPorSlug(slug);
+        S_Loja loja = lojaService.buscarPorSlug(slug);
+        UUID tenant = loja.getGuid();
 
-        List<Produto> produtos = produtoRepository.findByRestauranteIdAndDisponivelTrueOrderByOrdemExibicaoAsc(restaurante.getId());
-        List<Categoria> categorias = categoriaRepository.findByRestauranteIdAndAtivoTrueOrderByOrdemExibicaoAsc(restaurante.getId());
+        List<T_Produto> produtos = produtoRepository.findByTenantAndDisponivelTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(tenant);
+        List<T_Categoria> categorias = categoriaRepository.findByTenantAndAtivoTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(tenant);
 
         List<CardapioResponse.CategoriaComProdutosResponse> categoriasComProdutos = categorias.stream()
                 .map(categoria -> new CardapioResponse.CategoriaComProdutosResponse(
-                        categoria.getId(),
+                        categoria.getGuid(),
                         categoria.getNome(),
                         produtos.stream()
                                 .filter(p -> p.getCategoria().getId().equals(categoria.getId()))
@@ -47,31 +49,30 @@ public class CardapioService {
                 .sorted(Comparator.comparing(CardapioResponse.CategoriaComProdutosResponse::nome))
                 .collect(Collectors.toList());
 
-        return new CardapioResponse(RestauranteResponse.of(restaurante), categoriasComProdutos);
+        return new CardapioResponse(LojaResponse.of(loja), categoriasComProdutos);
     }
 
     @Transactional(readOnly = true)
-    public List<Categoria> listarCategorias(Long restauranteId) {
-        return categoriaRepository.findByRestauranteIdOrderByOrdemExibicaoAsc(restauranteId);
+    public List<T_Categoria> listarCategorias(UUID tenant) {
+        return categoriaRepository.findByTenantAndDeletadoFalseOrderByOrdemExibicaoAsc(tenant);
     }
 
     @Transactional
-    public Categoria criarCategoria(Long restauranteId, CategoriaRequest request) {
-        Restaurante restaurante = restauranteService.buscarPorId(restauranteId);
-
-        Categoria categoria = Categoria.builder()
-                .restaurante(restaurante)
+    public T_Categoria criarCategoria(UUID tenant, CategoriaRequest request) {
+        T_Categoria categoria = T_Categoria.builder()
+                .tenant(tenant)
                 .nome(request.nome())
                 .ordemExibicao(request.ordemExibicao() != null ? request.ordemExibicao() : 0)
-                .ativo(request.ativo() == null || request.ativo())
                 .build();
+
+        if (request.ativo() != null) categoria.setAtivo(request.ativo());
 
         return categoriaRepository.save(categoria);
     }
 
     @Transactional
-    public Categoria atualizarCategoria(Long restauranteId, Long categoriaId, CategoriaRequest request) {
-        Categoria categoria = buscarCategoria(restauranteId, categoriaId);
+    public T_Categoria atualizarCategoria(UUID tenant, UUID categoriaGuid, CategoriaRequest request) {
+        T_Categoria categoria = buscarCategoria(tenant, categoriaGuid);
         categoria.setNome(request.nome());
         if (request.ordemExibicao() != null) categoria.setOrdemExibicao(request.ordemExibicao());
         if (request.ativo() != null) categoria.setAtivo(request.ativo());
@@ -79,23 +80,24 @@ public class CardapioService {
     }
 
     @Transactional
-    public void excluirCategoria(Long restauranteId, Long categoriaId) {
-        Categoria categoria = buscarCategoria(restauranteId, categoriaId);
-        categoriaRepository.delete(categoria);
+    public void excluirCategoria(UUID tenant, UUID categoriaGuid) {
+        T_Categoria categoria = buscarCategoria(tenant, categoriaGuid);
+        categoria.setDeletado(true);
+        categoria.setAtivo(false);
+        categoriaRepository.save(categoria);
     }
 
     @Transactional(readOnly = true)
-    public List<Produto> listarProdutos(Long restauranteId) {
-        return produtoRepository.findByRestauranteIdOrderByOrdemExibicaoAsc(restauranteId);
+    public List<T_Produto> listarProdutos(UUID tenant) {
+        return produtoRepository.findByTenantOrderByOrdemExibicaoAsc(tenant);
     }
 
     @Transactional
-    public Produto criarProduto(Long restauranteId, ProdutoRequest request) {
-        Restaurante restaurante = restauranteService.buscarPorId(restauranteId);
-        Categoria categoria = buscarCategoria(restauranteId, request.categoriaId());
+    public T_Produto criarProduto(UUID tenant, ProdutoRequest request) {
+        T_Categoria categoria = buscarCategoria(tenant, request.categoriaGuid());
 
-        Produto produto = Produto.builder()
-                .restaurante(restaurante)
+        T_Produto produto = T_Produto.builder()
+                .tenant(tenant)
                 .categoria(categoria)
                 .nome(request.nome())
                 .descricao(request.descricao())
@@ -109,9 +111,9 @@ public class CardapioService {
     }
 
     @Transactional
-    public Produto atualizarProduto(Long restauranteId, Long produtoId, ProdutoRequest request) {
-        Produto produto = buscarProduto(restauranteId, produtoId);
-        Categoria categoria = buscarCategoria(restauranteId, request.categoriaId());
+    public T_Produto atualizarProduto(UUID tenant, UUID produtoGuid, ProdutoRequest request) {
+        T_Produto produto = buscarProduto(tenant, produtoGuid);
+        T_Categoria categoria = buscarCategoria(tenant, request.categoriaGuid());
 
         produto.setCategoria(categoria);
         produto.setNome(request.nome());
@@ -125,28 +127,21 @@ public class CardapioService {
     }
 
     @Transactional
-    public void excluirProduto(Long restauranteId, Long produtoId) {
-        Produto produto = buscarProduto(restauranteId, produtoId);
-        produtoRepository.delete(produto);
+    public void excluirProduto(UUID tenant, UUID produtoGuid) {
+        T_Produto produto = buscarProduto(tenant, produtoGuid);
+        produto.setDeletado(true);
+        produto.setAtivo(false);
+        produto.setDisponivel(false);
+        produtoRepository.save(produto);
     }
 
-    private Categoria buscarCategoria(Long restauranteId, Long categoriaId) {
-        Categoria categoria = categoriaRepository.findById(categoriaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria nao encontrada: " + categoriaId));
-        validarPertenceAoRestaurante(categoria.getRestaurante().getId(), restauranteId);
-        return categoria;
+    private T_Categoria buscarCategoria(UUID tenant, UUID categoriaGuid) {
+        return categoriaRepository.findByGuidAndTenant(categoriaGuid, tenant)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria nao encontrada: " + categoriaGuid));
     }
 
-    private Produto buscarProduto(Long restauranteId, Long produtoId) {
-        Produto produto = produtoRepository.findById(produtoId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado: " + produtoId));
-        validarPertenceAoRestaurante(produto.getRestaurante().getId(), restauranteId);
-        return produto;
-    }
-
-    private void validarPertenceAoRestaurante(Long idDoRecurso, Long restauranteId) {
-        if (!idDoRecurso.equals(restauranteId)) {
-            throw new RecursoNaoEncontradoException("Recurso nao pertence a este restaurante");
-        }
+    private T_Produto buscarProduto(UUID tenant, UUID produtoGuid) {
+        return produtoRepository.findByGuidAndTenant(produtoGuid, tenant)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado: " + produtoGuid));
     }
 }

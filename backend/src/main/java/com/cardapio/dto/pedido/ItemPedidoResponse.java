@@ -1,21 +1,22 @@
 package com.cardapio.dto.pedido;
 
-import com.cardapio.entity.ItemPedido;
+import com.cardapio.entity.I_ItemPedido;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record ItemPedidoResponse(
-        Long id,
-        Long produtoId,
+        UUID guid,
+        UUID produtoGuid,
         String nomeProduto,
         BigDecimal precoUnitario,
         Integer quantidade,
         BigDecimal totalItem,
         String observacoes
 ) {
-    public static ItemPedidoResponse of(ItemPedido i) {
+    public static ItemPedidoResponse of(I_ItemPedido i) {
         return new ItemPedidoResponse(
-                i.getId(), i.getProduto().getId(), i.getNomeProduto(), i.getPrecoUnitario(),
+                i.getGuid(), i.getProduto().getGuid(), i.getNomeProduto(), i.getPrecoUnitario(),
                 i.getQuantidade(), i.getTotalItem(), i.getObservacoes());
     }
 }

@@ -1,12 +1,13 @@
 package com.cardapio.dto.cardapio;
 
-import com.cardapio.entity.Produto;
+import com.cardapio.entity.T_Produto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record ProdutoResponse(
-        Long id,
-        Long categoriaId,
+        UUID guid,
+        UUID categoriaGuid,
         String categoriaNome,
         String nome,
         String descricao,
@@ -15,9 +16,9 @@ public record ProdutoResponse(
         boolean disponivel,
         Integer ordemExibicao
 ) {
-    public static ProdutoResponse of(Produto p) {
+    public static ProdutoResponse of(T_Produto p) {
         return new ProdutoResponse(
-                p.getId(), p.getCategoria().getId(), p.getCategoria().getNome(), p.getNome(),
+                p.getGuid(), p.getCategoria().getGuid(), p.getCategoria().getNome(), p.getNome(),
                 p.getDescricao(), p.getPreco(), p.getImagemUrl(), p.isDisponivel(), p.getOrdemExibicao());
     }
 }

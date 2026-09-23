@@ -15,7 +15,7 @@ public class CardapioPublicoController {
 
     private final CardapioService cardapioService;
 
-    @GetMapping("/restaurantes/{slug}/cardapio")
+    @GetMapping("/lojas/{slug}/cardapio")
     public CardapioResponse buscarCardapio(@PathVariable String slug) {
         return cardapioService.buscarCardapioPublico(slug);
     }

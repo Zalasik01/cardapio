@@ -9,16 +9,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/restaurantes/{restauranteId}/pedidos")
+@RequestMapping("/api/admin/lojas/{tenant}/pedidos")
 @RequiredArgsConstructor
 public class AdminPedidoController {
 
     private final PedidoService pedidoService;
 
     @GetMapping
-    public List<PedidoResponse> listar(@PathVariable Long restauranteId) {
-        return pedidoService.listarPorRestaurante(restauranteId).stream().map(PedidoResponse::of).toList();
+    public List<PedidoResponse> listar(@PathVariable UUID tenant) {
+        return pedidoService.listarPorTenant(tenant).stream().map(PedidoResponse::of).toList();
     }
 }

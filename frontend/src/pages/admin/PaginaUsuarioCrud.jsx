@@ -21,16 +21,16 @@ const ROTA_LISTA = '/admin/usuarios'
 const TIPOS_FOTO = ['image/png', 'image/jpeg', 'image/webp']
 const TAMANHO_MAXIMO_FOTO = 2 * 1024 * 1024
 
-/** CRUD de usuario da loja: /admin/usuarios/novo (cria) e /admin/usuarios/:guid (edita). */
+/** CRUD de usuario da loja: /admin/usuarios/novo (cria) e /admin/usuarios/:id (edita). */
 export default function PaginaUsuarioCrud() {
-  const { guid } = useParams()
-  const editando = guid !== undefined
+  const { id } = useParams()
+  const editando = id !== undefined
   const { loja } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
   const [form, setForm] = useState({ nome: '', email: '', ativo: true, administrador: false, exigeTrocarSenha: false })
-  const [funcionario, setFuncionario] = useState(null) // objeto { guid, nome, cpf } ou o texto digitado
+  const [funcionario, setFuncionario] = useState(null) // objeto { id, nome, cpf } ou o texto digitado
   const [sugestoes, setSugestoes] = useState([])
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
@@ -52,22 +52,22 @@ export default function PaginaUsuarioCrud() {
   useEffect(() => {
     if (!editando) return
     setCarregando(true)
-    obterUsuario(loja.tenant, guid)
+    obterUsuario(loja.tenant, id)
       .then(async (usuario) => {
         setForm({
           nome: usuario.nome, email: usuario.email, ativo: usuario.ativo, administrador: usuario.administrador,
           exigeTrocarSenha: usuario.exigeTrocarSenha,
         })
-        setFuncionario(usuario.funcionarioGuid ? { guid: usuario.funcionarioGuid, nome: usuario.funcionarioNome } : null)
+        setFuncionario(usuario.funcionarioId ? { id: usuario.funcionarioId, nome: usuario.funcionarioNome } : null)
         setTinhaFoto(usuario.temFoto)
         if (usuario.temFoto) {
-          const blob = await obterFotoUsuario(loja.tenant, guid)
+          const blob = await obterFotoUsuario(loja.tenant, id)
           setPreviaFoto(URL.createObjectURL(blob))
         }
       })
       .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
-  }, [editando, guid, loja.tenant])
+  }, [editando, id, loja.tenant])
 
   // libera a URL temporaria da previa quando ela muda ou a tela fecha
   useEffect(() => () => {
@@ -105,30 +105,30 @@ export default function PaginaUsuarioCrud() {
     setRemoverFoto(tinhaFoto)
   }
 
-  async function sincronizarFoto(usuarioGuid) {
+  async function sincronizarFoto(usuarioId) {
     if (arquivoFoto) {
-      await enviarFotoUsuario(loja.tenant, usuarioGuid, arquivoFoto)
+      await enviarFotoUsuario(loja.tenant, usuarioId, arquivoFoto)
     } else if (removerFoto) {
-      await removerFotoUsuario(loja.tenant, usuarioGuid)
+      await removerFotoUsuario(loja.tenant, usuarioId)
     }
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!funcionario?.guid) {
+    if (!funcionario?.id) {
       dispatchMsgWarn('Selecione um funcionário da lista.')
       return
     }
 
     setSalvando(true)
     const dados = {
-      nome: form.nome, email: form.email, funcionarioGuid: funcionario.guid, ativo: form.ativo,
+      nome: form.nome, email: form.email, funcionarioId: funcionario.id, ativo: form.ativo,
       administrador: form.administrador,
     }
     try {
       if (editando) {
-        await atualizarUsuario(loja.tenant, guid, dados)
-        await sincronizarFoto(guid)
+        await atualizarUsuario(loja.tenant, id, dados)
+        await sincronizarFoto(id)
         setArquivoFoto(null)
         setTinhaFoto(!!previaFoto)
         setRemoverFoto(false)
@@ -137,7 +137,7 @@ export default function PaginaUsuarioCrud() {
         const resposta = await criarUsuario(loja.tenant, dados)
         dispatchMsgSuccess('Usuário cadastrado com sucesso')
         try {
-          await sincronizarFoto(resposta.usuario.guid)
+          await sincronizarFoto(resposta.usuario.id)
         } catch (erroFoto) {
           dispatchMsgWarn(`Usuário criado, mas a foto não foi enviada: ${erroFoto.mensagem}`)
         }
@@ -159,7 +159,7 @@ export default function PaginaUsuarioCrud() {
       mensagem: 'Excluir este usuário da loja? A conta dele em outras lojas não é afetada.',
       aoConfirmar: async () => {
         try {
-          await excluirUsuario(loja.tenant, guid)
+          await excluirUsuario(loja.tenant, id)
           dispatchMsgSuccess('Usuário excluído com sucesso')
           navigate(ROTA_LISTA)
         } catch (e) {
@@ -171,7 +171,7 @@ export default function PaginaUsuarioCrud() {
 
   async function handleNovoLink() {
     try {
-      const resposta = await gerarNovoLinkUsuario(loja.tenant, guid)
+      const resposta = await gerarNovoLinkUsuario(loja.tenant, id)
       setConvite({ token: resposta.token, expiraEm: resposta.expiraEm, nome: resposta.usuario.nome })
     } catch (e) {
       dispatchMsgError(e.mensagem)

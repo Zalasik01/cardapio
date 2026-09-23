@@ -37,7 +37,7 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
 
   // foto do usuario logado (se tiver); sem foto ou sem acesso, mostra o icone padrao
   useEffect(() => {
-    if (!usuarioLogado?.temFoto || !usuarioLogado?.guid) return undefined
+    if (!usuarioLogado?.temFoto || !usuarioLogado?.id) return undefined
     let url = null
     let cancelado = false
     obterFotoUsuario(loja.tenant, usuarioLogado.guid)
@@ -51,7 +51,7 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
       cancelado = true
       if (url) URL.revokeObjectURL(url)
     }
-  }, [usuarioLogado?.temFoto, usuarioLogado?.guid, loja.tenant])
+  }, [usuarioLogado?.temFoto, usuarioLogado?.id, loja.tenant])
 
   const itens = [{ label: 'Sair', icon: 'pi pi-sign-out', command: aoSair }]
 

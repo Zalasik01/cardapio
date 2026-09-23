@@ -64,8 +64,8 @@ public class FuncionarioService {
     }
 
     @Transactional(readOnly = true)
-    public FuncionarioResponse obter(UUID tenant, UUID guid) {
-        return montarResposta(buscarFuncionario(tenant, guid));
+    public FuncionarioResponse obter(UUID tenant, Long id) {
+        return montarResposta(buscarFuncionario(tenant, id));
     }
 
     @Transactional
@@ -91,8 +91,8 @@ public class FuncionarioService {
     }
 
     @Transactional
-    public FuncionarioResponse atualizar(UUID tenant, UUID guid, FuncionarioRequest request) {
-        T_Funcionario funcionario = buscarFuncionario(tenant, guid);
+    public FuncionarioResponse atualizar(UUID tenant, Long id, FuncionarioRequest request) {
+        T_Funcionario funcionario = buscarFuncionario(tenant, id);
         T_Pessoa pessoa = funcionario.getPessoa();
         T_PessoaFisica pessoaFisica = pessoa.getPessoaFisica();
 
@@ -113,8 +113,8 @@ public class FuncionarioService {
 
     /** Exclusao logica. Nao permite excluir um funcionario que ainda tem usuario vinculado. */
     @Transactional
-    public void excluir(UUID tenant, UUID guid) {
-        T_Funcionario funcionario = buscarFuncionario(tenant, guid);
+    public void excluir(UUID tenant, Long id) {
+        T_Funcionario funcionario = buscarFuncionario(tenant, id);
         T_Pessoa pessoa = funcionario.getPessoa();
 
         if (perfilUsuarioRepository.existsByPessoaIdAndDeletadoFalse(pessoa.getId())) {
@@ -131,8 +131,8 @@ public class FuncionarioService {
         pessoaFisicaRepository.save(pessoaFisica);
     }
 
-    private T_Funcionario buscarFuncionario(UUID tenant, UUID guid) {
-        return funcionarioRepository.findByGuidAndTenantAndDeletadoFalse(guid, tenant)
+    private T_Funcionario buscarFuncionario(UUID tenant, Long id) {
+        return funcionarioRepository.findByIdAndTenantAndDeletadoFalse(id, tenant)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Funcionario nao encontrado"));
     }
 
@@ -215,7 +215,7 @@ public class FuncionarioService {
                 .map(e -> new EmailDto(e.getEmail(), e.getObservacao())).toList();
 
         return new FuncionarioResponse(
-                funcionario.getGuid(), funcionario.isAtivo(), pf.getSexo(), pf.getCpf(),
+                funcionario.getId(), funcionario.isAtivo(), pf.getSexo(), pf.getCpf(),
                 pf.getRg(), pf.getApelido(), pf.getNome(), pf.getNaturalidade(), pf.getNacionalidade(),
                 pf.getDataNascimento(), pf.getProfissao(), pf.getEstadoCivil(), funcionario.getNumeroCnh(),
                 funcionario.getVencimentoCnh(), pf.getObservacao(), endereco, telefones, emails);

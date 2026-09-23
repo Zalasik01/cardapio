@@ -29,7 +29,7 @@ public interface T_PerfilUsuarioRepository
     /** Vinculo do usuario com a loja, mesmo que excluido (existe uma unica linha por usuario/loja). */
     Optional<T_PerfilUsuario> findByUsuarioIdAndTenant(Long usuarioId, UUID tenant);
 
-    Optional<T_PerfilUsuario> findByUsuarioGuidAndTenantAndDeletadoFalse(UUID usuarioGuid, UUID tenant);
+    Optional<T_PerfilUsuario> findByUsuarioIdAndTenantAndDeletadoFalse(Long usuarioId, UUID tenant);
 
     List<T_PerfilUsuario> findByUsuarioIdAndDeletadoFalse(Long usuarioId);
 

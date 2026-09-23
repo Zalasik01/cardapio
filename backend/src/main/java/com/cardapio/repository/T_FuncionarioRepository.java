@@ -17,7 +17,7 @@ public interface T_FuncionarioRepository
         extends JpaRepository<T_Funcionario, Long>, JpaSpecificationExecutor<T_Funcionario> {
 
     @EntityGraph(attributePaths = {"pessoa", "pessoa.pessoaFisica"})
-    Optional<T_Funcionario> findByGuidAndTenantAndDeletadoFalse(UUID guid, UUID tenant);
+    Optional<T_Funcionario> findByIdAndTenantAndDeletadoFalse(Long id, UUID tenant);
 
     @EntityGraph(attributePaths = {"pessoa", "pessoa.pessoaFisica"})
     List<T_Funcionario> findByPessoaIdIn(Collection<Long> pessoaIds);

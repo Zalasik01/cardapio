@@ -32,10 +32,10 @@ export default function PaginaFuncionarios() {
       placeholder="Buscar por nome, apelido ou CPF"
       colunas={COLUNAS}
       filtros={FILTROS}
-      chaveLinha={(funcionario) => funcionario.guid}
+      chaveLinha={(funcionario) => funcionario.id}
       buscar={({ busca, filtros, page, size }) => buscarFuncionarios(loja.tenant, { busca, ...filtros, page, size })}
       aoNovo={() => navigate('/admin/funcionarios/novo')}
-      aoAbrir={(funcionario) => navigate(`/admin/funcionarios/${funcionario.guid}`)}
+      aoAbrir={(funcionario) => navigate(`/admin/funcionarios/${funcionario.id}`)}
     />
   )
 }

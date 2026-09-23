@@ -46,10 +46,10 @@ export default function App() {
             <Route path="dashboard" element={<PaginaDashboard />} />
             <Route path="usuarios" element={<PaginaUsuarios />} />
             <Route path="usuarios/novo" element={<PaginaUsuarioCrud key="novo" />} />
-            <Route path="usuarios/:guid" element={<PaginaUsuarioCrud key="editar" />} />
+            <Route path="usuarios/:id" element={<PaginaUsuarioCrud key="editar" />} />
             <Route path="funcionarios" element={<PaginaFuncionarios />} />
             <Route path="funcionarios/novo" element={<PaginaFuncionarioCrud key="novo" />} />
-            <Route path="funcionarios/:guid" element={<PaginaFuncionarioCrud key="editar" />} />
+            <Route path="funcionarios/:id" element={<PaginaFuncionarioCrud key="editar" />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
             <Route path="categorias" element={<PaginaCategorias />} />
             <Route path="produtos" element={<PaginaProdutos />} />

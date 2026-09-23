@@ -1,6 +1,7 @@
 package com.cardapio.controller.admin;
 
 import com.cardapio.dto.PaginaResponse;
+import com.cardapio.dto.usuario.AlterarEmailRequest;
 import com.cardapio.dto.usuario.FiltroUsuario;
 import com.cardapio.dto.usuario.UsuarioConviteResponse;
 import com.cardapio.dto.usuario.UsuarioLojaRequest;
@@ -43,9 +44,9 @@ public class AdminUsuarioController {
         return usuarioLojaService.buscar(tenant, new FiltroUsuario(busca, nome, email, ativo, status), page, size);
     }
 
-    @GetMapping("/{usuarioGuid}")
-    public UsuarioLojaResponse obter(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
-        return usuarioLojaService.obter(tenant, usuarioGuid);
+    @GetMapping("/{usuarioId}")
+    public UsuarioLojaResponse obter(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
+        return usuarioLojaService.obter(tenant, usuarioId);
     }
 
     @PostMapping
@@ -54,43 +55,49 @@ public class AdminUsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioLojaService.criar(tenant, request));
     }
 
-    @PutMapping("/{usuarioGuid}")
-    public UsuarioLojaResponse atualizar(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid,
+    @PutMapping("/{usuarioId}")
+    public UsuarioLojaResponse atualizar(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                          @Valid @RequestBody UsuarioLojaRequest request) {
-        return usuarioLojaService.atualizar(tenant, usuarioGuid, request);
+        return usuarioLojaService.atualizar(tenant, usuarioId, request);
     }
 
-    @DeleteMapping("/{usuarioGuid}")
-    public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid,
+    @DeleteMapping("/{usuarioId}")
+    public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                         @AuthenticationPrincipal AppUserDetails logado) {
-        usuarioLojaService.excluir(tenant, usuarioGuid, logado.getUsuarioId());
+        usuarioLojaService.excluir(tenant, usuarioId, logado.getUsuarioId());
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{usuarioGuid}/novo-link")
-    public UsuarioConviteResponse gerarNovoLink(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
-        return usuarioLojaService.gerarNovoLink(tenant, usuarioGuid);
+    @PutMapping("/{usuarioId}/email")
+    public UsuarioLojaResponse alterarEmail(@PathVariable UUID tenant, @PathVariable Long usuarioId,
+                                            @Valid @RequestBody AlterarEmailRequest request) {
+        return usuarioLojaService.alterarEmail(tenant, usuarioId, request.email());
     }
 
-    @GetMapping("/{usuarioGuid}/foto")
-    public ResponseEntity<byte[]> obterFoto(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
-        var foto = usuarioFotoService.obter(tenant, usuarioGuid);
+    @PostMapping("/{usuarioId}/novo-link")
+    public UsuarioConviteResponse gerarNovoLink(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
+        return usuarioLojaService.gerarNovoLink(tenant, usuarioId);
+    }
+
+    @GetMapping("/{usuarioId}/foto")
+    public ResponseEntity<byte[]> obterFoto(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
+        var foto = usuarioFotoService.obter(tenant, usuarioId);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(foto.tipoConteudo()))
                 .cacheControl(CacheControl.maxAge(Duration.ofSeconds(30)).cachePrivate())
                 .body(foto.conteudo());
     }
 
-    @PutMapping(path = "/{usuarioGuid}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> salvarFoto(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid,
+    @PutMapping(path = "/{usuarioId}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> salvarFoto(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                            @RequestParam("arquivo") MultipartFile arquivo) {
-        usuarioFotoService.salvar(tenant, usuarioGuid, arquivo);
+        usuarioFotoService.salvar(tenant, usuarioId, arquivo);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{usuarioGuid}/foto")
-    public ResponseEntity<Void> removerFoto(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
-        usuarioFotoService.remover(tenant, usuarioGuid);
+    @DeleteMapping("/{usuarioId}/foto")
+    public ResponseEntity<Void> removerFoto(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
+        usuarioFotoService.remover(tenant, usuarioId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -11,29 +11,29 @@ export const buscarUsuarios = (tenant, { page = 0, size = 10, ...filtros }) => {
   return http.get(base(tenant), { params }).then((res) => res.data)
 }
 
-export const obterUsuario = (tenant, guid) =>
-  http.get(`${base(tenant)}/${guid}`).then((res) => res.data)
+export const obterUsuario = (tenant, id) =>
+  http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 
 /** Devolve { usuario, token, expiraEm }; token e o codigo do link /novo-usuario/{token}. */
 export const criarUsuario = (tenant, dados) =>
   http.post(base(tenant), dados).then((res) => res.data)
 
-export const atualizarUsuario = (tenant, guid, dados) =>
-  http.put(`${base(tenant)}/${guid}`, dados).then((res) => res.data)
+export const atualizarUsuario = (tenant, id, dados) =>
+  http.put(`${base(tenant)}/${id}`, dados).then((res) => res.data)
 
-export const excluirUsuario = (tenant, guid) => http.delete(`${base(tenant)}/${guid}`)
+export const excluirUsuario = (tenant, id) => http.delete(`${base(tenant)}/${id}`)
 
-export const gerarNovoLinkUsuario = (tenant, guid) =>
-  http.post(`${base(tenant)}/${guid}/novo-link`).then((res) => res.data)
+export const gerarNovoLinkUsuario = (tenant, id) =>
+  http.post(`${base(tenant)}/${id}/novo-link`).then((res) => res.data)
 
 /** Foto do usuario como Blob (404 se nao tiver). */
-export const obterFotoUsuario = (tenant, guid) =>
-  http.get(`${base(tenant)}/${guid}/foto`, { responseType: 'blob' }).then((res) => res.data)
+export const obterFotoUsuario = (tenant, id) =>
+  http.get(`${base(tenant)}/${id}/foto`, { responseType: 'blob' }).then((res) => res.data)
 
-export const enviarFotoUsuario = (tenant, guid, arquivo) => {
+export const enviarFotoUsuario = (tenant, id, arquivo) => {
   const dados = new FormData()
   dados.append('arquivo', arquivo)
-  return http.put(`${base(tenant)}/${guid}/foto`, dados)
+  return http.put(`${base(tenant)}/${id}/foto`, dados)
 }
 
-export const removerFotoUsuario = (tenant, guid) => http.delete(`${base(tenant)}/${guid}/foto`)
+export const removerFotoUsuario = (tenant, id) => http.delete(`${base(tenant)}/${id}/foto`)

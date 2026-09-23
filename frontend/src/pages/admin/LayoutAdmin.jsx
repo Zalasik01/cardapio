@@ -109,17 +109,15 @@ export default function LayoutAdmin() {
     setMenuMobileAberto(false)
   }, [pathname])
 
-  // mantem abertos a categoria e os submenus da pagina atual (inclui o redirecionamento de /admin para o dashboard)
+  // ao mudar de tela, recolhe tudo e deixa aberto so o caminho (categoria e submenus) da tela atual
   useEffect(() => {
-    setAbertas((atual) => {
-      const proximo = { ...atual }
-      menu.forEach((categoria) => {
-        if (abrirCaminhoAtual(proximo, categoria.paginas, pathname)) {
-          proximo[categoria.guid] = true
-        }
-      })
-      return proximo
+    const proximo = {}
+    menu.forEach((categoria) => {
+      if (abrirCaminhoAtual(proximo, categoria.paginas, pathname)) {
+        proximo[categoria.guid] = true
+      }
     })
+    setAbertas(proximo)
   }, [pathname, menu])
 
   function alternarRecolhido() {

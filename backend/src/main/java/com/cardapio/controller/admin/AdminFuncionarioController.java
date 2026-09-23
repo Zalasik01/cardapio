@@ -33,9 +33,9 @@ public class AdminFuncionarioController {
         return funcionarioService.buscar(tenant, new FiltroFuncionario(busca, nome, cpf, ativo), page, size);
     }
 
-    @GetMapping("/{guid}")
-    public FuncionarioResponse obter(@PathVariable UUID tenant, @PathVariable UUID guid) {
-        return funcionarioService.obter(tenant, guid);
+    @GetMapping("/{id}")
+    public FuncionarioResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
+        return funcionarioService.obter(tenant, id);
     }
 
     @PostMapping
@@ -44,15 +44,15 @@ public class AdminFuncionarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(funcionarioService.criar(tenant, request));
     }
 
-    @PutMapping("/{guid}")
-    public FuncionarioResponse atualizar(@PathVariable UUID tenant, @PathVariable UUID guid,
+    @PutMapping("/{id}")
+    public FuncionarioResponse atualizar(@PathVariable UUID tenant, @PathVariable Long id,
                                          @Valid @RequestBody FuncionarioRequest request) {
-        return funcionarioService.atualizar(tenant, guid, request);
+        return funcionarioService.atualizar(tenant, id, request);
     }
 
-    @DeleteMapping("/{guid}")
-    public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable UUID guid) {
-        funcionarioService.excluir(tenant, guid);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long id) {
+        funcionarioService.excluir(tenant, id);
         return ResponseEntity.noContent().build();
     }
 }

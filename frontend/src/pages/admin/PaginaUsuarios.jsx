@@ -57,10 +57,10 @@ export default function PaginaUsuarios() {
       placeholder="Buscar por nome ou e-mail"
       colunas={COLUNAS}
       filtros={FILTROS}
-      chaveLinha={(usuario) => usuario.guid}
+      chaveLinha={(usuario) => usuario.id}
       buscar={({ busca, filtros, page, size }) => buscarUsuarios(loja.tenant, { busca, ...filtros, page, size })}
       aoNovo={() => navigate('/admin/usuarios/novo')}
-      aoAbrir={(usuario) => navigate(`/admin/usuarios/${usuario.guid}`)}
+      aoAbrir={(usuario) => navigate(`/admin/usuarios/${usuario.id}`)}
     />
   )
 }

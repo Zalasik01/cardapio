@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.UUID;
 
 /**
  * Cadastro/edicao de usuario da loja. O e-mail so e usado na criacao (nao muda depois);
@@ -14,7 +13,7 @@ import java.util.UUID;
 public record UsuarioLojaRequest(
         @NotBlank @Size(max = 255) String nome,
         @NotBlank @Email @Size(max = 255) String email,
-        @NotNull UUID funcionarioGuid,
+        @NotNull Long funcionarioId,
         Boolean ativo,
         boolean administrador
 ) {

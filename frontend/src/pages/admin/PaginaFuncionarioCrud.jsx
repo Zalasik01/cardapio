@@ -128,10 +128,10 @@ function paraRequisicao(form) {
   }
 }
 
-/** Cadastro de funcionario: /admin/funcionarios/novo e /admin/funcionarios/:guid. */
+/** Cadastro de funcionario: /admin/funcionarios/novo e /admin/funcionarios/:id. */
 export default function PaginaFuncionarioCrud() {
-  const { guid } = useParams()
-  const editando = guid !== undefined
+  const { id } = useParams()
+  const editando = id !== undefined
   const { loja } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
@@ -154,11 +154,11 @@ export default function PaginaFuncionarioCrud() {
   useEffect(() => {
     if (!editando) return
     setCarregando(true)
-    obterFuncionario(loja.tenant, guid)
+    obterFuncionario(loja.tenant, id)
       .then((funcionario) => setForm(paraFormulario(funcionario)))
       .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
-  }, [editando, guid, loja.tenant])
+  }, [editando, id, loja.tenant])
 
   const definir = (campo) => (valor) => setForm((atual) => ({ ...atual, [campo]: valor }))
   const definirTexto = (campo) => (e) => definir(campo)(e.target.value)
@@ -245,7 +245,7 @@ export default function PaginaFuncionarioCrud() {
     setSalvando(true)
     try {
       if (editando) {
-        await atualizarFuncionario(loja.tenant, guid, paraRequisicao(form))
+        await atualizarFuncionario(loja.tenant, id, paraRequisicao(form))
         dispatchMsgSuccess('Funcionário atualizado com sucesso')
       } else {
         await criarFuncionario(loja.tenant, paraRequisicao(form))
@@ -264,7 +264,7 @@ export default function PaginaFuncionarioCrud() {
       mensagem: 'Excluir este funcionário?',
       aoConfirmar: async () => {
         try {
-          await excluirFuncionario(loja.tenant, guid)
+          await excluirFuncionario(loja.tenant, id)
           dispatchMsgSuccess('Funcionário excluído com sucesso')
           navigate(ROTA_LISTA)
         } catch (e) {

@@ -9,7 +9,7 @@ import java.util.UUID;
 
 /** Funcionario completo (tela de cadastro). */
 public record FuncionarioResponse(
-        UUID guid,
+        Long id,
         boolean ativo,
         Sexo sexo,
         String cpf,

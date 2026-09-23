@@ -27,8 +27,8 @@ public class UsuarioFotoService {
     private final S_UsuarioFotoRepository fotoRepository;
 
     @Transactional
-    public void salvar(UUID tenant, UUID usuarioGuid, MultipartFile arquivo) {
-        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioGuid).getUsuario();
+    public void salvar(UUID tenant, Long usuarioId, MultipartFile arquivo) {
+        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario();
 
         if (arquivo == null || arquivo.isEmpty()) {
             throw new RegraNegocioException("Selecione uma imagem");
@@ -55,16 +55,16 @@ public class UsuarioFotoService {
     }
 
     @Transactional(readOnly = true)
-    public Foto obter(UUID tenant, UUID usuarioGuid) {
-        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioGuid).getUsuario();
+    public Foto obter(UUID tenant, Long usuarioId) {
+        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario();
         return fotoRepository.findByUsuarioId(usuario.getId())
                 .map(foto -> new Foto(foto.getTipoConteudo(), foto.getConteudo()))
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario sem foto"));
     }
 
     @Transactional
-    public void remover(UUID tenant, UUID usuarioGuid) {
-        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioGuid).getUsuario();
+    public void remover(UUID tenant, Long usuarioId) {
+        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioId).getUsuario();
         fotoRepository.findByUsuarioId(usuario.getId()).ifPresent(fotoRepository::delete);
     }
 

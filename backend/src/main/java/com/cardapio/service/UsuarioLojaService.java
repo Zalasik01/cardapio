@@ -83,8 +83,8 @@ public class UsuarioLojaService {
     }
 
     @Transactional(readOnly = true)
-    public UsuarioLojaResponse obter(UUID tenant, UUID usuarioGuid) {
-        return resposta(buscarVinculo(tenant, usuarioGuid));
+    public UsuarioLojaResponse obter(UUID tenant, Long usuarioId) {
+        return resposta(buscarVinculo(tenant, usuarioId));
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class UsuarioLojaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Loja nao encontrada"));
         S_Perfil papel = perfilRepository.findByCodigo(PAPEL_PADRAO)
                 .orElseThrow(() -> new IllegalStateException("Perfil " + PAPEL_PADRAO + " nao cadastrado"));
-        T_Funcionario funcionario = buscarFuncionario(tenant, request.funcionarioGuid());
+        T_Funcionario funcionario = buscarFuncionario(tenant, request.funcionarioId());
 
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         String nome = request.nome().trim();
@@ -142,12 +142,14 @@ public class UsuarioLojaService {
     }
 
     @Transactional
-    public UsuarioLojaResponse atualizar(UUID tenant, UUID usuarioGuid, UsuarioLojaRequest request) {
-        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioGuid);
+    public UsuarioLojaResponse atualizar(UUID tenant, Long usuarioId, UsuarioLojaRequest request) {
+        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
 
-        T_Funcionario funcionario = buscarFuncionario(tenant, request.funcionarioGuid());
-        validarFuncionarioLivre(funcionario, vinculo);
-        vinculo.setPessoa(funcionario.getPessoa());
+        // o funcionario do usuario nao muda depois do cadastro
+        T_Funcionario funcionario = buscarFuncionario(tenant, request.funcionarioId());
+        if (!funcionario.getPessoa().getId().equals(vinculo.getPessoa().getId())) {
+            throw new RegraNegocioException("O funcionario do usuario nao pode ser alterado");
+        }
 
         S_Usuario usuario = vinculo.getUsuario();
         usuario.setNome(request.nome().trim());
@@ -160,10 +162,37 @@ public class UsuarioLojaService {
         return resposta(perfilUsuarioRepository.save(vinculo));
     }
 
+    /**
+     * Altera o e-mail de login. So e permitido quando o usuario nao pertence a outras lojas, porque o
+     * e-mail e da conta (compartilhada entre lojas) e uma loja nao pode mexer no acesso das demais.
+     * As sessoes ja abertas desse usuario deixam de valer (o token identifica o usuario pelo e-mail).
+     */
+    @Transactional
+    public UsuarioLojaResponse alterarEmail(UUID tenant, Long usuarioId, String novoEmail) {
+        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
+        S_Usuario usuario = vinculo.getUsuario();
+        String email = novoEmail.trim().toLowerCase(Locale.ROOT);
+
+        if (!email.equals(usuario.getEmail())) {
+            boolean emOutraLoja = perfilUsuarioRepository.findByUsuarioIdAndDeletadoFalse(usuario.getId()).stream()
+                    .anyMatch(outro -> !tenant.equals(outro.getTenant()));
+            if (emOutraLoja) {
+                throw new RegraNegocioException(
+                        "Este usuario tambem pertence a outras lojas, entao o e-mail nao pode ser alterado por aqui");
+            }
+            if (usuarioRepository.existsByEmail(email)) {
+                throw new RegraNegocioException("Este e-mail ja esta em uso");
+            }
+            usuario.setEmail(email);
+            usuarioRepository.save(usuario);
+        }
+        return resposta(vinculo);
+    }
+
     /** Exclusao logica do vinculo com a loja; a conta do usuario (e suas outras lojas) nao e afetada. */
     @Transactional
-    public void excluir(UUID tenant, UUID usuarioGuid, Long usuarioLogadoId) {
-        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioGuid);
+    public void excluir(UUID tenant, Long usuarioId, Long usuarioLogadoId) {
+        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
         if (vinculo.getUsuario().getId().equals(usuarioLogadoId)) {
             throw new RegraNegocioException("Voce nao pode excluir o proprio usuario");
         }
@@ -174,8 +203,8 @@ public class UsuarioLojaService {
 
     /** Gera um novo link de definicao de senha para um usuario que ainda nao a definiu. */
     @Transactional
-    public UsuarioConviteResponse gerarNovoLink(UUID tenant, UUID usuarioGuid) {
-        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioGuid);
+    public UsuarioConviteResponse gerarNovoLink(UUID tenant, Long usuarioId) {
+        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
         S_Usuario usuario = vinculo.getUsuario();
         if (!usuario.isExigeTrocarSenha()) {
             throw new RegraNegocioException("Este usuario ja definiu a senha");
@@ -186,13 +215,13 @@ public class UsuarioLojaService {
     }
 
     /** Vinculo do usuario na loja; usado tambem pelo servico de foto. */
-    T_PerfilUsuario buscarVinculo(UUID tenant, UUID usuarioGuid) {
-        return perfilUsuarioRepository.findByUsuarioGuidAndTenantAndDeletadoFalse(usuarioGuid, tenant)
+    T_PerfilUsuario buscarVinculo(UUID tenant, Long usuarioId) {
+        return perfilUsuarioRepository.findByUsuarioIdAndTenantAndDeletadoFalse(usuarioId, tenant)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
     }
 
-    private T_Funcionario buscarFuncionario(UUID tenant, UUID funcionarioGuid) {
-        T_Funcionario funcionario = funcionarioRepository.findByGuidAndTenantAndDeletadoFalse(funcionarioGuid, tenant)
+    private T_Funcionario buscarFuncionario(UUID tenant, Long funcionarioId) {
+        T_Funcionario funcionario = funcionarioRepository.findByIdAndTenantAndDeletadoFalse(funcionarioId, tenant)
                 .orElseThrow(() -> new RegraNegocioException("Funcionario nao encontrado"));
         if (!funcionario.isAtivo()) {
             throw new RegraNegocioException("O funcionario selecionado esta inativo");

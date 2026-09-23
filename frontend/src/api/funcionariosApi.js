@@ -11,13 +11,13 @@ export const buscarFuncionarios = (tenant, { page = 0, size = 10, ...filtros }) 
   return http.get(base(tenant), { params }).then((res) => res.data)
 }
 
-export const obterFuncionario = (tenant, guid) =>
-  http.get(`${base(tenant)}/${guid}`).then((res) => res.data)
+export const obterFuncionario = (tenant, id) =>
+  http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 
 export const criarFuncionario = (tenant, dados) =>
   http.post(base(tenant), dados).then((res) => res.data)
 
-export const atualizarFuncionario = (tenant, guid, dados) =>
-  http.put(`${base(tenant)}/${guid}`, dados).then((res) => res.data)
+export const atualizarFuncionario = (tenant, id, dados) =>
+  http.put(`${base(tenant)}/${id}`, dados).then((res) => res.data)
 
-export const excluirFuncionario = (tenant, guid) => http.delete(`${base(tenant)}/${guid}`)
+export const excluirFuncionario = (tenant, id) => http.delete(`${base(tenant)}/${id}`)

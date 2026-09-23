@@ -31,7 +31,7 @@ export default function LayoutAdmin() {
         // abre por padrao a categoria da pagina atual
         const inicial = {}
         categorias.forEach((categoria) => {
-          if (categoria.paginas.some((pagina) => pagina.rota === pathname)) {
+          if (categoria.paginas.some((pagina) => pathname.startsWith(pagina.rota))) {
             inicial[categoria.guid] = true
           }
         })
@@ -149,7 +149,7 @@ export default function LayoutAdmin() {
                   <ul id={idSubmenu} className="menu-grupo__paginas">
                     {categoria.paginas.map((pagina) => (
                       <li key={pagina.guid}>
-                        <NavLink to={pagina.rota} end>
+                        <NavLink to={pagina.rota}>
                           {pagina.nome}
                         </NavLink>
                       </li>

@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
         loja: sessao.loja,
         entrar,
         selecionarLoja,
+        aplicarSessao: aplicarResposta,
         sair,
         carregando,
         erro,

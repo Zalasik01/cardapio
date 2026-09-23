@@ -53,10 +53,14 @@ public class AuthService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
 
-        S_Usuario usuario = buscarPorEmail(request.email());
+        return iniciarSessao(buscarPorEmail(request.email()));
+    }
+
+    /** Registra o acesso e cria a sessao (usado no login e apos definir a senha do novo usuario). */
+    @Transactional
+    public AuthResponse iniciarSessao(S_Usuario usuario) {
         usuario.setDataUltimoAcesso(LocalDateTime.now().withNano(0));
         usuarioRepository.save(usuario);
-
         return criarSessao(usuario, null);
     }
 

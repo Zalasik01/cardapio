@@ -49,6 +49,9 @@ public class S_Usuario extends SystemAbstract {
 
     private String esqueciSenhaToken;
 
+    @Column(columnDefinition = "timestamp(0)")
+    private LocalDateTime esqueciSenhaExpiraEm;
+
     @Column(nullable = false, updatable = false, columnDefinition = "timestamp(0)")
     private LocalDateTime dataCriacao;
 

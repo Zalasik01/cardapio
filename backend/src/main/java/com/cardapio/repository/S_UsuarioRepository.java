@@ -10,4 +10,6 @@ public interface S_UsuarioRepository extends JpaRepository<S_Usuario, Long> {
     Optional<S_Usuario> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    Optional<S_Usuario> findByEsqueciSenhaToken(String token);
 }

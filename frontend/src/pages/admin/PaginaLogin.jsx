@@ -15,7 +15,7 @@ export default function PaginaLogin() {
     try {
       const resposta = await entrar(email, senha)
       // sem loja vinculada (usuario do sistema ou com varias lojas), o modal de selecao abre aqui mesmo
-      if (resposta.loja) navigate('/admin')
+      if (resposta.loja) navigate('/admin/dashboard')
     } catch {
       // erro ja tratado no contexto
     }
@@ -60,7 +60,7 @@ export default function PaginaLogin() {
       </form>
 
       {precisaEscolherLoja && (
-        <ModalSelecionarLoja aoSelecionar={() => navigate('/admin')} aoSair={sair} />
+        <ModalSelecionarLoja aoSelecionar={() => navigate('/admin/dashboard')} aoSair={sair} />
       )}
     </div>
   )

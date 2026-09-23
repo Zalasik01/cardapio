@@ -26,17 +26,7 @@ export default function LayoutAdmin() {
 
   useEffect(() => {
     buscarMenu()
-      .then((categorias) => {
-        setMenu(categorias)
-        // abre por padrao a categoria da pagina atual
-        const inicial = {}
-        categorias.forEach((categoria) => {
-          if (categoria.paginas.some((pagina) => pathname.startsWith(pagina.rota))) {
-            inicial[categoria.guid] = true
-          }
-        })
-        setAbertas(inicial)
-      })
+      .then(setMenu)
       .catch((e) => setErroMenu(e.mensagem))
       .finally(() => setCarregandoMenu(false))
     // o menu so precisa ser carregado uma vez por sessao do painel
@@ -46,6 +36,19 @@ export default function LayoutAdmin() {
   useEffect(() => {
     setMenuMobileAberto(false)
   }, [pathname])
+
+  // mantem aberta a categoria da pagina atual (inclui o redirecionamento de /admin para o dashboard)
+  useEffect(() => {
+    setAbertas((atual) => {
+      const proximo = { ...atual }
+      menu.forEach((categoria) => {
+        if (categoria.paginas.some((pagina) => pathname.startsWith(pagina.rota))) {
+          proximo[categoria.guid] = true
+        }
+      })
+      return proximo
+    })
+  }, [pathname, menu])
 
   function alternarRecolhido() {
     setRecolhido((atual) => {

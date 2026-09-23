@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { TabelaSkeleton } from '../../components/Skeleton'
+import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarStatusPedido, listarPedidosDaLoja } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -37,38 +37,28 @@ export default function PaginaPedidos() {
       <h1>Pedidos</h1>
       {erro && <p className="mensagem-erro">{erro}</p>}
 
-      {carregando ? (
-        <TabelaSkeleton cabecalhos={['#', 'Cliente', 'Tipo', 'Total', 'Status']} />
-      ) : (
-      <table className="tabela-admin">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Cliente</th>
-            <th>Tipo</th>
-            <th>Total</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pedidos.map((pedido) => (
-            <tr key={pedido.guid}>
-              <td>{pedido.guid.slice(0, 8)}</td>
-              <td>{pedido.nomeCliente} — {pedido.telefoneCliente}</td>
-              <td>{pedido.tipoEntrega === 'ENTREGA' ? 'Entrega' : 'Retirada'}</td>
-              <td>{formatarMoeda(pedido.total)}</td>
-              <td>
-                <select value={pedido.status} onChange={(e) => handleAlterarStatus(pedido.guid, e.target.value)}>
-                  {STATUS_OPCOES.map((status) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      )}
+      <TabelaDados
+        dados={pedidos}
+        chave="guid"
+        carregando={carregando}
+        colunas={[
+          { campo: 'guid', cabecalho: '#', corpo: (pedido) => pedido.guid.slice(0, 8) },
+          { campo: 'nomeCliente', cabecalho: 'Cliente', corpo: (pedido) => `${pedido.nomeCliente} — ${pedido.telefoneCliente}` },
+          { campo: 'tipoEntrega', cabecalho: 'Tipo', corpo: (pedido) => (pedido.tipoEntrega === 'ENTREGA' ? 'Entrega' : 'Retirada') },
+          { campo: 'total', cabecalho: 'Total', corpo: (pedido) => formatarMoeda(pedido.total) },
+          {
+            campo: 'status',
+            cabecalho: 'Status',
+            corpo: (pedido) => (
+              <select value={pedido.status} onChange={(e) => handleAlterarStatus(pedido.guid, e.target.value)}>
+                {STATUS_OPCOES.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            ),
+          },
+        ]}
+      />
     </div>
   )
 }

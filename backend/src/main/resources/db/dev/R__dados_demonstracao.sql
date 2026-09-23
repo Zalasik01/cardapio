@@ -38,6 +38,8 @@ DECLARE
     v_pessoa  bigint;
     v_massas  bigint;
     v_bebidas bigint;
+    v_pf2     bigint;
+    v_pessoa2 bigint;
 BEGIN
     SELECT guid, id_loja INTO v_tenant, v_loja FROM s_loja WHERE slug = 'cantina-da-nonna';
     SELECT id_usuario INTO v_usuario FROM s_usuario WHERE email = 'nonna@cardapio.com';
@@ -53,8 +55,29 @@ BEGIN
         VALUES (gen_random_uuid(), v_tenant, v_pf)
         RETURNING id_pessoa INTO v_pessoa;
 
-        INSERT INTO t_perfil_usuario (guid, tenant, id_usuario, id_pessoa, id_loja, id_perfil, status)
-        VALUES (gen_random_uuid(), v_tenant, v_usuario, v_pessoa, v_loja, v_perfil, 'ATIVO');
+        INSERT INTO t_funcionario (guid, tenant, id_pessoa) VALUES (gen_random_uuid(), v_tenant, v_pessoa);
+
+        INSERT INTO t_perfil_usuario (guid, tenant, id_usuario, id_pessoa, id_loja, id_perfil, status, administrador)
+        VALUES (gen_random_uuid(), v_tenant, v_usuario, v_pessoa, v_loja, v_perfil, 'ATIVO', true);
+    END IF;
+
+    -- Funcionarios de exemplo, ainda sem usuario (CPFs de teste validos)
+    IF NOT EXISTS (SELECT 1 FROM t_pessoa_fisica WHERE tenant = v_tenant AND cpf = '52998224725') THEN
+        INSERT INTO t_pessoa_fisica (guid, tenant, nome, apelido, cpf, sexo, nacionalidade, profissao)
+        VALUES (gen_random_uuid(), v_tenant, 'Carlos Almeida', 'Carlão', '52998224725', 'MASCULINO', 'Brasileiro', 'Garçom')
+        RETURNING id_pessoa_fisica INTO v_pf2;
+        INSERT INTO t_pessoa (guid, tenant, id_pessoa_fisica) VALUES (gen_random_uuid(), v_tenant, v_pf2)
+        RETURNING id_pessoa INTO v_pessoa2;
+        INSERT INTO t_funcionario (guid, tenant, id_pessoa) VALUES (gen_random_uuid(), v_tenant, v_pessoa2);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM t_pessoa_fisica WHERE tenant = v_tenant AND cpf = '11144477735') THEN
+        INSERT INTO t_pessoa_fisica (guid, tenant, nome, apelido, cpf, sexo, nacionalidade, profissao)
+        VALUES (gen_random_uuid(), v_tenant, 'Bruna Souza', 'Bru', '11144477735', 'FEMININO', 'Brasileira', 'Atendente')
+        RETURNING id_pessoa_fisica INTO v_pf2;
+        INSERT INTO t_pessoa (guid, tenant, id_pessoa_fisica) VALUES (gen_random_uuid(), v_tenant, v_pf2)
+        RETURNING id_pessoa INTO v_pessoa2;
+        INSERT INTO t_funcionario (guid, tenant, id_pessoa) VALUES (gen_random_uuid(), v_tenant, v_pessoa2);
     END IF;
 
     -- Cardapio e zonas de entrega

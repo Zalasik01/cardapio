@@ -1,18 +1,21 @@
 package com.cardapio.dto.usuario;
 
-import com.cardapio.entity.StatusPerfilUsuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.util.UUID;
 
 /**
  * Cadastro/edicao de usuario da loja. O e-mail so e usado na criacao (nao muda depois);
- * ativo e status so sao considerados na edicao.
+ * ativo so e considerado na edicao (na criacao o usuario nasce ativo, com acesso PENDENTE).
  */
 public record UsuarioLojaRequest(
         @NotBlank @Size(max = 255) String nome,
         @NotBlank @Email @Size(max = 255) String email,
+        @NotNull UUID funcionarioGuid,
         Boolean ativo,
-        StatusPerfilUsuario status
+        boolean administrador
 ) {
 }

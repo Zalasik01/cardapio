@@ -56,6 +56,16 @@ public class T_PerfilUsuario extends TenantAbstract {
     @Builder.Default
     private StatusPerfilUsuario status = StatusPerfilUsuario.PENDENTE;
 
+    /**
+     * Administrador da loja: o usuario tem acesso a todas as telas e opcoes desta loja.
+     * Ainda nao e verificado nos endpoints: o controle por @PreAuthorize com as permissoes
+     * (ACESSO, LEITURA e ESCRITA por tela) sera implementado depois; o administrador passara
+     * por cima dessas permissoes.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean administrador = false;
+
     @PrePersist
     void definirTenant() {
         if (getTenant() == null && loja != null) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { TabelaSkeleton } from '../../components/Skeleton'
+import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarCategoria, criarCategoria, excluirCategoria, listarCategorias } from '../../api/adminApi'
 
@@ -83,33 +83,20 @@ export default function PaginaCategorias() {
 
       {erro && <p className="mensagem-erro">{erro}</p>}
 
-      {carregando ? (
-        <TabelaSkeleton cabecalhos={['Nome', 'Ordem', 'Ativa', '']} />
-      ) : (
-      <table className="tabela-admin">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Ordem</th>
-            <th>Ativa</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {categorias.map((categoria) => (
-            <tr key={categoria.guid}>
-              <td>{categoria.nome}</td>
-              <td>{categoria.ordemExibicao}</td>
-              <td>{categoria.ativo ? 'Sim' : 'Nao'}</td>
-              <td>
-                <button type="button" className="botao-secundario" onClick={() => handleEditar(categoria)}>Editar</button>
-                <button type="button" className="botao-perigo" onClick={() => handleExcluir(categoria.guid)}>Excluir</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      )}
+      <TabelaDados
+        dados={categorias}
+        chave="guid"
+        carregando={carregando}
+        colunas={[
+          { campo: 'nome', cabecalho: 'Nome' },
+          { campo: 'ordemExibicao', cabecalho: 'Ordem' },
+          { campo: 'ativo', cabecalho: 'Ativa', corpo: (categoria) => (categoria.ativo ? 'Sim' : 'Não') },
+        ]}
+        acoes={(categoria) => [
+          { label: 'Editar', icon: 'pi pi-pencil', command: () => handleEditar(categoria) },
+          { label: 'Excluir', icon: 'pi pi-trash', className: 'item-perigo', command: () => handleExcluir(categoria.guid) },
+        ]}
+      />
     </div>
   )
 }

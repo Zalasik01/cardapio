@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { TabelaSkeleton } from '../../components/Skeleton'
+import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarProduto, criarProduto, excluirProduto, listarCategorias, listarProdutos } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -97,35 +97,21 @@ export default function PaginaProdutos() {
 
       {erro && <p className="mensagem-erro">{erro}</p>}
 
-      {carregando ? (
-        <TabelaSkeleton cabecalhos={['Nome', 'Categoria', 'Preco', 'Disponivel', '']} />
-      ) : (
-      <table className="tabela-admin">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Categoria</th>
-            <th>Preco</th>
-            <th>Disponivel</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {produtos.map((produto) => (
-            <tr key={produto.guid}>
-              <td>{produto.nome}</td>
-              <td>{produto.categoriaNome}</td>
-              <td>{formatarMoeda(produto.preco)}</td>
-              <td>{produto.disponivel ? 'Sim' : 'Nao'}</td>
-              <td>
-                <button type="button" className="botao-secundario" onClick={() => handleEditar(produto)}>Editar</button>
-                <button type="button" className="botao-perigo" onClick={() => handleExcluir(produto.guid)}>Excluir</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      )}
+      <TabelaDados
+        dados={produtos}
+        chave="guid"
+        carregando={carregando}
+        colunas={[
+          { campo: 'nome', cabecalho: 'Nome' },
+          { campo: 'categoriaNome', cabecalho: 'Categoria' },
+          { campo: 'preco', cabecalho: 'Preço', corpo: (produto) => formatarMoeda(produto.preco) },
+          { campo: 'disponivel', cabecalho: 'Disponível', corpo: (produto) => (produto.disponivel ? 'Sim' : 'Não') },
+        ]}
+        acoes={(produto) => [
+          { label: 'Editar', icon: 'pi pi-pencil', command: () => handleEditar(produto) },
+          { label: 'Excluir', icon: 'pi pi-trash', className: 'item-perigo', command: () => handleExcluir(produto.guid) },
+        ]}
+      />
     </div>
   )
 }

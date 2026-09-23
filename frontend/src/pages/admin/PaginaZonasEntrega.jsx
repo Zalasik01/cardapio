@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { TabelaSkeleton } from '../../components/Skeleton'
+import TabelaDados from '../../components/TabelaDados'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarZonaEntrega, criarZonaEntrega, excluirZonaEntrega, listarZonasEntrega } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -91,35 +91,21 @@ export default function PaginaZonasEntrega() {
 
       {erro && <p className="mensagem-erro">{erro}</p>}
 
-      {carregando ? (
-        <TabelaSkeleton cabecalhos={['Bairro', 'Taxa', 'Tempo estimado', 'Ativa', '']} />
-      ) : (
-      <table className="tabela-admin">
-        <thead>
-          <tr>
-            <th>Bairro</th>
-            <th>Taxa</th>
-            <th>Tempo estimado</th>
-            <th>Ativa</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {zonas.map((zona) => (
-            <tr key={zona.guid}>
-              <td>{zona.bairro}</td>
-              <td>{formatarMoeda(zona.taxa)}</td>
-              <td>{zona.tempoEstimadoMinutos} min</td>
-              <td>{zona.ativo ? 'Sim' : 'Nao'}</td>
-              <td>
-                <button type="button" className="botao-secundario" onClick={() => handleEditar(zona)}>Editar</button>
-                <button type="button" className="botao-perigo" onClick={() => handleExcluir(zona.guid)}>Excluir</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      )}
+      <TabelaDados
+        dados={zonas}
+        chave="guid"
+        carregando={carregando}
+        colunas={[
+          { campo: 'bairro', cabecalho: 'Bairro' },
+          { campo: 'taxa', cabecalho: 'Taxa', corpo: (zona) => formatarMoeda(zona.taxa) },
+          { campo: 'tempoEstimadoMinutos', cabecalho: 'Tempo estimado', corpo: (zona) => `${zona.tempoEstimadoMinutos} min` },
+          { campo: 'ativo', cabecalho: 'Ativa', corpo: (zona) => (zona.ativo ? 'Sim' : 'Não') },
+        ]}
+        acoes={(zona) => [
+          { label: 'Editar', icon: 'pi pi-pencil', command: () => handleEditar(zona) },
+          { label: 'Excluir', icon: 'pi pi-trash', className: 'item-perigo', command: () => handleExcluir(zona.guid) },
+        ]}
+      />
     </div>
   )
 }

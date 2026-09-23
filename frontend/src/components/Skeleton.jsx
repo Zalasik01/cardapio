@@ -12,31 +12,6 @@ export function Skeleton({ largura = '100%', altura = '1rem', raio, className = 
   )
 }
 
-export function TabelaSkeleton({ cabecalhos, linhas = 5 }) {
-  return (
-    <table className="tabela-admin" aria-busy="true" aria-label="Carregando dados">
-      <thead>
-        <tr>
-          {cabecalhos.map((cabecalho, i) => (
-            <th key={i}>{cabecalho}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {Array.from({ length: linhas }, (_, linha) => (
-          <tr key={linha}>
-            {cabecalhos.map((_, coluna) => (
-              <td key={coluna}>
-                <Skeleton largura={coluna === 0 ? '70%' : '50%'} altura="0.9rem" />
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
 export function FormularioSkeleton({ campos = 4 }) {
   return (
     <div className="formulario-restaurante" aria-busy="true" aria-label="Carregando formulario">

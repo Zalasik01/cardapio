@@ -25,3 +25,15 @@ export const excluirUsuario = (tenant, guid) => http.delete(`${base(tenant)}/${g
 
 export const gerarNovoLinkUsuario = (tenant, guid) =>
   http.post(`${base(tenant)}/${guid}/novo-link`).then((res) => res.data)
+
+/** Foto do usuario como Blob (404 se nao tiver). */
+export const obterFotoUsuario = (tenant, guid) =>
+  http.get(`${base(tenant)}/${guid}/foto`, { responseType: 'blob' }).then((res) => res.data)
+
+export const enviarFotoUsuario = (tenant, guid, arquivo) => {
+  const dados = new FormData()
+  dados.append('arquivo', arquivo)
+  return http.put(`${base(tenant)}/${guid}/foto`, dados)
+}
+
+export const removerFotoUsuario = (tenant, guid) => http.delete(`${base(tenant)}/${guid}/foto`)

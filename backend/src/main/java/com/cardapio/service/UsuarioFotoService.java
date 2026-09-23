@@ -1,0 +1,84 @@
+package com.cardapio.service;
+
+import com.cardapio.entity.S_Usuario;
+import com.cardapio.entity.S_UsuarioFoto;
+import com.cardapio.exception.RecursoNaoEncontradoException;
+import com.cardapio.exception.RegraNegocioException;
+import com.cardapio.repository.S_UsuarioFotoRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.UUID;
+
+/** Foto de perfil do usuario (PNG, JPEG ou WEBP de ate 2 MB). O tipo e conferido pelo conteudo, nao pelo nome. */
+@Service
+@RequiredArgsConstructor
+public class UsuarioFotoService {
+
+    public static final long TAMANHO_MAXIMO_BYTES = 2L * 1024 * 1024;
+
+    public record Foto(String tipoConteudo, byte[] conteudo) {
+    }
+
+    private final UsuarioLojaService usuarioLojaService;
+    private final S_UsuarioFotoRepository fotoRepository;
+
+    @Transactional
+    public void salvar(UUID tenant, UUID usuarioGuid, MultipartFile arquivo) {
+        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioGuid).getUsuario();
+
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new RegraNegocioException("Selecione uma imagem");
+        }
+        if (arquivo.getSize() > TAMANHO_MAXIMO_BYTES) {
+            throw new RegraNegocioException("A imagem deve ter no maximo 2 MB");
+        }
+        byte[] conteudo;
+        try {
+            conteudo = arquivo.getBytes();
+        } catch (IOException e) {
+            throw new RegraNegocioException("Nao foi possivel ler a imagem");
+        }
+        String tipo = detectarTipo(conteudo);
+        if (tipo == null) {
+            throw new RegraNegocioException("Formato de imagem nao suportado. Use PNG, JPEG ou WEBP");
+        }
+
+        S_UsuarioFoto foto = fotoRepository.findByUsuarioId(usuario.getId())
+                .orElseGet(() -> S_UsuarioFoto.builder().usuario(usuario).build());
+        foto.setTipoConteudo(tipo);
+        foto.setConteudo(conteudo);
+        fotoRepository.save(foto);
+    }
+
+    @Transactional(readOnly = true)
+    public Foto obter(UUID tenant, UUID usuarioGuid) {
+        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioGuid).getUsuario();
+        return fotoRepository.findByUsuarioId(usuario.getId())
+                .map(foto -> new Foto(foto.getTipoConteudo(), foto.getConteudo()))
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario sem foto"));
+    }
+
+    @Transactional
+    public void remover(UUID tenant, UUID usuarioGuid) {
+        S_Usuario usuario = usuarioLojaService.buscarVinculo(tenant, usuarioGuid).getUsuario();
+        fotoRepository.findByUsuarioId(usuario.getId()).ifPresent(fotoRepository::delete);
+    }
+
+    private String detectarTipo(byte[] b) {
+        if (b.length >= 8 && (b[0] & 0xFF) == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') {
+            return "image/png";
+        }
+        if (b.length >= 3 && (b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8 && (b[2] & 0xFF) == 0xFF) {
+            return "image/jpeg";
+        }
+        if (b.length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+                && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') {
+            return "image/webp";
+        }
+        return null;
+    }
+}

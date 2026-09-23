@@ -7,14 +7,19 @@ import com.cardapio.dto.usuario.UsuarioLojaRequest;
 import com.cardapio.dto.usuario.UsuarioLojaResponse;
 import com.cardapio.entity.StatusPerfilUsuario;
 import com.cardapio.security.AppUserDetails;
+import com.cardapio.service.UsuarioFotoService;
 import com.cardapio.service.UsuarioLojaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.UUID;
 
 /** CRUD e busca dos usuarios da loja. O acesso ao tenant da URL e validado no SecurityConfig. */
@@ -24,6 +29,7 @@ import java.util.UUID;
 public class AdminUsuarioController {
 
     private final UsuarioLojaService usuarioLojaService;
+    private final UsuarioFotoService usuarioFotoService;
 
     @GetMapping
     public PaginaResponse<UsuarioLojaResponse> buscar(@PathVariable UUID tenant,
@@ -64,5 +70,27 @@ public class AdminUsuarioController {
     @PostMapping("/{usuarioGuid}/novo-link")
     public UsuarioConviteResponse gerarNovoLink(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
         return usuarioLojaService.gerarNovoLink(tenant, usuarioGuid);
+    }
+
+    @GetMapping("/{usuarioGuid}/foto")
+    public ResponseEntity<byte[]> obterFoto(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
+        var foto = usuarioFotoService.obter(tenant, usuarioGuid);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(foto.tipoConteudo()))
+                .cacheControl(CacheControl.maxAge(Duration.ofSeconds(30)).cachePrivate())
+                .body(foto.conteudo());
+    }
+
+    @PutMapping(path = "/{usuarioGuid}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> salvarFoto(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid,
+                                           @RequestParam("arquivo") MultipartFile arquivo) {
+        usuarioFotoService.salvar(tenant, usuarioGuid, arquivo);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{usuarioGuid}/foto")
+    public ResponseEntity<Void> removerFoto(@PathVariable UUID tenant, @PathVariable UUID usuarioGuid) {
+        usuarioFotoService.remover(tenant, usuarioGuid);
+        return ResponseEntity.noContent().build();
     }
 }

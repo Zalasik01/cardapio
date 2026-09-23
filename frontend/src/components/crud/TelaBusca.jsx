@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Drawer from '../Drawer'
-import { TabelaSkeleton } from '../Skeleton'
+import TabelaDados from '../TabelaDados'
 
 /**
  * Tela de busca padrao: campo de busca + lupa + filtros (drawer) + botao "Novo",
@@ -86,10 +86,8 @@ export default function TelaBusca({
   }
 
   const totalFiltros = Object.keys(aplicados).length
-  const linhas = dados?.content ?? []
-  const inicio = dados && dados.totalElements > 0 ? dados.page * dados.size + 1 : 0
-  const fim = dados ? dados.page * dados.size + linhas.length : 0
-  const cabecalhos = [...colunas.map((coluna) => coluna.cabecalho), '']
+  // a TabelaDados identifica cada linha por um campo unico
+  const linhas = (dados?.content ?? []).map((linha) => ({ ...linha, __chave: chaveLinha(linha) }))
 
   return (
     <div className="pagina-admin tela-busca">
@@ -131,63 +129,15 @@ export default function TelaBusca({
 
       {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
 
-      {carregando && !dados ? (
-        <TabelaSkeleton cabecalhos={cabecalhos} linhas={tamanhoPagina > 6 ? 6 : tamanhoPagina} />
-      ) : (
-        <div className={`tabela-busca ${carregando ? 'tabela-busca--carregando' : ''}`} aria-busy={carregando}>
-          <table className="tabela-admin">
-            <thead>
-              <tr>
-                {cabecalhos.map((cabecalho, i) => (
-                  <th key={i}>{cabecalho}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((linha) => (
-                <tr key={chaveLinha(linha)} className={aoAbrir ? 'linha-clicavel' : undefined}
-                    onDoubleClick={aoAbrir ? () => aoAbrir(linha) : undefined}>
-                  {colunas.map((coluna) => (
-                    <td key={coluna.chave}>{coluna.render ? coluna.render(linha) : linha[coluna.chave]}</td>
-                  ))}
-                  <td className="tabela-busca__acoes">
-                    {aoAbrir && (
-                      <button type="button" className="botao-secundario" onClick={() => aoAbrir(linha)}>
-                        <i className="fa-solid fa-pen" aria-hidden="true" /> Abrir
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {linhas.length === 0 && (
-                <tr>
-                  <td colSpan={cabecalhos.length} className="tabela-busca__vazio">
-                    Nenhum registro encontrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          {dados && dados.totalElements > 0 && (
-            <nav className="paginacao" aria-label="Paginação">
-              <span>Mostrando {inicio}–{fim} de {dados.totalElements}</span>
-              <div className="paginacao__controles">
-                <button type="button" className="botao-secundario" disabled={dados.page === 0 || carregando}
-                        onClick={() => setPagina(dados.page - 1)} aria-label="Página anterior">
-                  <i className="fa-solid fa-chevron-left" aria-hidden="true" />
-                </button>
-                <span>Página {dados.page + 1} de {dados.totalPages}</span>
-                <button type="button" className="botao-secundario"
-                        disabled={dados.page + 1 >= dados.totalPages || carregando}
-                        onClick={() => setPagina(dados.page + 1)} aria-label="Próxima página">
-                  <i className="fa-solid fa-chevron-right" aria-hidden="true" />
-                </button>
-              </div>
-            </nav>
-          )}
-        </div>
-      )}
+      <TabelaDados
+        dados={linhas}
+        chave="__chave"
+        carregando={carregando}
+        colunas={colunas.map((coluna) => ({ campo: coluna.chave, cabecalho: coluna.cabecalho, corpo: coluna.render }))}
+        aoClicarLinha={aoAbrir}
+        acoes={aoAbrir ? (linha) => [{ label: 'Abrir', icon: 'pi pi-pencil', command: () => aoAbrir(linha) }] : undefined}
+        paginacao={dados ? { pagina: dados.page, tamanho: dados.size, total: dados.totalElements, aoMudar: setPagina } : undefined}
+      />
 
       <Drawer
         aberto={drawerAberto}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import CampoSenha from '../../components/CampoSenha'
 import ModalSelecionarLoja from '../../components/ModalSelecionarLoja'
 
 export default function PaginaLogin() {
@@ -8,7 +9,6 @@ export default function PaginaLogin() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [mostrarSenha, setMostrarSenha] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -31,28 +31,7 @@ export default function PaginaLogin() {
           Email
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
-        <label>
-          Senha
-          <span className="campo-senha">
-            <input
-              type={mostrarSenha ? 'text' : 'password'}
-              required
-              autoComplete="current-password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-            />
-            <button
-              type="button"
-              className="campo-senha__alternar"
-              aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-              aria-pressed={mostrarSenha}
-              title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-              onClick={() => setMostrarSenha((atual) => !atual)}
-            >
-              <i className={`fa-solid ${mostrarSenha ? 'fa-eye-slash' : 'fa-eye'}`} aria-hidden="true" />
-            </button>
-          </span>
-        </label>
+        <CampoSenha rotulo="Senha" valor={senha} aoAlterar={setSenha} />
         {erro && <p className="mensagem-erro">{erro}</p>}
         <button type="submit" className="botao-principal" disabled={carregando}>
           {carregando ? 'Entrando...' : 'Entrar'}

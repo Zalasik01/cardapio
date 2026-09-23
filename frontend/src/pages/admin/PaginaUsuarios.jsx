@@ -29,6 +29,8 @@ function formatarData(iso) {
 const COLUNAS = [
   { chave: 'nome', cabecalho: 'Nome' },
   { chave: 'email', cabecalho: 'E-mail' },
+  { chave: 'funcionarioNome', cabecalho: 'Funcionário', render: (usuario) => usuario.funcionarioNome || '—' },
+  { chave: 'administrador', cabecalho: 'Administrador', render: (usuario) => (usuario.administrador ? 'Sim' : 'Não') },
   {
     chave: 'status',
     cabecalho: 'Acesso',

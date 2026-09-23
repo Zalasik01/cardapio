@@ -7,7 +7,10 @@ import io.jsonwebtoken.JwtException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -48,6 +51,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErroResposta> handleAcessoNegado(AccessDeniedException ex) {
         return construirResposta(HttpStatus.FORBIDDEN, "Acesso negado", null);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErroResposta> handleCorpoInvalido(HttpMessageNotReadableException ex) {
+        return construirResposta(HttpStatus.BAD_REQUEST, "Requisicao invalida: corpo ausente ou mal formatado", null);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErroResposta> handleRotaInexistente(NoResourceFoundException ex) {
+        return construirResposta(HttpStatus.NOT_FOUND, "Recurso nao encontrado", null);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErroResposta> handleArquivoGrande(MaxUploadSizeExceededException ex) {
+        return construirResposta(HttpStatus.PAYLOAD_TOO_LARGE, "Arquivo muito grande (maximo 2 MB)", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

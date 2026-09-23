@@ -33,7 +33,12 @@ public interface T_PerfilUsuarioRepository
 
     List<T_PerfilUsuario> findByUsuarioIdAndDeletadoFalse(Long usuarioId);
 
+    /** Ja existe usuario (nao excluido) vinculado a esta pessoa/funcionario? */
+    boolean existsByPessoaIdAndDeletadoFalse(Long pessoaId);
+
+    Optional<T_PerfilUsuario> findFirstByPessoaIdAndDeletadoFalse(Long pessoaId);
+
     @Override
-    @EntityGraph(attributePaths = {"usuario", "perfil", "pessoa", "pessoa.pessoaFisica"})
+    @EntityGraph(attributePaths = {"usuario", "perfil", "pessoa"})
     Page<T_PerfilUsuario> findAll(org.springframework.data.jpa.domain.Specification<T_PerfilUsuario> spec, Pageable pageable);
 }

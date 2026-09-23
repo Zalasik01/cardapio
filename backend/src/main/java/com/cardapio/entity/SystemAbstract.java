@@ -26,8 +26,11 @@ import java.util.UUID;
  *
  * O identificador tecnico (id_&lt;tabela&gt;) e definido em cada subclasse via
  * @AttributeOverride, mas os demais campos de controle sao sempre os mesmos:
- * guid (identificador publico), ativo, deletado (soft delete) e tenant
- * (guid da s_loja "dona" do registro; nulo para registros de nivel sistema).
+ * guid (identificador publico), ativo e deletado (soft delete).
+ *
+ * O campo tenant (guid da s_loja "dona" do registro) NAO faz parte desta classe:
+ * so as tabelas de tenant o possuem, via {@link TenantAbstract}. Tabelas s_ nao
+ * tem tenant.
  */
 @MappedSuperclass
 @Getter
@@ -51,9 +54,6 @@ public abstract class SystemAbstract {
     @Column(nullable = false)
     @Builder.Default
     private boolean deletado = false;
-
-    /** Guid da s_loja dona do registro. Nulo para entidades de nivel sistema. */
-    private UUID tenant;
 
     @PrePersist
     protected void gerarGuid() {

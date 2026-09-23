@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 @Component
-@Profile("dev")
+@Profile({"dev", "docker"})
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 

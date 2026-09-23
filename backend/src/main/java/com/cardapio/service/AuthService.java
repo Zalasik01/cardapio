@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,7 +61,7 @@ public class AuthService {
         S_Usuario usuario = usuarioRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RegraNegocioException("Email ou senha invalidos"));
 
-        usuario.setDataUltimoAcesso(Instant.now());
+        usuario.setDataUltimoAcesso(LocalDateTime.now().withNano(0));
         usuarioRepository.save(usuario);
 
         return gerarResposta(usuario);

@@ -3,12 +3,42 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: cardapio
-      POSTGRES_USER: cardapio
-      POSTGRES_PASSWORD: cardapio
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5440:5432"
     volumes:
       - cardapio_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cardapio"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DATABASE_URL: jdbc:postgresql://postgres:5432/cardapio
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080/api
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
 
 volumes:
   cardapio_postgres_data:

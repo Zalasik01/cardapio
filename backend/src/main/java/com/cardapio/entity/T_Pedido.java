@@ -21,7 +21,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +33,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class T_Pedido extends SystemAbstract {
+public class T_Pedido extends TenantAbstract {
 
     /** Nulo quando o pedido e feito como convidado (guest checkout). */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,19 +79,20 @@ public class T_Pedido extends SystemAbstract {
     @Builder.Default
     private StatusPedido status = StatusPedido.PENDENTE;
 
-    @Column(nullable = false, updatable = false)
-    private Instant dataCriacao;
+    @Column(nullable = false, updatable = false, columnDefinition = "timestamp(0)")
+    private LocalDateTime dataCriacao;
 
-    private Instant dataAtualizacao;
+    @Column(columnDefinition = "timestamp(0)")
+    private LocalDateTime dataAtualizacao;
 
     @PrePersist
     void aoCriar() {
-        this.dataCriacao = Instant.now();
+        this.dataCriacao = LocalDateTime.now().withNano(0);
         this.dataAtualizacao = this.dataCriacao;
     }
 
     @PreUpdate
     void aoAtualizar() {
-        this.dataAtualizacao = Instant.now();
+        this.dataAtualizacao = LocalDateTime.now().withNano(0);
     }
 }

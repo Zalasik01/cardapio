@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { TabelaSkeleton } from '../../components/Skeleton'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarStatusPedido, listarPedidosDaLoja } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -11,9 +12,13 @@ export default function PaginaPedidos() {
 
   const [pedidos, setPedidos] = useState([])
   const [erro, setErro] = useState(null)
+  const [carregando, setCarregando] = useState(true)
 
   function carregar() {
-    listarPedidosDaLoja(tenant).then(setPedidos).catch((e) => setErro(e.mensagem))
+    listarPedidosDaLoja(tenant)
+      .then(setPedidos)
+      .catch((e) => setErro(e.mensagem))
+      .finally(() => setCarregando(false))
   }
 
   useEffect(() => {
@@ -32,6 +37,9 @@ export default function PaginaPedidos() {
       <h1>Pedidos</h1>
       {erro && <p className="mensagem-erro">{erro}</p>}
 
+      {carregando ? (
+        <TabelaSkeleton cabecalhos={['#', 'Cliente', 'Tipo', 'Total', 'Status']} />
+      ) : (
       <table className="tabela-admin">
         <thead>
           <tr>
@@ -60,6 +68,7 @@ export default function PaginaPedidos() {
           ))}
         </tbody>
       </table>
+      )}
     </div>
   )
 }

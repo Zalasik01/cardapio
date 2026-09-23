@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FormularioSkeleton } from '../../components/Skeleton'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarLoja, buscarLoja } from '../../api/adminApi'
 
@@ -26,7 +27,23 @@ export default function PaginaLoja() {
     }
   }
 
-  if (!form) return <div className="pagina-centralizada">Carregando...</div>
+  if (!form && !erro) {
+    return (
+      <div className="pagina-admin">
+        <h1>Minha loja</h1>
+        <FormularioSkeleton campos={5} />
+      </div>
+    )
+  }
+
+  if (!form) {
+    return (
+      <div className="pagina-admin">
+        <h1>Minha loja</h1>
+        <p className="mensagem-erro">{erro}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="pagina-admin">

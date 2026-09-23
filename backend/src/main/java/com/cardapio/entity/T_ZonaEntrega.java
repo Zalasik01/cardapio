@@ -25,7 +25,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class T_ZonaEntrega extends SystemAbstract {
+public class T_ZonaEntrega extends TenantAbstract {
 
     @Column(nullable = false)
     private String bairro;

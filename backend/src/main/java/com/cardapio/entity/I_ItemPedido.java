@@ -24,7 +24,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class I_ItemPedido extends SystemAbstract {
+public class I_ItemPedido extends TenantAbstract {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_pedido", nullable = false)

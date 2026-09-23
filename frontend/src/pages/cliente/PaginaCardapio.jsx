@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { buscarCardapio } from '../../api/cardapioApi'
 import CartaoProduto from '../../components/CartaoProduto'
+import { CardapioSkeleton } from '../../components/Skeleton'
 import BarraCarrinho from '../../components/BarraCarrinho'
 
 export default function PaginaCardapio() {
@@ -18,7 +19,7 @@ export default function PaginaCardapio() {
       .finally(() => setCarregando(false))
   }, [slug])
 
-  if (carregando) return <div className="pagina-centralizada">Carregando cardapio...</div>
+  if (carregando) return <CardapioSkeleton />
   if (erro) return <div className="pagina-centralizada pagina-centralizada--erro">{erro}</div>
   if (!cardapio) return null
 

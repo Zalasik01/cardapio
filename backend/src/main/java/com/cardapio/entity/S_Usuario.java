@@ -3,9 +3,6 @@ package com.cardapio.entity;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -14,13 +11,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
- * Tabela de sistema: usuarios da plataforma. E de nivel sistema (s_) mas
- * carrega o campo tenant (herdado de SystemAbstract) para indicar a qual
- * s_loja o usuario administra; nulo para super admins e clientes sem loja
- * vinculada.
+ * Tabela de sistema: usuarios da plataforma (credenciais de acesso). Nao
+ * pertence a nenhuma loja: o vinculo usuario-loja fica em {@link T_PerfilUsuario},
+ * e um usuario pode ter varios. Usuario de suporte sem nenhum perfil vinculado
+ * e usuario do sistema e enxerga todas as lojas.
  */
 @Entity
 @Table(name = "s_usuario", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
@@ -42,10 +39,6 @@ public class S_Usuario extends SystemAbstract {
     @Column(nullable = false)
     private String senha;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_perfil", nullable = false)
-    private S_Perfil perfil;
-
     @Column(nullable = false)
     @lombok.Builder.Default
     private boolean usuarioSuporte = false;
@@ -56,13 +49,14 @@ public class S_Usuario extends SystemAbstract {
 
     private String esqueciSenhaToken;
 
-    @Column(nullable = false, updatable = false)
-    private Instant dataCriacao;
+    @Column(nullable = false, updatable = false, columnDefinition = "timestamp(0)")
+    private LocalDateTime dataCriacao;
 
-    private Instant dataUltimoAcesso;
+    @Column(columnDefinition = "timestamp(0)")
+    private LocalDateTime dataUltimoAcesso;
 
     @jakarta.persistence.PrePersist
     void aoCriar() {
-        this.dataCriacao = Instant.now();
+        this.dataCriacao = LocalDateTime.now().withNano(0);
     }
 }

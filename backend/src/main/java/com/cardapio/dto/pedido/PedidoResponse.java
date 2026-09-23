@@ -3,7 +3,7 @@ package com.cardapio.dto.pedido;
 import com.cardapio.entity.T_Pedido;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +25,7 @@ public record PedidoResponse(
         String formaPagamento,
         String observacoes,
         String status,
-        Instant dataCriacao
+        LocalDateTime dataCriacao
 ) {
     public static PedidoResponse of(T_Pedido p) {
         return new PedidoResponse(

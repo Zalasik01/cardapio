@@ -14,37 +14,33 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
-
+/**
+ * Tabela de sistema: paginas do painel administrativo, exibidas como submenu
+ * de uma {@link S_CategoriaMenu}.
+ */
 @Entity
-@Table(name = "t_produto")
-@AttributeOverride(name = "id", column = @Column(name = "id_produto"))
+@Table(name = "s_pagina")
+@AttributeOverride(name = "id", column = @Column(name = "id_pagina"))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class T_Produto extends TenantAbstract {
+public class S_Pagina extends SystemAbstract {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_categoria", nullable = false)
-    private T_Categoria categoria;
+    @JoinColumn(name = "id_categoria_menu", nullable = false)
+    private S_CategoriaMenu categoriaMenu;
 
     @Column(nullable = false)
     private String nome;
 
-    @Column(length = 1000)
-    private String descricao;
-
+    /** Rota do frontend que a pagina abre, ex.: "/admin/produtos". */
     @Column(nullable = false)
-    private BigDecimal preco;
+    private String rota;
 
-    private String imagemUrl;
-
+    /** Posicao da pagina dentro da categoria. */
     @Column(nullable = false)
     @Builder.Default
-    private boolean disponivel = true;
-
-    @Builder.Default
-    private Integer ordemExibicao = 0;
+    private Integer ordem = 0;
 }

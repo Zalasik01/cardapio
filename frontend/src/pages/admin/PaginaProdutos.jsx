@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { TabelaSkeleton } from '../../components/Skeleton'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarProduto, criarProduto, excluirProduto, listarCategorias, listarProdutos } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -14,10 +15,16 @@ export default function PaginaProdutos() {
   const [form, setForm] = useState(FORM_VAZIO)
   const [editandoGuid, setEditandoGuid] = useState(null)
   const [erro, setErro] = useState(null)
+  const [carregando, setCarregando] = useState(true)
 
   function carregar() {
-    listarProdutos(tenant).then(setProdutos).catch((e) => setErro(e.mensagem))
-    listarCategorias(tenant).then(setCategorias).catch((e) => setErro(e.mensagem))
+    Promise.all([listarProdutos(tenant), listarCategorias(tenant)])
+      .then(([listaProdutos, listaCategorias]) => {
+        setProdutos(listaProdutos)
+        setCategorias(listaCategorias)
+      })
+      .catch((e) => setErro(e.mensagem))
+      .finally(() => setCarregando(false))
   }
 
   useEffect(carregar, [tenant])
@@ -82,7 +89,7 @@ export default function PaginaProdutos() {
         </label>
         <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
         {editandoGuid && (
-          <button type="button" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
+          <button type="button" className="botao-secundario" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
             Cancelar
           </button>
         )}
@@ -90,6 +97,9 @@ export default function PaginaProdutos() {
 
       {erro && <p className="mensagem-erro">{erro}</p>}
 
+      {carregando ? (
+        <TabelaSkeleton cabecalhos={['Nome', 'Categoria', 'Preco', 'Disponivel', '']} />
+      ) : (
       <table className="tabela-admin">
         <thead>
           <tr>
@@ -108,13 +118,14 @@ export default function PaginaProdutos() {
               <td>{formatarMoeda(produto.preco)}</td>
               <td>{produto.disponivel ? 'Sim' : 'Nao'}</td>
               <td>
-                <button type="button" onClick={() => handleEditar(produto)}>Editar</button>
-                <button type="button" onClick={() => handleExcluir(produto.guid)}>Excluir</button>
+                <button type="button" className="botao-secundario" onClick={() => handleEditar(produto)}>Editar</button>
+                <button type="button" className="botao-perigo" onClick={() => handleExcluir(produto.guid)}>Excluir</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      )}
     </div>
   )
 }

@@ -5,25 +5,29 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+/** Dados de uma pessoa juridica. Ligada a uma {@link T_Pessoa}. */
 @Entity
-@Table(name = "t_categoria")
-@AttributeOverride(name = "id", column = @Column(name = "id_categoria"))
+@Table(name = "t_pessoa_juridica")
+@AttributeOverride(name = "id", column = @Column(name = "id_pessoa_juridica"))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class T_Categoria extends TenantAbstract {
+public class T_PessoaJuridica extends TenantAbstract {
 
     @Column(nullable = false)
-    private String nome;
+    private String razaoSocial;
 
-    @Builder.Default
-    private Integer ordemExibicao = 0;
+    private String nomeFantasia;
+
+    @Column(length = 18)
+    private String cnpj;
+
+    private String telefone;
 }

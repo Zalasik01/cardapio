@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { TabelaSkeleton } from '../../components/Skeleton'
 import { useAuth } from '../../context/AuthContext'
 import { atualizarZonaEntrega, criarZonaEntrega, excluirZonaEntrega, listarZonasEntrega } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -13,9 +14,13 @@ export default function PaginaZonasEntrega() {
   const [form, setForm] = useState(FORM_VAZIO)
   const [editandoGuid, setEditandoGuid] = useState(null)
   const [erro, setErro] = useState(null)
+  const [carregando, setCarregando] = useState(true)
 
   function carregar() {
-    listarZonasEntrega(tenant).then(setZonas).catch((e) => setErro(e.mensagem))
+    listarZonasEntrega(tenant)
+      .then(setZonas)
+      .catch((e) => setErro(e.mensagem))
+      .finally(() => setCarregando(false))
   }
 
   useEffect(carregar, [tenant])
@@ -78,7 +83,7 @@ export default function PaginaZonasEntrega() {
         </label>
         <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
         {editandoGuid && (
-          <button type="button" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
+          <button type="button" className="botao-secundario" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
             Cancelar
           </button>
         )}
@@ -86,6 +91,9 @@ export default function PaginaZonasEntrega() {
 
       {erro && <p className="mensagem-erro">{erro}</p>}
 
+      {carregando ? (
+        <TabelaSkeleton cabecalhos={['Bairro', 'Taxa', 'Tempo estimado', 'Ativa', '']} />
+      ) : (
       <table className="tabela-admin">
         <thead>
           <tr>
@@ -104,13 +112,14 @@ export default function PaginaZonasEntrega() {
               <td>{zona.tempoEstimadoMinutos} min</td>
               <td>{zona.ativo ? 'Sim' : 'Nao'}</td>
               <td>
-                <button type="button" onClick={() => handleEditar(zona)}>Editar</button>
-                <button type="button" onClick={() => handleExcluir(zona.guid)}>Excluir</button>
+                <button type="button" className="botao-secundario" onClick={() => handleEditar(zona)}>Editar</button>
+                <button type="button" className="botao-perigo" onClick={() => handleExcluir(zona.guid)}>Excluir</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      )}
     </div>
   )
 }

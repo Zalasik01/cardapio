@@ -1,15 +1,11 @@
+import { Skeleton as EsqueletoPrime } from 'primereact/skeleton'
+
 /**
- * Blocos de carregamento (skeleton). Reservam o espaco do conteudo final
- * para evitar salto de layout e sao ocultos de leitores de tela.
+ * Blocos de carregamento (skeleton do PrimeReact). Reservam o espaco do conteudo final
+ * para evitar salto de layout; os contenedores marcam aria-busy.
  */
 export function Skeleton({ largura = '100%', altura = '1rem', raio, className = '' }) {
-  return (
-    <span
-      className={`skeleton ${className}`}
-      aria-hidden="true"
-      style={{ width: largura, height: altura, borderRadius: raio }}
-    />
-  )
+  return <EsqueletoPrime width={largura} height={altura} borderRadius={raio} className={className} />
 }
 
 export function FormularioSkeleton({ campos = 4 }) {

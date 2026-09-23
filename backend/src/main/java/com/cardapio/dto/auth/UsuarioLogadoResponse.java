@@ -11,13 +11,12 @@ public record UsuarioLogadoResponse(
         String perfil,
         boolean temFoto,
         String whatsapp,
-        boolean salvarConfiguracoes,
-        String configuracoes
+        boolean exigeTrocarSenha
 ) {
 
     public static UsuarioLogadoResponse of(S_Usuario usuario, String perfil, boolean temFoto) {
         return new UsuarioLogadoResponse(
                 usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.isUsuarioSuporte(),
-                perfil, temFoto, usuario.getWhatsapp(), usuario.isSalvarConfiguracoes(), usuario.getConfiguracoes());
+                perfil, temFoto, usuario.getWhatsapp(), usuario.isExigeTrocarSenha());
     }
 }

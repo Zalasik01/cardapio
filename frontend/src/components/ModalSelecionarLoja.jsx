@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
+import { Button } from 'primereact/button'
+import { Dialog } from 'primereact/dialog'
+import { useDebounce } from 'primereact/hooks'
+import { InputText } from 'primereact/inputtext'
 import { useAuth } from '../context/AuthContext'
 import { listarLojasAcessiveis } from '../api/authApi'
+import { dispatchMsgError } from '../store/dispatchMsg'
 import { Skeleton } from './Skeleton'
 
 const ATRASO_BUSCA_MS = 300
 
 /**
- * Modal de selecao de loja, com busca pelo nome enquanto o usuario digita.
+ * Modal (PrimeReact Dialog) de selecao de loja, com busca pelo nome enquanto o usuario digita.
  *
  * - aoSelecionar: chamado depois que a sessao foi vinculada a loja escolhida.
- * - aoFechar: quando informado, o modal pode ser fechado (botao e Esc); no login
- *   ele nao e informado, pois sem loja o usuario nao segue e so pode sair.
+ * - aoFechar: quando informado, o modal pode ser fechado; no login ele nao e informado,
+ *   pois sem loja o usuario nao segue e so pode sair.
  * - aoSair: quando informado, exibe o botao "Sair".
  */
 export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) {
@@ -18,88 +23,72 @@ export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) 
 
   const [lojas, setLojas] = useState([])
   const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState(null)
-  const [busca, setBusca] = useState('')
+  const [busca, buscaAtrasada, setBusca] = useDebounce('', ATRASO_BUSCA_MS)
   const [selecionando, setSelecionando] = useState(null)
-  const campoBusca = useRef(null)
+  const primeiraBusca = useRef(true)
 
-  useEffect(() => {
-    campoBusca.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    if (!aoFechar) return undefined
-    const aoTeclar = (e) => e.key === 'Escape' && aoFechar()
-    document.addEventListener('keydown', aoTeclar)
-    return () => document.removeEventListener('keydown', aoTeclar)
-  }, [aoFechar])
-
-  // busca enquanto digita: espera uma breve pausa na digitacao e ignora respostas antigas
+  // consulta pela busca "atrasada" (espera uma pausa na digitacao) e ignora respostas antigas
   useEffect(() => {
     let descartada = false
     setCarregando(true)
-    const espera = setTimeout(() => {
-      listarLojasAcessiveis(busca.trim())
-        .then((resultado) => {
-          if (descartada) return
-          setLojas(resultado)
-          setErro(null)
-        })
-        .catch((e) => !descartada && setErro(e.mensagem))
-        .finally(() => !descartada && setCarregando(false))
-    }, busca ? ATRASO_BUSCA_MS : 0)
-
+    listarLojasAcessiveis(buscaAtrasada.trim())
+      .then((resultado) => !descartada && setLojas(resultado))
+      .catch((e) => !descartada && dispatchMsgError(e.mensagem))
+      .finally(() => {
+        if (!descartada) {
+          setCarregando(false)
+          primeiraBusca.current = false
+        }
+      })
     return () => {
       descartada = true
-      clearTimeout(espera)
     }
-  }, [busca])
+  }, [buscaAtrasada])
 
   async function handleSelecionar(loja) {
-    setErro(null)
     setSelecionando(loja.tenant)
     try {
       await selecionarLoja(loja.tenant)
       aoSelecionar()
     } catch (e) {
-      setErro(e.mensagem)
+      dispatchMsgError(e.mensagem)
       setSelecionando(null)
     }
   }
 
   return (
-    <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && aoFechar?.()}>
-      <div className="painel-selecao" role="dialog" aria-modal="true" aria-labelledby="titulo-selecao-loja">
-        <header className="painel-selecao__cabecalho">
-          <div>
-            <h1 id="titulo-selecao-loja">Selecione a loja</h1>
-            <p>
-              Olá, <strong>{usuarioLogado?.nome}</strong>. Escolha em qual loja você quer trabalhar.
-            </p>
-          </div>
-          {aoFechar && (
-            <button type="button" className="botao-icone painel-selecao__fechar" aria-label="Fechar" onClick={aoFechar}>
-              <i className="fa-solid fa-xmark" aria-hidden="true" />
-            </button>
-          )}
-        </header>
+    <Dialog
+      visible
+      modal
+      draggable={false}
+      resizable={false}
+      closable={!!aoFechar}
+      closeOnEscape={!!aoFechar}
+      dismissableMask={!!aoFechar}
+      onHide={aoFechar ?? (() => {})}
+      header="Selecione a loja"
+      style={{ width: 'min(32rem, 95vw)' }}
+      footer={aoSair && <Button type="button" label="Sair" icon="pi pi-sign-out" severity="secondary" outlined onClick={aoSair} />}
+    >
+      <div className="selecao-loja">
+        <p className="selecao-loja__texto">
+          Olá, <strong>{usuarioLogado?.nome}</strong>. Escolha em qual loja você quer trabalhar.
+        </p>
 
-        <div className="painel-selecao__busca">
-          <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-          <input
-            ref={campoBusca}
+        <span className="p-input-icon-left selecao-loja__busca">
+          <i className="pi pi-search" aria-hidden="true" />
+          <InputText
             type="search"
             placeholder="Buscar loja pelo nome"
             aria-label="Buscar loja pelo nome"
+            autoFocus
             autoComplete="off"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
-        </div>
+        </span>
 
-        {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
-
-        <div className="painel-selecao__lista">
+        <div className="selecao-loja__lista">
           {carregando && (
             <ul className="lista-lojas" aria-busy="true" aria-label="Carregando lojas">
               {[0, 1, 2].map((i) => (
@@ -114,10 +103,10 @@ export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) 
             </ul>
           )}
 
-          {!carregando && lojas.length === 0 && !erro && (
-            <p className="painel-selecao__vazio">
-              {busca.trim()
-                ? `Nenhuma loja encontrada para “${busca.trim()}”.`
+          {!carregando && lojas.length === 0 && (
+            <p className="selecao-loja__vazio">
+              {buscaAtrasada.trim()
+                ? `Nenhuma loja encontrada para “${buscaAtrasada.trim()}”.`
                 : 'Você não tem acesso a nenhuma loja no momento.'}
             </p>
           )}
@@ -148,13 +137,7 @@ export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) 
             </ul>
           )}
         </div>
-
-        {aoSair && (
-          <button type="button" className="botao-secundario painel-selecao__sair" onClick={aoSair}>
-            <i className="fa-solid fa-right-from-bracket" aria-hidden="true" /> Sair
-          </button>
-        )}
       </div>
-    </div>
+    </Dialog>
   )
 }

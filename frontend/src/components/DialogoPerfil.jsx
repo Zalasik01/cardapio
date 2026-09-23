@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { Button } from 'primereact/button'
-import { Checkbox } from 'primereact/checkbox'
 import { Dialog } from 'primereact/dialog'
 import { FileUpload } from 'primereact/fileupload'
 import { InputMask } from 'primereact/inputmask'
@@ -12,7 +10,6 @@ import {
 } from '../api/perfilApi'
 import { useAuth } from '../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../store/dispatchMsg'
-import { limparPreferencias } from '../store/preferenciasSlice'
 import { avaliarSenha } from '../utils/senha'
 import { formatarTelefone } from '../utils/formatadores'
 import CampoSenha from './CampoSenha'
@@ -24,8 +21,6 @@ const TAMANHO_MAXIMO_FOTO = 2 * 1024 * 1024
 /** "Seu perfil": nome, WhatsApp, senha, configuracoes de tela e imagem do proprio usuario logado. */
 export default function DialogoPerfil({ aberto, aoFechar }) {
   const { usuarioLogado, atualizarUsuarioLogado } = useAuth()
-  const preferencias = useSelector((estado) => estado.preferencias)
-  const dispatch = useDispatch()
   const seletorArquivo = useRef(null)
 
   const [nome, setNome] = useState('')
@@ -34,7 +29,6 @@ export default function DialogoPerfil({ aberto, aoFechar }) {
   const [senhaAtual, setSenhaAtual] = useState('')
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmacao, setConfirmacao] = useState('')
-  const [salvarConfiguracoes, setSalvarConfiguracoes] = useState(false)
   const [arquivo, setArquivo] = useState(null)
   const [previa, setPrevia] = useState(null)
   const [tinhaFoto, setTinhaFoto] = useState(false)
@@ -49,7 +43,6 @@ export default function DialogoPerfil({ aberto, aoFechar }) {
     setSenhaAtual('')
     setNovaSenha('')
     setConfirmacao('')
-    setSalvarConfiguracoes(!!usuarioLogado.salvarConfiguracoes)
     setArquivo(null)
     setPrevia(null)
     setTinhaFoto(!!usuarioLogado.temFoto)
@@ -97,11 +90,6 @@ export default function DialogoPerfil({ aberto, aoFechar }) {
     setPrevia(null)
   }
 
-  function limparConfiguracoesLocais() {
-    dispatch(limparPreferencias())
-    dispatchMsgSuccess('Configurações locais restauradas para o padrão')
-  }
-
   async function confirmar() {
     if (!nome.trim()) {
       dispatchMsgWarn('Informe o seu nome.')
@@ -124,12 +112,7 @@ export default function DialogoPerfil({ aberto, aoFechar }) {
 
     setSalvando(true)
     try {
-      let atualizado = await atualizarPerfil({
-        nome: nome.trim(),
-        whatsapp,
-        salvarConfiguracoes,
-        configuracoes: salvarConfiguracoes ? JSON.stringify(preferencias) : null,
-      })
+      let atualizado = await atualizarPerfil({ nome: nome.trim(), whatsapp })
       if (alterarSenha) {
         await alterarMinhaSenha(senhaAtual, novaSenha)
       }
@@ -187,21 +170,6 @@ export default function DialogoPerfil({ aberto, aoFechar }) {
             </div>
           )}
 
-          <div className="campo-checkbox perfil__linha">
-            <Checkbox inputId="perfil-salvar-config" checked={salvarConfiguracoes}
-                      onChange={(e) => setSalvarConfiguracoes(e.checked)} />
-            <label htmlFor="perfil-salvar-config">
-              Salvar configurações locais de colunas personalizadas no meu usuário
-            </label>
-          </div>
-
-          <p className="perfil__situacao">
-            <strong>Você está:</strong>{' '}
-            {usuarioLogado?.salvarConfiguracoes ? 'Usando configurações do usuário' : 'Usando configurações locais'}
-          </p>
-
-          <Button type="button" label="Limpar configurações locais" severity="secondary" outlined
-                  onClick={limparConfiguracoesLocais} />
         </div>
 
         <div className="perfil__coluna perfil__coluna--imagem">

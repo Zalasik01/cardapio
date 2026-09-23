@@ -23,6 +23,7 @@ import java.util.UUID;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String ATRIBUTO_SENHA_TEMPORARIA = "senhaTemporariaPendente";
 
     private final JwtService jwtService;
     private final AppUserDetailsService userDetailsService;
@@ -42,7 +43,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
+        if (Boolean.TRUE.equals(request.getAttribute(ATRIBUTO_SENHA_TEMPORARIA))) {
+            responderTrocaDeSenhaObrigatoria(response);
+            return;
+        }
+
         filterChain.doFilter(request, response);
+    }
+
+    /** Enquanto a senha for temporaria, so a autenticacao e a propria troca de senha sao permitidas. */
+    private boolean liberadoComSenhaTemporaria(HttpServletRequest request) {
+        String caminho = request.getRequestURI();
+        return caminho.startsWith("/api/auth/") || caminho.equals("/api/perfil/senha");
+    }
+
+    private void responderTrocaDeSenhaObrigatoria(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"status\":403,\"erro\":\"Forbidden\","
+                + "\"mensagem\":\"Defina uma nova senha antes de continuar\",\"codigo\":\"SENHA_TEMPORARIA\"}");
     }
 
     private void autenticar(HttpServletRequest request, String token) {
@@ -61,5 +80,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 contexto, null, contexto.getAuthorities());
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
+        if (carregado.getUsuario().isExigeTrocarSenha() && !liberadoComSenhaTemporaria(request)) {
+            request.setAttribute(ATRIBUTO_SENHA_TEMPORARIA, Boolean.TRUE);
+        }
     }
 }

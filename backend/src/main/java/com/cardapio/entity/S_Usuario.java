@@ -53,15 +53,6 @@ public class S_Usuario extends SystemAbstract {
     @Column(length = 20)
     private String whatsapp;
 
-    /** Opt-in: guarda as configuracoes de tela no usuario em vez de so no navegador. */
-    @Column(nullable = false)
-    @lombok.Builder.Default
-    private boolean salvarConfiguracoes = false;
-
-    /** JSON com as preferencias de tela; so vale quando salvarConfiguracoes e true. */
-    @Column(columnDefinition = "text")
-    private String configuracoes;
-
     @Column(columnDefinition = "timestamp(0)")
     private LocalDateTime esqueciSenhaExpiraEm;
 

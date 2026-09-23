@@ -3,6 +3,7 @@ package com.cardapio.controller.admin;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.usuario.AlterarEmailRequest;
 import com.cardapio.dto.usuario.FiltroUsuario;
+import com.cardapio.dto.usuario.RedefinirSenhaRequest;
 import com.cardapio.dto.usuario.UsuarioConviteResponse;
 import com.cardapio.dto.usuario.UsuarioLojaRequest;
 import com.cardapio.dto.usuario.UsuarioLojaResponse;
@@ -72,6 +73,13 @@ public class AdminUsuarioController {
     public UsuarioLojaResponse alterarEmail(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                             @Valid @RequestBody AlterarEmailRequest request) {
         return usuarioLojaService.alterarEmail(tenant, usuarioId, request.email());
+    }
+
+    @PutMapping("/{usuarioId}/senha")
+    public UsuarioLojaResponse redefinirSenha(@PathVariable UUID tenant, @PathVariable Long usuarioId,
+                                              @Valid @RequestBody RedefinirSenhaRequest request,
+                                              @AuthenticationPrincipal AppUserDetails logado) {
+        return usuarioLojaService.redefinirSenha(tenant, usuarioId, request.senhaTemporaria(), logado.getUsuarioId());
     }
 
     @PostMapping("/{usuarioId}/novo-link")

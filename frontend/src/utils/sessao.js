@@ -42,6 +42,11 @@ export function salvarSessao({ accessToken, refreshToken, usuarioLogado, loja })
   }
 }
 
+/** Atualiza so o usuarioLogado (ex.: apos editar o proprio perfil), sem mexer nos tokens. */
+export function salvarUsuarioLogado(usuarioLogado) {
+  localStorage.setItem(CHAVES.usuarioLogado, JSON.stringify(usuarioLogado))
+}
+
 export function limparSessao() {
   Object.values(CHAVES).forEach((chave) => localStorage.removeItem(chave))
 }

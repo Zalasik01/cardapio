@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** "Seu perfil": o proprio usuario logado edita nome, WhatsApp, senha e configuracoes. */
+/** "Seu perfil": o proprio usuario logado edita nome, WhatsApp, senha e foto. */
 @Service
 @RequiredArgsConstructor
 public class PerfilService {
@@ -22,8 +22,7 @@ public class PerfilService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public UsuarioLogadoResponse atualizar(Long usuarioId, String nome, String whatsapp,
-                                           boolean salvarConfiguracoes, String configuracoes, String papel) {
+    public UsuarioLogadoResponse atualizar(Long usuarioId, String nome, String whatsapp, String papel) {
         S_Usuario usuario = buscar(usuarioId);
 
         String digitos = Documentos.soDigitos(whatsapp);
@@ -33,9 +32,6 @@ public class PerfilService {
 
         usuario.setNome(nome.trim());
         usuario.setWhatsapp(digitos == null || digitos.isEmpty() ? null : digitos);
-        usuario.setSalvarConfiguracoes(salvarConfiguracoes);
-        // sem o opt-in as preferencias ficam so no navegador; desmarcar apaga o que estava guardado
-        usuario.setConfiguracoes(salvarConfiguracoes ? configuracoes : null);
         usuarioRepository.save(usuario);
 
         return UsuarioLogadoResponse.of(usuario, papel, fotoRepository.existsByUsuarioId(usuarioId));
@@ -45,11 +41,18 @@ public class PerfilService {
     public void alterarSenha(Long usuarioId, String senhaAtual, String novaSenha) {
         S_Usuario usuario = buscar(usuarioId);
 
-        if (!passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
-            throw new RegraNegocioException("Senha atual incorreta");
-        }
-        if (senhaAtual.equals(novaSenha)) {
-            throw new RegraNegocioException("A nova senha deve ser diferente da atual");
+        if (usuario.isExigeTrocarSenha()) {
+            // troca obrigatoria (senha temporaria): so exige que a nova seja diferente da temporaria
+            if (passwordEncoder.matches(novaSenha, usuario.getSenha())) {
+                throw new RegraNegocioException("A nova senha deve ser diferente da senha temporaria");
+            }
+        } else {
+            if (senhaAtual == null || !passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
+                throw new RegraNegocioException("Senha atual incorreta");
+            }
+            if (senhaAtual.equals(novaSenha)) {
+                throw new RegraNegocioException("A nova senha deve ser diferente da atual");
+            }
         }
         PoliticaSenha.validar(novaSenha, usuario.getEmail(), usuario.getNome());
 

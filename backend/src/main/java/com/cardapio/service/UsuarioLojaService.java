@@ -19,6 +19,7 @@ import com.cardapio.repository.S_UsuarioFotoRepository;
 import com.cardapio.repository.S_UsuarioRepository;
 import com.cardapio.repository.T_FuncionarioRepository;
 import com.cardapio.repository.T_PerfilUsuarioRepository;
+import com.cardapio.security.PoliticaSenha;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
@@ -186,6 +187,39 @@ public class UsuarioLojaService {
             usuario.setEmail(email);
             usuarioRepository.save(usuario);
         }
+        return resposta(vinculo);
+    }
+
+    /**
+     * Define uma senha temporaria para o usuario e o obriga a trocar no proximo acesso
+     * (exige_trocar_senha = true). Mesmas restricoes do e-mail: a conta e compartilhada entre lojas,
+     * entao so vale para quem pertence apenas a esta loja. Usuario pendente usa o link de acesso, e a
+     * propria senha e alterada em "Seu perfil".
+     */
+    @Transactional
+    public UsuarioLojaResponse redefinirSenha(UUID tenant, Long usuarioId, String senhaTemporaria, Long usuarioLogadoId) {
+        T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
+        S_Usuario usuario = vinculo.getUsuario();
+
+        if (usuario.getId().equals(usuarioLogadoId)) {
+            throw new RegraNegocioException("Para alterar a propria senha use \"Seu perfil\"");
+        }
+        if (vinculo.getStatus() == StatusPerfilUsuario.PENDENTE) {
+            throw new RegraNegocioException("O usuario ainda nao definiu a senha: gere um novo link de acesso");
+        }
+        boolean emOutraLoja = perfilUsuarioRepository.findByUsuarioIdAndDeletadoFalse(usuario.getId()).stream()
+                .anyMatch(outro -> !tenant.equals(outro.getTenant()));
+        if (emOutraLoja) {
+            throw new RegraNegocioException(
+                    "Este usuario tambem pertence a outras lojas, entao a senha nao pode ser redefinida por aqui");
+        }
+        PoliticaSenha.validar(senhaTemporaria, usuario.getEmail(), usuario.getNome());
+
+        usuario.setSenha(passwordEncoder.encode(senhaTemporaria));
+        usuario.setExigeTrocarSenha(true);
+        usuario.setEsqueciSenhaToken(null);
+        usuario.setEsqueciSenhaExpiraEm(null);
+        usuarioRepository.save(usuario);
         return resposta(vinculo);
     }
 

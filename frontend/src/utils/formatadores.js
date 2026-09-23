@@ -34,3 +34,11 @@ export function linkWhatsapp(numero) {
   const comPais = digitos.startsWith('55') && digitos.length >= 12 ? digitos : `55${digitos}`
   return `https://wa.me/${comPais}`
 }
+
+/** 47999998888 -> (47) 99999-8888 (fixo: (47) 3324-0648). Outros tamanhos voltam como vieram. */
+export function formatarTelefone(valor) {
+  const digitos = soDigitos(valor)
+  if (digitos.length === 11) return digitos.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+  if (digitos.length === 10) return digitos.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
+  return valor ?? ''
+}

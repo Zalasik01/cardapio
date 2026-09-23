@@ -29,8 +29,7 @@ public class PerfilController {
     @PutMapping
     public UsuarioLogadoResponse atualizar(@AuthenticationPrincipal AppUserDetails logado,
                                            @Valid @RequestBody PerfilRequest request) {
-        return perfilService.atualizar(logado.getUsuarioId(), request.nome(), request.whatsapp(),
-                request.salvarConfiguracoes(), request.configuracoes(), logado.getPerfil());
+        return perfilService.atualizar(logado.getUsuarioId(), request.nome(), request.whatsapp(), logado.getPerfil());
     }
 
     @PutMapping("/senha")

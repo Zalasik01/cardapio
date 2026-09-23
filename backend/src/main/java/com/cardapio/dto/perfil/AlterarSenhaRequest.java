@@ -2,5 +2,6 @@ package com.cardapio.dto.perfil;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record AlterarSenhaRequest(@NotBlank String senhaAtual, @NotBlank String novaSenha) {
+/** senhaAtual so pode faltar na troca obrigatoria (apos redefinicao por um administrador). */
+public record AlterarSenhaRequest(String senhaAtual, @NotBlank String novaSenha) {
 }

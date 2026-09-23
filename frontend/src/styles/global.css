@@ -62,16 +62,19 @@ h1, h2, h3 {
   margin-top: 0;
 }
 
-:focus-visible {
-  outline: 3px solid var(--cor-destaque);
-  outline-offset: 2px;
-}
 
-/* Campos de formulario mostram o foco pela borda + anel suave (input:focus); sem contorno extra por fora */
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
+
+/* Regra global: nenhum contorno nem anel de foco extra em elementos ou componentes (PrimeReact inclusive).
+   O foco dos campos aparece so pela cor da borda. Fica no fim do CSS de base para vencer o tema, que vem em camada. */
+:focus,
+:focus-visible,
+.p-component:focus,
+.p-component:focus-visible,
+.p-component :focus,
+.p-component :focus-visible,
+.p-focus {
   outline: none;
+  box-shadow: none;
 }
 
 /* ==========================================================================
@@ -569,38 +572,6 @@ a {
   font-weight: 600;
 }
 
-.campo-senha {
-  position: relative;
-  display: block;
-}
-
-.campo-senha input {
-  width: 100%;
-  padding-right: 2.75rem;
-}
-
-.campo-senha__alternar {
-  position: absolute;
-  top: 50%;
-  right: 0.25rem;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  min-height: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--cor-texto-suave);
-}
-
-.campo-senha__alternar:hover {
-  background: var(--cor-primaria-suave);
-  color: var(--cor-primaria-escura);
-}
-
-.campo-senha__alternar:active {
-  transform: translateY(-50%);
-}
-
 /* ==========================================================================
    Painel administrativo
    ========================================================================== */
@@ -671,23 +642,20 @@ a {
 
   .menu-admin--recolhido .marca-admin span,
   .menu-admin--recolhido .menu-grupo__titulo span,
-  .menu-admin--recolhido .menu-grupo__seta,
-  .menu-admin--recolhido .menu-grupo__paginas,
-  .menu-admin--recolhido .menu-admin__usuario span,
-  .menu-admin--recolhido .menu-admin__rodape .botao-secundario span,
-  .menu-admin--recolhido .menu-admin__loja {
-    display: none;
+  .menu-admin--recolhido .menu-grupo__seta {
+    opacity: 0;
+    max-width: 0;
   }
 
-  .menu-admin--recolhido .menu-grupo__titulo,
-  .menu-admin--recolhido .menu-admin__rodape .botao-secundario {
-    justify-content: center;
+  .menu-admin--recolhido .submenu {
+    grid-template-rows: 0fr;
+  }
+
+  .menu-admin--recolhido .menu-grupo__titulo {
+    gap: 0;
     padding-left: 0;
     padding-right: 0;
-  }
-
-  .menu-admin--recolhido .menu-admin__usuario {
-    text-align: center;
+    justify-content: center;
   }
 }
 
@@ -1324,7 +1292,8 @@ button.cartao-loja:hover {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--cor-borda);
 }
 
 .pagina-admin .crud__cabecalho h1 {
@@ -1625,11 +1594,11 @@ button.cartao-loja:hover {
 }
 
 .secao-crud {
-  background: var(--cor-superficie);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
   padding: 1.25rem;
-  margin-bottom: 1.25rem;
+}
+
+.secao-crud + .secao-crud {
+  border-top: 1px solid var(--cor-borda);
 }
 
 .secao-crud > h2 {
@@ -1640,10 +1609,9 @@ button.cartao-loja:hover {
 }
 
 .crud__abas .p-tabview-panels {
-  background: var(--cor-superficie);
-  border-radius: 0 0 var(--raio) var(--raio);
-  box-shadow: var(--sombra);
-  padding: 1.5rem;
+  background: transparent;
+  box-shadow: none;
+  padding: 1.5rem 1.25rem;
 }
 
 .contatos {
@@ -1738,12 +1706,6 @@ button.cartao-loja:hover {
 .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
   color: var(--cor-primaria);
   border-color: var(--cor-primaria);
-}
-
-/* Os componentes do PrimeReact ja desenham o proprio anel de foco; sem isto o contorno global aparece duplicado */
-.p-component:focus-visible,
-.p-component :focus-visible {
-  outline: none;
 }
 
 /* Menu em arvore: pagina que agrupa outras paginas */
@@ -1971,9 +1933,8 @@ button.cartao-loja:hover {
   z-index: 4;
   display: flex;
   gap: 0.25rem;
-  margin: 0 0 1rem;
-  padding-top: 0.25rem;
-  background: var(--cor-fundo);
+  padding: 0.25rem 1.25rem 0;
+  background: var(--cor-superficie);
   border-bottom: 1px solid var(--cor-borda);
 }
 
@@ -2012,4 +1973,161 @@ button.cartao-loja:hover {
   .cartao-usuario__textos {
     display: none;
   }
+}
+
+/* Cabecalho: badge da loja + cartao do usuario */
+.cabecalho-admin__direita {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-left: auto;
+}
+
+.badge-loja {
+  font-weight: 700;
+}
+
+.p-password {
+  display: block;
+  width: 100%;
+}
+
+.p-password .p-inputtext {
+  width: 100%;
+}
+
+/* Seu perfil */
+.perfil {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.perfil__coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.perfil__coluna > .campo,
+.perfil__senha {
+  width: 100%;
+}
+
+.perfil__coluna--imagem {
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--cor-borda);
+  align-items: stretch;
+}
+
+.perfil__rotulo {
+  color: var(--cor-texto-suave);
+}
+
+.perfil__linha {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.perfil__senha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.perfil__situacao {
+  margin: 0;
+}
+
+.perfil__upload .p-fileupload-content {
+  min-height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.perfil__upload .p-fileupload-buttonbar,
+.perfil__upload-cabecalho {
+  border: none;
+  background: transparent;
+  padding: 0 0 0.75rem;
+}
+
+.perfil__vazio {
+  text-align: center;
+  color: var(--cor-texto-suave);
+  font-weight: 600;
+}
+
+.perfil__vazio i {
+  font-size: 1.5rem;
+}
+
+.perfil__previa {
+  max-width: 100%;
+  max-height: 11rem;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+@media (max-width: 860px) {
+  .perfil {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil__coluna--imagem {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .badge-loja .p-tag-value {
+    display: none;
+  }
+}
+
+/* Animacoes do menu lateral */
+.marca-admin span,
+.menu-grupo__titulo span,
+.menu-grupo__seta {
+  max-width: 14rem;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 200ms ease, max-width 250ms ease;
+}
+
+.menu-grupo__titulo {
+  transition: gap 250ms ease, padding 250ms ease, background var(--transicao);
+}
+
+/* Submenu: a altura vai de 0 ate o conteudo (grid 0fr -> 1fr), sem medir a altura em JS */
+.submenu {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 250ms ease;
+}
+
+.submenu--aberto {
+  grid-template-rows: 1fr;
+}
+
+.submenu__interno {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Cadastro: cabecalho, abas/secoes e campos dentro de um unico bloco branco */
+.crud__cartao {
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  margin-bottom: 1.25rem;
+}
+
+.crud__cartao .p-tabview-nav-container {
+  padding: 0 0.5rem;
 }

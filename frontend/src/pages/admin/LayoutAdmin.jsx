@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
 import CabecalhoAdmin from '../../components/CabecalhoAdmin'
-
-const CHAVE_MENU_RECOLHIDO = 'cardapio_menu_recolhido'
+import { definirMenuRecolhido } from '../../store/preferenciasSlice'
 
 /** A pagina (ou alguma descendente dela) e a rota aberta agora? */
 function contemRota(pagina, pathname) {
@@ -40,6 +40,19 @@ function acharPagina(menu, pathname) {
   return melhor
 }
 
+/** Submenu que abre/fecha com animacao suave; fechado, fica inerte (sem foco de teclado). */
+function Submenu({ id, aberto, aninhado = false, children }) {
+  return (
+    <div className={`submenu ${aberto ? 'submenu--aberto' : ''} ${aninhado ? 'submenu--aninhado' : ''}`}>
+      <div className="submenu__interno">
+        <ul id={id} className="menu-grupo__paginas" inert={aberto ? undefined : ''}>
+          {children}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 /** Item do submenu: link, ou grupo expansivel quando a pagina tem paginas filhas (qualquer profundidade). */
 function ItemMenu({ pagina, abertas, aoAlternar, pathname }) {
   const filhas = pagina.filhas ?? []
@@ -66,13 +79,11 @@ function ItemMenu({ pagina, abertas, aoAlternar, pathname }) {
         <span>{pagina.nome}</span>
         <i className={`fa-solid fa-chevron-down menu-grupo__seta ${aberta ? 'menu-grupo__seta--aberta' : ''}`} aria-hidden="true" />
       </button>
-      {aberta && (
-        <ul id={idSubmenu} className="menu-grupo__paginas menu-grupo__paginas--aninhada">
-          {filhas.map((filha) => (
-            <ItemMenu key={filha.guid} pagina={filha} abertas={abertas} aoAlternar={aoAlternar} pathname={pathname} />
-          ))}
-        </ul>
-      )}
+      <Submenu id={idSubmenu} aberto={aberta} aninhado>
+        {filhas.map((filha) => (
+          <ItemMenu key={filha.guid} pagina={filha} abertas={abertas} aoAlternar={aoAlternar} pathname={pathname} />
+        ))}
+      </Submenu>
     </li>
   )
 }
@@ -88,13 +99,8 @@ export default function LayoutAdmin() {
   const [abertas, setAbertas] = useState({})
   const [menuMobileAberto, setMenuMobileAberto] = useState(false)
   const [migalhaExtra, setMigalhaExtra] = useState(null) // ex.: "Editando usuário", definida pela tela
-  const [recolhido, setRecolhido] = useState(() => {
-    try {
-      return localStorage.getItem(CHAVE_MENU_RECOLHIDO) === '1'
-    } catch {
-      return false
-    }
-  })
+  const dispatch = useDispatch()
+  const recolhido = useSelector((estado) => estado.preferencias.menuRecolhido)
 
   useEffect(() => {
     buscarMenu()
@@ -121,14 +127,7 @@ export default function LayoutAdmin() {
   }, [pathname, menu])
 
   function alternarRecolhido() {
-    setRecolhido((atual) => {
-      try {
-        localStorage.setItem(CHAVE_MENU_RECOLHIDO, atual ? '0' : '1')
-      } catch {
-        // preferencia nao persistida; segue funcionando na sessao
-      }
-      return !atual
-    })
+    dispatch(definirMenuRecolhido(!recolhido))
   }
 
   function alternar(guid) {
@@ -213,13 +212,11 @@ export default function LayoutAdmin() {
                     aria-hidden="true"
                   />
                 </button>
-                {aberta && (
-                  <ul id={idSubmenu} className="menu-grupo__paginas">
-                    {categoria.paginas.map((pagina) => (
-                      <ItemMenu key={pagina.guid} pagina={pagina} abertas={abertas} aoAlternar={alternar} pathname={pathname} />
-                    ))}
-                  </ul>
-                )}
+                <Submenu id={idSubmenu} aberto={aberta}>
+                  {categoria.paginas.map((pagina) => (
+                    <ItemMenu key={pagina.guid} pagina={pagina} abertas={abertas} aoAlternar={alternar} pathname={pathname} />
+                  ))}
+                </Submenu>
               </div>
             )
           })}

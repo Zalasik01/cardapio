@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react'
 import { login as loginApi, selecionarLoja as selecionarLojaApi } from '../api/authApi'
-import { lerSessao, limparSessao, salvarSessao } from '../utils/sessao'
+import { lerSessao, limparSessao, salvarSessao, salvarUsuarioLogado } from '../utils/sessao'
 
 const AuthContext = createContext(null)
 
@@ -10,12 +10,21 @@ export function AuthProvider({ children }) {
     return accessToken ? { usuarioLogado, loja } : { usuarioLogado: null, loja: null }
   })
   const [carregando, setCarregando] = useState(false)
+  const [versaoFoto, setVersaoFoto] = useState(0) // muda quando a foto do usuario troca (o cabecalho recarrega)
   const [erro, setErro] = useState(null)
 
   const aplicarResposta = useCallback((resposta) => {
     salvarSessao(resposta)
     setSessao({ usuarioLogado: resposta.usuarioLogado, loja: resposta.loja })
+
     return resposta
+  }, [])
+
+  /** Atualiza os dados do usuario logado na sessao (nome, foto, configuracoes...) apos editar o perfil. */
+  const atualizarUsuarioLogado = useCallback((usuarioLogado) => {
+    salvarUsuarioLogado(usuarioLogado)
+    setSessao((atual) => ({ ...atual, usuarioLogado }))
+    setVersaoFoto((versao) => versao + 1)
   }, [])
 
   async function entrar(email, senha) {
@@ -49,6 +58,8 @@ export function AuthProvider({ children }) {
         entrar,
         selecionarLoja,
         aplicarSessao: aplicarResposta,
+        atualizarUsuarioLogado,
+        versaoFoto,
         sair,
         carregando,
         erro,

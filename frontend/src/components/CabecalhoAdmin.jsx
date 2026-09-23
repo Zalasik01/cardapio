@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu } from 'primereact/menu'
+import { Tag } from 'primereact/tag'
 import { useAuth } from '../context/AuthContext'
-import { obterFotoUsuario } from '../api/usuariosApi'
+import { obterMinhaFoto } from '../api/perfilApi'
+import DialogoPerfil from './DialogoPerfil'
 
 /** Caminho da tela: Geral > Pessoas > Usuarios. O ultimo item e a tela atual. */
 function Migalhas({ migalhas }) {
@@ -31,16 +33,22 @@ function Migalhas({ migalhas }) {
  * o cartao do usuario logado com o menu de sessao (Sair).
  */
 export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAberto }) {
-  const { usuarioLogado, loja } = useAuth()
+  const { usuarioLogado, loja, versaoFoto } = useAuth()
+  const [perfilAberto, setPerfilAberto] = useState(false)
+  // TODO: o estado real (aberta/fechada) sera definido quando a regra de horario da loja existir
+  const lojaAberta = true
   const menu = useRef(null)
   const [foto, setFoto] = useState(null)
 
-  // foto do usuario logado (se tiver); sem foto ou sem acesso, mostra o icone padrao
+  // foto do proprio usuario (se tiver); sem foto mostra o icone padrao
   useEffect(() => {
-    if (!usuarioLogado?.temFoto || !usuarioLogado?.id) return undefined
+    if (!usuarioLogado?.temFoto) {
+      setFoto(null)
+      return undefined
+    }
     let url = null
     let cancelado = false
-    obterFotoUsuario(loja.tenant, usuarioLogado.id)
+    obterMinhaFoto()
       .then((blob) => {
         if (cancelado) return
         url = URL.createObjectURL(blob)
@@ -51,9 +59,13 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
       cancelado = true
       if (url) URL.revokeObjectURL(url)
     }
-  }, [usuarioLogado?.temFoto, usuarioLogado?.id, loja.tenant])
+  }, [usuarioLogado?.temFoto, versaoFoto])
 
-  const itens = [{ label: 'Sair', icon: 'pi pi-sign-out', command: aoSair }]
+  const itens = [
+    { label: 'Editar perfil', icon: 'pi pi-user-edit', command: () => setPerfilAberto(true) },
+    { separator: true },
+    { label: 'Sair', icon: 'pi pi-sign-out', command: aoSair },
+  ]
 
   return (
     <header className="cabecalho-admin">
@@ -63,6 +75,14 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
       </button>
 
       <Migalhas migalhas={migalhas} />
+
+      <div className="cabecalho-admin__direita">
+        <Tag
+          className="badge-loja"
+          severity={lojaAberta ? 'success' : 'danger'}
+          icon={lojaAberta ? 'pi pi-lock-open' : 'pi pi-lock'}
+          value={lojaAberta ? 'Loja aberta' : 'Loja fechada'}
+        />
 
       <button type="button" className="cartao-usuario" aria-haspopup="menu" aria-label="Menu do usuário"
               onClick={(e) => menu.current.toggle(e)}>
@@ -76,6 +96,9 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
         <i className="fa-solid fa-chevron-down cartao-usuario__seta" aria-hidden="true" />
       </button>
       <Menu model={itens} popup ref={menu} popupAlignment="right" />
+      </div>
+
+      <DialogoPerfil aberto={perfilAberto} aoFechar={() => setPerfilAberto(false)} />
     </header>
   )
 }

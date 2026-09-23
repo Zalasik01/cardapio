@@ -1,7 +1,7 @@
 /** Secao (bloco com titulo) de uma tela de cadastro longa. */
-export function SecaoCrud({ titulo, children }) {
+export function SecaoCrud({ id, titulo, children }) {
   return (
-    <section className="secao-crud">
+    <section id={id} className="secao-crud">
       <h2>{titulo}</h2>
       {children}
     </section>

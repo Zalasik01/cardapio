@@ -20,6 +20,7 @@
   --cor-menu-suave: #9ca3af;
   --cor-menu-hover: rgba(255, 255, 255, 0.08);
 
+  --altura-cabecalho: 56px;
   --raio: 10px;
   --sombra: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.05);
   --transicao: 200ms ease;
@@ -603,10 +604,6 @@ a {
   overflow: hidden;
 }
 
-.topo-admin {
-  display: none;
-}
-
 .marca-admin {
   font-family: var(--fonte-titulo);
   font-weight: 700;
@@ -925,22 +922,6 @@ a {
    Responsivo
    ========================================================================== */
 @media (max-width: 860px) {
-  .layout-admin {
-    flex-direction: column;
-  }
-
-  .topo-admin {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--cor-menu-fundo);
-    color: var(--cor-menu-texto);
-    padding: 0.4rem 0.75rem;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-  }
-
   .menu-admin {
     position: fixed;
     inset: 0 auto 0 0;
@@ -1392,7 +1373,8 @@ button.cartao-loja:hover {
 .crud {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 2rem);
+  min-height: calc(100vh - var(--altura-cabecalho) - 2rem);
+  min-height: calc(100dvh - var(--altura-cabecalho) - 2rem);
 }
 
 .crud__corpo {
@@ -1525,10 +1507,6 @@ button.cartao-loja:hover {
 }
 
 @media (max-width: 860px) {
-  .crud {
-    min-height: calc(100vh - 4.5rem);
-  }
-
   .crud__rodape {
     margin: 1.5rem -1rem 0;
     padding: 0.85rem 1rem;
@@ -1837,4 +1815,194 @@ button.cartao-loja:hover {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* Linhas mais compactas nas tabelas */
+.tabela-dados .p-datatable-thead > tr > th {
+  padding: 0.6rem 0.9rem;
+}
+
+.tabela-dados .p-datatable-tbody > tr > td {
+  padding: 0.35rem 0.9rem;
+}
+
+.tabela-dados .p-datatable-tbody > tr > td .p-button.p-button-icon-only {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+/* Cabecalho do painel: caminho da tela + cartao do usuario */
+.area-admin {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cabecalho-admin {
+  flex-shrink: 0;
+  height: var(--altura-cabecalho);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.cabecalho-admin__menu {
+  display: none;
+  color: var(--cor-texto);
+}
+
+.migalhas ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--cor-texto-suave);
+}
+
+.migalhas li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.migalhas a {
+  color: var(--cor-primaria);
+  text-decoration: none;
+}
+
+.migalhas a:hover {
+  text-decoration: underline;
+}
+
+.migalhas__separador {
+  font-size: 0.7rem;
+  color: var(--cor-primaria);
+}
+
+.migalhas__atual {
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.cartao-usuario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  max-width: 320px;
+  padding: 0.3rem 0.75rem 0.3rem 0.4rem;
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-primaria);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.cartao-usuario:hover {
+  background: var(--cor-primaria-suave);
+}
+
+.cartao-usuario__avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cartao-usuario__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cartao-usuario__textos {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.cartao-usuario__textos strong,
+.cartao-usuario__textos small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cartao-usuario__textos small {
+  color: var(--cor-texto-suave);
+  font-weight: 400;
+}
+
+.cartao-usuario__seta {
+  font-size: 0.7rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Ganchos (atalhos para os blocos) dos cadastros em secoes */
+.crud__ancoras {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  padding-top: 0.25rem;
+  background: var(--cor-fundo);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.crud__ancora {
+  background: transparent;
+  color: var(--cor-texto-suave);
+  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+}
+
+.crud__ancora:hover {
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+}
+
+.crud__ancora--ativa {
+  color: var(--cor-primaria);
+  border-bottom-color: var(--cor-primaria);
+}
+
+.secao-crud {
+  scroll-margin-top: 3.5rem;
+}
+
+@media (max-width: 860px) {
+  .cabecalho-admin {
+    padding: 0 0.75rem;
+  }
+
+  .cabecalho-admin__menu {
+    display: inline-flex;
+  }
+
+  .cartao-usuario__textos {
+    display: none;
+  }
 }

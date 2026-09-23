@@ -44,6 +44,12 @@ public class S_Pagina extends SystemAbstract {
     /** Rota do frontend que a pagina abre, ex.: "/admin/produtos". Nula quando a pagina so agrupa outras. */
     private String rota;
 
+    /**
+     * Caminho da tela mostrado no cabecalho: nomes separados por virgula (ex.: "Geral, Pessoas, Usuarios"),
+     * exibidos como Geral > Pessoas > Usuarios.
+     */
+    private String screen;
+
     /** Posicao da pagina entre as irmas (mesma categoria e mesma pagina pai). */
     @Column(nullable = false)
     @Builder.Default

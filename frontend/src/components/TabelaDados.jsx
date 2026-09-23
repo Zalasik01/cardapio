@@ -19,6 +19,7 @@ function AcoesLinha({ itens }) {
         icon="pi pi-ellipsis-h"
         rounded
         text
+        size="small"
         severity="secondary"
         aria-label="Ações"
         aria-haspopup="menu"
@@ -71,6 +72,7 @@ export default function TabelaDados({
       value={valor}
       dataKey={chave}
       stripedRows
+      size="small"
       rowHover={!!aoClicarLinha && !mostrarEsqueleto}
       loading={carregando && !mostrarEsqueleto}
       emptyMessage={vazio}

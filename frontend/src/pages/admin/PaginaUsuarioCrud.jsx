@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Button } from 'primereact/button'
 import { Checkbox } from 'primereact/checkbox'
@@ -27,6 +27,7 @@ export default function PaginaUsuarioCrud() {
   const editando = guid !== undefined
   const { loja } = useAuth()
   const navigate = useNavigate()
+  const { definirMigalha } = useOutletContext()
 
   const [form, setForm] = useState({ nome: '', email: '', ativo: true, administrador: false, exigeTrocarSenha: false })
   const [funcionario, setFuncionario] = useState(null) // objeto { guid, nome, cpf } ou o texto digitado
@@ -42,6 +43,11 @@ export default function PaginaUsuarioCrud() {
   const [tinhaFoto, setTinhaFoto] = useState(false)
   const [removerFoto, setRemoverFoto] = useState(false)
   const inputArquivo = useRef(null)
+
+  useEffect(() => {
+    definirMigalha(editando ? 'Editando usuário' : 'Novo usuário')
+    return () => definirMigalha(null)
+  }, [editando, definirMigalha])
 
   useEffect(() => {
     if (!editando) return

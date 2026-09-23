@@ -8,6 +8,7 @@ import com.cardapio.entity.S_Loja;
 import com.cardapio.entity.S_Usuario;
 import com.cardapio.entity.T_PerfilUsuario;
 import com.cardapio.repository.S_LojaRepository;
+import com.cardapio.repository.S_UsuarioFotoRepository;
 import com.cardapio.repository.S_UsuarioRepository;
 import com.cardapio.repository.T_PerfilUsuarioRepository;
 import com.cardapio.security.AppUserDetails;
@@ -45,6 +46,7 @@ public class AuthService {
     private final S_UsuarioRepository usuarioRepository;
     private final S_LojaRepository lojaRepository;
     private final T_PerfilUsuarioRepository perfilUsuarioRepository;
+    private final S_UsuarioFotoRepository fotoRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
@@ -137,7 +139,7 @@ public class AuthService {
         return new AuthResponse(
                 jwtService.gerarAccessToken(usuario.getEmail(), claims),
                 jwtService.gerarRefreshToken(usuario.getEmail(), claims),
-                UsuarioLogadoResponse.of(usuario, papel),
+                UsuarioLogadoResponse.of(usuario, papel, fotoRepository.existsByUsuarioId(usuario.getId())),
                 loja != null ? LojaResponse.of(loja) : null);
     }
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
 import { Calendar } from 'primereact/calendar'
 import { Checkbox } from 'primereact/checkbox'
@@ -24,6 +24,12 @@ import { FormularioSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCpf, isoParaData, linkWhatsapp, soDigitos } from '../../utils/formatadores'
 
 const ROTA_LISTA = '/admin/funcionarios'
+
+const ANCORAS = [
+  { id: 'secao-principal', titulo: 'Principal' },
+  { id: 'secao-endereco', titulo: 'Endereço' },
+  { id: 'secao-contatos', titulo: 'Contatos' },
+]
 
 const SEXOS = [
   { valor: 'MASCULINO', rotulo: 'Masculino' },
@@ -128,6 +134,7 @@ export default function PaginaFuncionarioCrud() {
   const editando = guid !== undefined
   const { loja } = useAuth()
   const navigate = useNavigate()
+  const { definirMigalha } = useOutletContext()
 
   const [form, setForm] = useState(FORM_VAZIO)
   const [carregando, setCarregando] = useState(editando)
@@ -138,6 +145,11 @@ export default function PaginaFuncionarioCrud() {
   const [dialogoTelefone, setDialogoTelefone] = useState(null) // { _id?, tipo, numero, observacao }
   const [dialogoEmail, setDialogoEmail] = useState(null) // { _id?, email, observacao }
   const consultaCep = useRef(0) // ignora respostas de consultas antigas
+
+  useEffect(() => {
+    definirMigalha(editando ? 'Editando funcionário' : 'Novo funcionário')
+    return () => definirMigalha(null)
+  }, [editando, definirMigalha])
 
   useEffect(() => {
     if (!editando) return
@@ -264,7 +276,7 @@ export default function PaginaFuncionarioCrud() {
 
   const conteudo = (
     <>
-      <SecaoCrud titulo="Principal">
+      <SecaoCrud id="secao-principal" titulo="Principal">
         <GradeCampos>
           <div className="campo campo--12 campo--linha">
             <span className="campo-checkbox">
@@ -334,7 +346,7 @@ export default function PaginaFuncionarioCrud() {
         </GradeCampos>
       </SecaoCrud>
 
-      <SecaoCrud titulo="Endereço">
+      <SecaoCrud id="secao-endereco" titulo="Endereço">
         <GradeCampos>
           <Campo id="cep" rotulo="CEP" tamanho={2} ajuda={buscandoCep ? 'Buscando endereço...' : avisoCep}>
             <InputMask id="cep" mask="99999-999" autoClear={false} value={form.endereco.cep}
@@ -368,7 +380,7 @@ export default function PaginaFuncionarioCrud() {
         </GradeCampos>
       </SecaoCrud>
 
-      <SecaoCrud titulo="Contatos">
+      <SecaoCrud id="secao-contatos" titulo="Contatos">
         <div className="contatos">
           <div className="contatos__lista">
             <DataTable value={form.telefones} dataKey="_id" emptyMessage="Nenhum telefone cadastrado." className="tabela-dados">
@@ -484,6 +496,7 @@ export default function PaginaFuncionarioCrud() {
         titulo={editando ? (carregando ? 'Funcionário' : form.nome) : 'Novo funcionário'}
         subtitulo={editando ? 'Editar funcionário' : 'Cadastro de funcionário'}
         aoVoltar={() => navigate(ROTA_LISTA)}
+        ancoras={carregando ? undefined : ANCORAS}
         rodape={(
           <>
             <div className="crud__acoes">

@@ -1,10 +1,46 @@
+import { useEffect, useRef, useState } from 'react'
+
 /**
- * Moldura padrao das telas de cadastro (CRUD): cabecalho com "voltar", conteudo e
- * barra de acoes fixa na base da tela.
+ * Moldura padrao das telas de cadastro (CRUD): cabecalho com "voltar", ganchos opcionais
+ * (atalhos para os blocos da tela), conteudo e barra de acoes fixa na base da tela.
+ *
+ * ancoras: [{ id, titulo }] — cada id e o id de um bloco (SecaoCrud). Clicar rola ate o bloco e,
+ * enquanto a tela rola, o gancho do bloco visivel fica destacado. Passe undefined enquanto os
+ * blocos ainda nao existem (carregando).
  */
-export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, children }) {
+export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancoras, children }) {
+  const [ativa, setAtiva] = useState(ancoras?.[0]?.id)
+  const raiz = useRef(null)
+  const chaveAncoras = ancoras?.map((ancora) => ancora.id).join('|')
+
+  useEffect(() => {
+    if (!chaveAncoras) return undefined
+    const ids = chaveAncoras.split('|')
+    setAtiva(ids[0])
+
+    const area = raiz.current?.closest('.conteudo-admin')
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        const visivel = entradas.find((entrada) => entrada.isIntersecting)
+        if (visivel) setAtiva(visivel.target.id)
+      },
+      // considera "atual" o bloco que cruza a faixa superior da area de rolagem
+      { root: area, rootMargin: '-5% 0px -75% 0px', threshold: 0 },
+    )
+    ids.forEach((id) => {
+      const elemento = document.getElementById(id)
+      if (elemento) observador.observe(elemento)
+    })
+    return () => observador.disconnect()
+  }, [chaveAncoras])
+
+  function irPara(id) {
+    setAtiva(id)
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <div className="pagina-admin crud">
+    <div className="pagina-admin crud" ref={raiz}>
       <header className="crud__cabecalho">
         <button type="button" className="botao-icone crud__voltar" aria-label="Voltar" onClick={aoVoltar}>
           <i className="fa-solid fa-arrow-left" aria-hidden="true" />
@@ -14,6 +50,22 @@ export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, childr
           {subtitulo && <p className="crud__subtitulo">{subtitulo}</p>}
         </div>
       </header>
+
+      {ancoras && (
+        <nav className="crud__ancoras" aria-label="Blocos do cadastro">
+          {ancoras.map((ancora) => (
+            <button
+              key={ancora.id}
+              type="button"
+              className={`crud__ancora ${ativa === ancora.id ? 'crud__ancora--ativa' : ''}`}
+              aria-current={ativa === ancora.id ? 'true' : undefined}
+              onClick={() => irPara(ancora.id)}
+            >
+              {ancora.titulo}
+            </button>
+          ))}
+        </nav>
+      )}
 
       <div className="crud__corpo">{children}</div>
 

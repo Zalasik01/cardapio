@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
+import CabecalhoAdmin from '../../components/CabecalhoAdmin'
 
 const CHAVE_MENU_RECOLHIDO = 'cardapio_menu_recolhido'
 
@@ -23,6 +24,20 @@ function abrirCaminhoAtual(destino, paginas, pathname) {
     }
   })
   return algumaAtiva
+}
+
+/** Pagina do menu que abre a rota atual (a de rota mais especifica); serve para montar o caminho do cabecalho. */
+function acharPagina(menu, pathname) {
+  let melhor = null
+  const visitar = (paginas) => {
+    paginas.forEach((pagina) => {
+      const abre = pagina.rota && (pathname === pagina.rota || pathname.startsWith(`${pagina.rota}/`))
+      if (abre && (!melhor || pagina.rota.length > melhor.rota.length)) melhor = pagina
+      visitar(pagina.filhas ?? [])
+    })
+  }
+  menu.forEach((categoria) => visitar(categoria.paginas))
+  return melhor
 }
 
 /** Item do submenu: link, ou grupo expansivel quando a pagina tem paginas filhas (qualquer profundidade). */
@@ -63,7 +78,7 @@ function ItemMenu({ pagina, abertas, aoAlternar, pathname }) {
 }
 
 export default function LayoutAdmin() {
-  const { usuarioLogado, loja, sair } = useAuth()
+  const { sair } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -72,6 +87,7 @@ export default function LayoutAdmin() {
   const [erroMenu, setErroMenu] = useState(null)
   const [abertas, setAbertas] = useState({})
   const [menuMobileAberto, setMenuMobileAberto] = useState(false)
+  const [migalhaExtra, setMigalhaExtra] = useState(null) // ex.: "Editando usuário", definida pela tela
   const [recolhido, setRecolhido] = useState(() => {
     try {
       return localStorage.getItem(CHAVE_MENU_RECOLHIDO) === '1'
@@ -131,6 +147,16 @@ export default function LayoutAdmin() {
     alternar(guid)
   }
 
+  // caminho do cabecalho: vem do campo "screen" da pagina ("Geral, Pessoas, Usuarios"); a tela pode acrescentar um item
+  const migalhas = useMemo(() => {
+    const pagina = acharPagina(menu, pathname)
+    if (!pagina) return []
+    const partes = pagina.screen ? pagina.screen.split(',').map((parte) => parte.trim()).filter(Boolean) : [pagina.nome]
+    const lista = partes.map((texto, i) => ({ texto, rota: i === partes.length - 1 ? pagina.rota : null }))
+    if (migalhaExtra) lista.push({ texto: migalhaExtra })
+    return lista
+  }, [menu, pathname, migalhaExtra])
+
   function handleSair() {
     sair()
     navigate('/admin/login')
@@ -138,20 +164,6 @@ export default function LayoutAdmin() {
 
   return (
     <div className="layout-admin">
-      <header className="topo-admin">
-        <button
-          type="button"
-          className="botao-icone"
-          aria-label="Abrir menu"
-          aria-expanded={menuMobileAberto}
-          aria-controls="menu-admin"
-          onClick={() => setMenuMobileAberto(true)}
-        >
-          <i className="fa-solid fa-bars" aria-hidden="true" />
-        </button>
-        <span className="marca-admin">Cardápio Admin</span>
-      </header>
-
       {menuMobileAberto && <div className="menu-admin__fundo" onClick={() => setMenuMobileAberto(false)} />}
 
       <aside id="menu-admin" className={`menu-admin ${menuMobileAberto ? 'menu-admin--aberto' : ''} ${recolhido ? 'menu-admin--recolhido' : ''}`}>
@@ -177,11 +189,6 @@ export default function LayoutAdmin() {
           >
             <i className="fa-solid fa-xmark" aria-hidden="true" />
           </button>
-        </div>
-
-        <div className="menu-admin__loja">
-          <span className="menu-admin__loja-rotulo">Loja</span>
-          <strong title={loja?.nome}>{loja?.nome}</strong>
         </div>
 
         <nav aria-label="Menu principal" className="menu-admin__nav">
@@ -220,19 +227,19 @@ export default function LayoutAdmin() {
           })}
         </nav>
 
-        <div className="menu-admin__rodape">
-          <span className="menu-admin__usuario">
-            <i className="fa-solid fa-circle-user" aria-hidden="true" /> <span>{usuarioLogado?.nome}</span>
-          </span>
-          <button type="button" className="botao-secundario botao-secundario--escuro" onClick={handleSair}>
-            <i className="fa-solid fa-right-from-bracket" aria-hidden="true" /> <span>Sair</span>
-          </button>
-        </div>
       </aside>
 
-      <main className="conteudo-admin">
-        <Outlet />
-      </main>
+      <div className="area-admin">
+        <CabecalhoAdmin
+          migalhas={migalhas}
+          menuAberto={menuMobileAberto}
+          aoAbrirMenu={() => setMenuMobileAberto(true)}
+          aoSair={handleSair}
+        />
+        <main className="conteudo-admin">
+          <Outlet context={{ definirMigalha: setMigalhaExtra }} />
+        </main>
+      </div>
     </div>
   )
 }

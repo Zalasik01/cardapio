@@ -4,8 +4,8 @@ import { useAuth } from '../../context/AuthContext'
 import { atualizarLoja, buscarLoja } from '../../api/adminApi'
 
 export default function PaginaLoja() {
-  const { usuario } = useAuth()
-  const tenant = usuario.tenant
+  const { loja } = useAuth()
+  const tenant = loja.tenant
 
   const [form, setForm] = useState(null)
   const [mensagem, setMensagem] = useState(null)

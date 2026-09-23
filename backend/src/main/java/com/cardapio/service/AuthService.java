@@ -60,15 +60,27 @@ public class AuthService {
         return criarSessao(usuario, null);
     }
 
-    /** Lojas que o usuario pode acessar (todas as ativas, para o usuario do sistema). */
+    /**
+     * Lojas que o usuario pode acessar (todas as ativas, para o usuario do sistema),
+     * opcionalmente filtradas por parte do nome.
+     */
     @Transactional(readOnly = true)
-    public List<LojaResponse> listarLojasAcessiveis(Long usuarioId) {
+    public List<LojaResponse> listarLojasAcessiveis(Long usuarioId, String busca) {
         S_Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new AccessDeniedException("Usuario nao encontrado"));
         List<T_PerfilUsuario> perfis = perfilUsuarioRepository.buscarAtivosPorUsuario(usuarioId);
-        return lojasAcessiveis(ehUsuarioDoSistema(usuario, perfis), perfis).stream()
-                .map(LojaResponse::of)
-                .toList();
+        boolean usuarioSistema = ehUsuarioDoSistema(usuario, perfis);
+        String termo = busca == null ? "" : busca.trim();
+
+        List<S_Loja> lojas;
+        if (usuarioSistema && !termo.isEmpty()) {
+            lojas = lojaRepository.findByAtivoTrueAndDeletadoFalseAndNomeContainingIgnoreCaseOrderByNomeAsc(termo);
+        } else {
+            lojas = lojasAcessiveis(usuarioSistema, perfis).stream()
+                    .filter(loja -> loja.getNome().toLowerCase().contains(termo.toLowerCase()))
+                    .toList();
+        }
+        return lojas.stream().map(LojaResponse::of).toList();
     }
 
     @Transactional(readOnly = true)

@@ -11,8 +11,9 @@ export default function PaginaLogin() {
   async function handleSubmit(e) {
     e.preventDefault()
     try {
-      await entrar(email, senha)
-      navigate('/admin')
+      const resposta = await entrar(email, senha)
+      // sem loja vinculada (usuario do sistema ou com varias lojas) escolhe antes de entrar
+      navigate(resposta.loja ? '/admin' : '/admin/selecionar-loja')
     } catch {
       // erro ja tratado no contexto
     }

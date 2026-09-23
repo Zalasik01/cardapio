@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
@@ -7,7 +7,7 @@ import { MenuSkeleton } from '../../components/Skeleton'
 const CHAVE_MENU_RECOLHIDO = 'cardapio_menu_recolhido'
 
 export default function LayoutAdmin() {
-  const { usuario, sair } = useAuth()
+  const { usuarioLogado, loja, sair } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -116,6 +116,14 @@ export default function LayoutAdmin() {
           </button>
         </div>
 
+        <div className="menu-admin__loja">
+          <span className="menu-admin__loja-rotulo">Loja</span>
+          <strong title={loja?.nome}>{loja?.nome}</strong>
+        </div>
+        <Link to="/admin/selecionar-loja" className="menu-admin__trocar-loja" title="Trocar de loja">
+          <i className="fa-solid fa-repeat" aria-hidden="true" /> <span>Trocar de loja</span>
+        </Link>
+
         <nav aria-label="Menu principal" className="menu-admin__nav">
           {carregandoMenu && <MenuSkeleton />}
           {erroMenu && <p className="menu-admin__erro">{erroMenu}</p>}
@@ -158,7 +166,7 @@ export default function LayoutAdmin() {
 
         <div className="menu-admin__rodape">
           <span className="menu-admin__usuario">
-            <i className="fa-solid fa-circle-user" aria-hidden="true" /> <span>{usuario?.nome}</span>
+            <i className="fa-solid fa-circle-user" aria-hidden="true" /> <span>{usuarioLogado?.nome}</span>
           </span>
           <button type="button" className="botao-secundario botao-secundario--escuro" onClick={handleSair}>
             <i className="fa-solid fa-right-from-bracket" aria-hidden="true" /> <span>Sair</span>

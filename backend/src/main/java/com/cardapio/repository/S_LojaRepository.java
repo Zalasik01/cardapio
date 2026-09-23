@@ -12,4 +12,5 @@ public interface S_LojaRepository extends JpaRepository<S_Loja, Long> {
     Optional<S_Loja> findByGuid(UUID guid);
     boolean existsBySlug(String slug);
     List<S_Loja> findByAtivoTrueAndDeletadoFalseOrderByNomeAsc();
+    List<S_Loja> findByAtivoTrueAndDeletadoFalseAndNomeContainingIgnoreCaseOrderByNomeAsc(String nome);
 }

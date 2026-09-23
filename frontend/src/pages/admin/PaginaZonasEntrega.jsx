@@ -7,8 +7,8 @@ import { formatarMoeda } from '../../utils/formatadores'
 const FORM_VAZIO = { bairro: '', taxa: '', tempoEstimadoMinutos: 45, ativo: true }
 
 export default function PaginaZonasEntrega() {
-  const { usuario } = useAuth()
-  const tenant = usuario.tenant
+  const { loja } = useAuth()
+  const tenant = loja.tenant
 
   const [zonas, setZonas] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)

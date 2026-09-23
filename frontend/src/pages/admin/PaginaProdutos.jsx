@@ -7,8 +7,8 @@ import { formatarMoeda } from '../../utils/formatadores'
 const FORM_VAZIO = { categoriaGuid: '', nome: '', descricao: '', preco: '', imagemUrl: '', disponivel: true }
 
 export default function PaginaProdutos() {
-  const { usuario } = useAuth()
-  const tenant = usuario.tenant
+  const { loja } = useAuth()
+  const tenant = loja.tenant
 
   const [produtos, setProdutos] = useState([])
   const [categorias, setCategorias] = useState([])

@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/publico/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()

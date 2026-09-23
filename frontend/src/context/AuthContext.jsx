@@ -1,35 +1,28 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { login as loginApi } from '../api/authApi'
+import { createContext, useCallback, useContext, useState } from 'react'
+import { login as loginApi, selecionarLoja as selecionarLojaApi } from '../api/authApi'
+import { lerSessao, limparSessao, salvarSessao } from '../utils/sessao'
 
 const AuthContext = createContext(null)
 
-const CHAVE_TOKEN = 'cardapio_admin_token'
-const CHAVE_USUARIO = 'cardapio_admin_usuario'
-
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(() => {
-    const salvo = localStorage.getItem(CHAVE_USUARIO)
-    return salvo ? JSON.parse(salvo) : null
+  const [sessao, setSessao] = useState(() => {
+    const { accessToken, usuarioLogado, loja } = lerSessao()
+    return accessToken ? { usuarioLogado, loja } : { usuarioLogado: null, loja: null }
   })
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
 
-  useEffect(() => {
-    if (usuario) {
-      localStorage.setItem(CHAVE_USUARIO, JSON.stringify(usuario))
-    } else {
-      localStorage.removeItem(CHAVE_USUARIO)
-    }
-  }, [usuario])
+  const aplicarResposta = useCallback((resposta) => {
+    salvarSessao(resposta)
+    setSessao({ usuarioLogado: resposta.usuarioLogado, loja: resposta.loja })
+    return resposta
+  }, [])
 
   async function entrar(email, senha) {
     setCarregando(true)
     setErro(null)
     try {
-      const resposta = await loginApi(email, senha)
-      localStorage.setItem(CHAVE_TOKEN, resposta.token)
-      setUsuario(resposta)
-      return resposta
+      return aplicarResposta(await loginApi(email, senha))
     } catch (e) {
       setErro(e.mensagem || 'Nao foi possivel entrar')
       throw e
@@ -38,15 +31,28 @@ export function AuthProvider({ children }) {
     }
   }
 
-  function sair() {
-    localStorage.removeItem(CHAVE_TOKEN)
-    setUsuario(null)
+  /** Vincula a sessao a uma loja; o backend devolve novos tokens com o tenant dela. */
+  async function selecionarLoja(lojaGuid) {
+    return aplicarResposta(await selecionarLojaApi(lojaGuid))
   }
 
-  const ehAdmin = usuario?.perfil === 'ROLE_SUPER_ADMIN' || usuario?.perfil === 'ROLE_ADMIN_LOJA'
+  function sair() {
+    limparSessao()
+    setSessao({ usuarioLogado: null, loja: null })
+  }
 
   return (
-    <AuthContext.Provider value={{ usuario, entrar, sair, carregando, erro, ehAdmin }}>
+    <AuthContext.Provider
+      value={{
+        usuarioLogado: sessao.usuarioLogado,
+        loja: sessao.loja,
+        entrar,
+        selecionarLoja,
+        sair,
+        carregando,
+        erro,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

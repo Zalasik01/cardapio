@@ -7,8 +7,8 @@ import { formatarMoeda } from '../../utils/formatadores'
 const STATUS_OPCOES = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE', 'CANCELADO']
 
 export default function PaginaPedidos() {
-  const { usuario } = useAuth()
-  const tenant = usuario.tenant
+  const { loja } = useAuth()
+  const tenant = loja.tenant
 
   const [pedidos, setPedidos] = useState([])
   const [erro, setErro] = useState(null)

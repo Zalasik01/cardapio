@@ -6,8 +6,8 @@ import { atualizarCategoria, criarCategoria, excluirCategoria, listarCategorias 
 const FORM_VAZIO = { nome: '', ordemExibicao: 0, ativo: true }
 
 export default function PaginaCategorias() {
-  const { usuario } = useAuth()
-  const tenant = usuario.tenant
+  const { loja } = useAuth()
+  const tenant = loja.tenant
 
   const [categorias, setCategorias] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)

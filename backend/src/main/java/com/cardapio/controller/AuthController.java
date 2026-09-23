@@ -2,13 +2,21 @@ package com.cardapio.controller;
 
 import com.cardapio.dto.auth.AuthResponse;
 import com.cardapio.dto.auth.LoginRequest;
-import com.cardapio.dto.auth.RegistroClienteRequest;
+import com.cardapio.dto.auth.RefreshTokenRequest;
+import com.cardapio.dto.auth.SelecionarLojaRequest;
+import com.cardapio.dto.loja.LojaResponse;
+import com.cardapio.security.AppUserDetails;
 import com.cardapio.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,13 +25,26 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/registro")
-    public ResponseEntity<AuthResponse> registrar(@Valid @RequestBody RegistroClienteRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.registrarCliente(request));
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return authService.renovar(request.refreshToken());
+    }
+
+    /** Lojas que o usuario logado pode acessar (todas, para o usuario do sistema). */
+    @GetMapping("/lojas")
+    public List<LojaResponse> lojas(@AuthenticationPrincipal AppUserDetails usuario) {
+        return authService.listarLojasAcessiveis(usuario.getUsuarioId());
+    }
+
+    /** Vincula a sessao a uma loja e devolve novos tokens com o tenant e o papel nela. */
+    @PostMapping("/selecionar-loja")
+    public AuthResponse selecionarLoja(@AuthenticationPrincipal AppUserDetails usuario,
+                                       @Valid @RequestBody SelecionarLojaRequest request) {
+        return authService.selecionarLoja(usuario.getUsuarioId(), request.lojaGuid());
     }
 }

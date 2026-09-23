@@ -1,5 +1,7 @@
 package com.cardapio.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,12 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -30,25 +33,33 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                      @NonNull FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String token = authHeader.substring(BEARER_PREFIX.length());
-        String userEmail = jwtService.extractUsername(token);
-
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-
-            if (jwtService.isTokenValid(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            try {
+                autenticar(request, authHeader.substring(BEARER_PREFIX.length()));
+            } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
+                // token invalido, expirado, de outro tipo ou de usuario inexistente: segue sem autenticar (401)
+                SecurityContextHolder.clearContext();
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void autenticar(HttpServletRequest request, String token) {
+        Claims claims = jwtService.lerAccessToken(token);
+
+        AppUserDetails carregado = (AppUserDetails) userDetailsService.loadUserByUsername(claims.getSubject());
+        if (!carregado.isEnabled()) {
+            return;
+        }
+
+        String tenantClaim = claims.get("tenant", String.class);
+        UUID tenant = tenantClaim != null ? UUID.fromString(tenantClaim) : null;
+        AppUserDetails contexto = new AppUserDetails(carregado.getUsuario(), tenant, claims.get("perfil", String.class));
+
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                contexto, null, contexto.getAuthorities());
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 }

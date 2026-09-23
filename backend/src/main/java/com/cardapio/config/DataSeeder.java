@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 @Profile({"dev", "docker"})
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
+    // Dados de demonstracao: so nos perfis dev e docker, nunca em producao.
+
 
     private final S_LojaRepository lojaRepository;
     private final S_UsuarioRepository usuarioRepository;
@@ -21,20 +23,20 @@ public class DataSeeder implements CommandLineRunner {
     private final T_CategoriaRepository categoriaRepository;
     private final T_ProdutoRepository produtoRepository;
     private final T_ZonaEntregaRepository zonaEntregaRepository;
+    private final T_PessoaFisicaRepository pessoaFisicaRepository;
+    private final T_PessoaRepository pessoaRepository;
+    private final T_PerfilUsuarioRepository perfilUsuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
-        if (perfilRepository.count() > 0) {
+        if (lojaRepository.count() > 0) {
             return;
         }
 
-        S_Perfil perfilSuperAdmin = perfilRepository.save(S_Perfil.builder()
-                .nome("Super Administrador").codigo("ROLE_SUPER_ADMIN").build());
-        S_Perfil perfilAdminLoja = perfilRepository.save(S_Perfil.builder()
-                .nome("Administrador da Loja").codigo("ROLE_ADMIN_LOJA").build());
-        perfilRepository.save(S_Perfil.builder()
-                .nome("Cliente").codigo("ROLE_CLIENTE").build());
+        // Os perfis de acesso e o menu do painel vem das migrations (V3).
+        S_Perfil perfilAdminLoja = perfilRepository.findByCodigo("ROLE_ADMIN_LOJA")
+                .orElseThrow(() -> new IllegalStateException("Perfil ROLE_ADMIN_LOJA nao cadastrado"));
 
         S_Loja loja = lojaRepository.save(S_Loja.builder()
                 .nome("Cantina da Nonna")
@@ -53,21 +55,35 @@ public class DataSeeder implements CommandLineRunner {
                 .valorMinimoPedido(new BigDecimal("20.00"))
                 .build());
 
+        lojaRepository.save(S_Loja.builder()
+                .nome("Pizzaria do Ze")
+                .slug("pizzaria-do-ze")
+                .tipoOrganizacao(TipoOrganizacao.RESTAURANTE)
+                .situacaoConta(SituacaoConta.ATIVA)
+                .descricao("Pizzas artesanais no forno a lenha")
+                .build());
+
+        // Usuario do sistema: suporte e sem perfil vinculado, escolhe qualquer loja apos o login.
         usuarioRepository.save(S_Usuario.builder()
                 .nome("Super Admin")
                 .email("admin@cardapio.com")
                 .senha(passwordEncoder.encode("admin123"))
-                .perfil(perfilSuperAdmin)
                 .usuarioSuporte(true)
                 .build());
 
-        usuarioRepository.save(S_Usuario.builder()
+        // Usuario de loja: o vinculo com a loja e o papel ficam em t_perfil_usuario.
+        S_Usuario usuarioNonna = usuarioRepository.save(S_Usuario.builder()
                 .nome("Admin da Nonna")
                 .email("nonna@cardapio.com")
                 .senha(passwordEncoder.encode("nonna123"))
-                .perfil(perfilAdminLoja)
-                .tenant(loja.getGuid())
                 .build());
+
+        T_PessoaFisica pessoaFisicaNonna = pessoaFisicaRepository.save(T_PessoaFisica.builder()
+                .tenant(loja.getGuid()).nome("Admin da Nonna").apelido("Nonna").build());
+        T_Pessoa pessoaNonna = pessoaRepository.save(T_Pessoa.builder()
+                .tenant(loja.getGuid()).pessoaFisica(pessoaFisicaNonna).build());
+        perfilUsuarioRepository.save(T_PerfilUsuario.builder()
+                .usuario(usuarioNonna).pessoa(pessoaNonna).loja(loja).perfil(perfilAdminLoja).build());
 
         T_Categoria massas = categoriaRepository.save(T_Categoria.builder()
                 .tenant(loja.getGuid()).nome("Massas").ordemExibicao(1).build());

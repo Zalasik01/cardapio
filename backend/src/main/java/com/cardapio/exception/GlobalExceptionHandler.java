@@ -3,7 +3,10 @@ package com.cardapio.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import lombok.extern.slf4j.Slf4j;
+import io.jsonwebtoken.JwtException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +33,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErroResposta> handleCredenciaisInvalidas(BadCredentialsException ex) {
         return construirResposta(HttpStatus.UNAUTHORIZED, "Email ou senha invalidos", null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErroResposta> handleAutenticacao(AuthenticationException ex) {
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Nao foi possivel autenticar", null);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErroResposta> handleTokenInvalido(JwtException ex) {
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Sessao invalida ou expirada", null);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErroResposta> handleAcessoNegado(AccessDeniedException ex) {
+        return construirResposta(HttpStatus.FORBIDDEN, "Acesso negado", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

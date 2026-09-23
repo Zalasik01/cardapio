@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
 import CabecalhoAdmin from '../../components/CabecalhoAdmin'
+import DialogoTrocaSenhaObrigatoria from '../../components/DialogoTrocaSenhaObrigatoria'
 import { definirMenuRecolhido } from '../../store/preferenciasSlice'
 
 /** A pagina (ou alguma descendente dela) e a rota aberta agora? */
@@ -89,7 +90,8 @@ function ItemMenu({ pagina, abertas, aoAlternar, pathname }) {
 }
 
 export default function LayoutAdmin() {
-  const { sair } = useAuth()
+  const { usuarioLogado, sair } = useAuth()
+  const trocaObrigatoria = !!usuarioLogado?.exigeTrocarSenha
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -102,14 +104,14 @@ export default function LayoutAdmin() {
   const dispatch = useDispatch()
   const recolhido = useSelector((estado) => estado.preferencias.menuRecolhido)
 
+  // o menu so e carregado quando nao ha troca de senha pendente (a API bloqueia tudo ate la)
   useEffect(() => {
+    if (trocaObrigatoria) return
     buscarMenu()
       .then(setMenu)
       .catch((e) => setErroMenu(e.mensagem))
       .finally(() => setCarregandoMenu(false))
-    // o menu so precisa ser carregado uma vez por sessao do painel
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [trocaObrigatoria])
 
   useEffect(() => {
     setMenuMobileAberto(false)
@@ -232,9 +234,11 @@ export default function LayoutAdmin() {
           aoSair={handleSair}
         />
         <main className="conteudo-admin">
-          <Outlet context={{ definirMigalha: setMigalhaExtra }} />
+          {!trocaObrigatoria && <Outlet context={{ definirMigalha: setMigalhaExtra }} />}
         </main>
       </div>
+
+      {trocaObrigatoria && <DialogoTrocaSenhaObrigatoria aoSair={handleSair} />}
     </div>
   )
 }

@@ -1,31 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BreadCrumb } from 'primereact/breadcrumb'
 import { Menu } from 'primereact/menu'
 import { Tag } from 'primereact/tag'
 import { useAuth } from '../context/AuthContext'
 import { obterMinhaFoto } from '../api/perfilApi'
 import DialogoPerfil from './DialogoPerfil'
 
-/** Caminho da tela: Geral > Pessoas > Usuarios. O ultimo item e a tela atual. */
+/** Caminho da tela (BreadCrumb do PrimeReact): Geral > Pessoas > Usuarios. O ultimo item e a tela atual. */
 function Migalhas({ migalhas }) {
   if (migalhas.length === 0) return <div />
 
-  return (
-    <nav aria-label="Caminho da tela" className="migalhas">
-      <ol>
-        {migalhas.map((migalha, i) => {
-          const ultima = i === migalhas.length - 1
-          return (
-            <li key={`${migalha.texto}-${i}`} aria-current={ultima ? 'page' : undefined}
-                className={ultima ? 'migalhas__atual' : undefined}>
-              {migalha.rota && !ultima ? <Link to={migalha.rota}>{migalha.texto}</Link> : <span>{migalha.texto}</span>}
-              {!ultima && <i className="fa-solid fa-caret-right migalhas__separador" aria-hidden="true" />}
-            </li>
-          )
-        })}
-      </ol>
-    </nav>
-  )
+  const modelo = migalhas.map((migalha, i) => {
+    const ultima = i === migalhas.length - 1
+    return {
+      label: migalha.texto,
+      template: () => {
+        if (ultima) return <span className="migalhas__atual" aria-current="page">{migalha.texto}</span>
+        return migalha.rota ? <Link to={migalha.rota}>{migalha.texto}</Link> : <span>{migalha.texto}</span>
+      },
+    }
+  })
+  return <BreadCrumb model={modelo} className="migalhas" aria-label="Caminho da tela" />
 }
 
 /**

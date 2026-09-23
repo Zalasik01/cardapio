@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Button } from 'primereact/button'
+import { Dialog } from 'primereact/dialog'
+import { FileUpload } from 'primereact/fileupload'
 import { Menu } from 'primereact/menu'
 import { Checkbox } from 'primereact/checkbox'
 import { InputText } from 'primereact/inputtext'
@@ -17,6 +19,7 @@ import CrudBlocos from '../../components/crud/CrudBlocos'
 import { Campo, GradeCampos } from '../../components/crud/Campo'
 import { FormularioSkeleton } from '../../components/Skeleton'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
+import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
 import { formatarCpf } from '../../utils/formatadores'
 
 const ROTA_LISTA = '/admin/usuarios'
@@ -44,9 +47,10 @@ export default function PaginaUsuarioCrud() {
   const [previaFoto, setPreviaFoto] = useState(null)
   const [tinhaFoto, setTinhaFoto] = useState(false)
   const [removerFoto, setRemoverFoto] = useState(false)
-  const inputArquivo = useRef(null)
+  const seletorFoto = useRef(null)
   const menuMaisOpcoes = useRef(null)
   const [alterandoEmail, setAlterandoEmail] = useState(false)
+  const [redefinindoSenha, setRedefinindoSenha] = useState(false)
 
   useEffect(() => {
     definirMigalha(editando ? 'Editando usuário' : 'Novo usuário')
@@ -60,7 +64,7 @@ export default function PaginaUsuarioCrud() {
       .then(async (usuario) => {
         setForm({
           nome: usuario.nome, email: usuario.email, ativo: usuario.ativo, administrador: usuario.administrador,
-          exigeTrocarSenha: usuario.exigeTrocarSenha,
+          exigeTrocarSenha: usuario.exigeTrocarSenha, status: usuario.status,
         })
         setFuncionario(usuario.funcionarioId ? { id: usuario.funcionarioId, nome: usuario.funcionarioNome } : null)
         setTinhaFoto(usuario.temFoto)
@@ -87,8 +91,8 @@ export default function PaginaUsuarioCrud() {
   }
 
   function escolherArquivo(e) {
-    const arquivo = e.target.files?.[0]
-    e.target.value = '' // permite escolher o mesmo arquivo de novo
+    const arquivo = e.files?.[0]
+    seletorFoto.current?.clear() // a previa e desenhada aqui, nao pela lista do FileUpload
     if (!arquivo) return
     if (!TIPOS_FOTO.includes(arquivo.type)) {
       dispatchMsgWarn('Formato de imagem não suportado. Use PNG, JPEG ou WEBP.')
@@ -200,9 +204,12 @@ export default function PaginaUsuarioCrud() {
   }
 
   // "Mais opcoes" do cadastro (so na edicao)
+  const pendente = form.status === 'PENDENTE' // ainda nao definiu a senha: usa o link de acesso
   const itensMaisOpcoes = [
     { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setAlterandoEmail(true) },
-    ...(form.exigeTrocarSenha ? [{ label: 'Gerar novo link de acesso', icon: 'pi pi-link', command: handleNovoLink }] : []),
+    pendente
+      ? { label: 'Gerar novo link de acesso', icon: 'pi pi-link', command: handleNovoLink }
+      : { label: 'Redefinir senha', icon: 'pi pi-key', command: () => setRedefinindoSenha(true) },
   ]
 
   const dadosBasicos = (
@@ -261,10 +268,16 @@ export default function PaginaUsuarioCrud() {
           <legend>Foto do usuário</legend>
           <div className="foto-usuario">
             <div className="foto-usuario__acoes">
-              <input ref={inputArquivo} type="file" accept={TIPOS_FOTO.join(',')} className="sr-only"
-                     aria-label="Escolher arquivo de imagem" onChange={escolherArquivo} />
-              <Button type="button" label="Escolher arquivo" icon="pi pi-upload" outlined
-                      onClick={() => inputArquivo.current.click()} />
+              <FileUpload
+                ref={seletorFoto}
+                mode="basic"
+                name="foto"
+                customUpload
+                auto={false}
+                chooseLabel="Escolher arquivo"
+                chooseOptions={{ icon: 'pi pi-upload', className: 'p-button-outlined' }}
+                onSelect={escolherArquivo}
+              />
               <small className="campo__ajuda">PNG, JPEG ou WEBP de até 2 MB.</small>
             </div>
             <div className="foto-usuario__previa" aria-live="polite">
@@ -326,29 +339,33 @@ export default function PaginaUsuarioCrud() {
         aoAlterado={(atualizado) => setForm((atual) => ({ ...atual, email: atualizado.email }))}
       />
 
-      {convite && (
-        <div className="modal-fundo">
-          <div className="painel-selecao" role="dialog" aria-modal="true" aria-labelledby="titulo-convite">
-            <header className="painel-selecao__cabecalho">
-              <div>
-                <h1 id="titulo-convite">Link de acesso</h1>
-                <p>
-                  Envie este link para <strong>{convite.nome}</strong> definir a senha. Ele vale até{' '}
-                  {new Date(convite.expiraEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} e só
-                  pode ser usado uma vez.
-                </p>
-              </div>
-            </header>
+      <DialogoRedefinirSenha
+        usuario={redefinindoSenha ? { id: Number(id), nome: form.nome } : null}
+        aoFechar={() => setRedefinindoSenha(false)}
+      />
+
+      <Dialog
+        header="Link de acesso"
+        visible={!!convite}
+        onHide={fecharConvite}
+        style={{ width: 'min(32rem, 95vw)' }}
+        footer={<Button type="button" label="Concluir" severity="secondary" outlined onClick={fecharConvite} />}
+      >
+        {convite && (
+          <div className="dialogo-campos">
+            <p className="dialogo-campos__texto">
+              Envie este link para <strong>{convite.nome}</strong> definir a senha. Ele vale até{' '}
+              {new Date(convite.expiraEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} e só
+              pode ser usado uma vez.
+            </p>
             <div className="convite__link">
               <InputText readOnly value={link} aria-label="Link de acesso" onFocus={(e) => e.target.select()} />
               <Button type="button" label={copiado ? 'Copiado' : 'Copiar'} icon={copiado ? 'pi pi-check' : 'pi pi-copy'}
                       onClick={copiarLink} />
             </div>
-            <Button type="button" label="Concluir" severity="secondary" outlined className="painel-selecao__sair"
-                    onClick={fecharConvite} />
           </div>
-        </div>
-      )}
+        )}
+      </Dialog>
     </form>
   )
 }

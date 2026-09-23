@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { alterarEmailUsuario } from '../api/usuariosApi'
 import { useAuth } from '../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../store/dispatchMsg'
@@ -59,6 +59,7 @@ export default function DialogoAlterarEmail({ usuario, aoFechar, aoAlterado }) {
       header="Alterar e-mail"
       visible={!!usuario}
       onHide={aoFechar}
+      size="medium"
       style={{ width: 'min(28rem, 92vw)' }}
       footer={(
         <>
@@ -69,7 +70,7 @@ export default function DialogoAlterarEmail({ usuario, aoFechar, aoAlterado }) {
     >
       {usuario && (
         <div className="dialogo-campos" onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), confirmar())}>
-          <p className="texto-auxiliar dialogo-campos__texto">
+          <p className="dialogo-campos__texto">
             Usuário: <strong>{usuario.nome}</strong>. O e-mail é usado para entrar no sistema.
           </p>
           <div className="campo campo--12">

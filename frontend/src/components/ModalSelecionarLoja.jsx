@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { useDebounce } from 'primereact/hooks'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { useAuth } from '../context/AuthContext'
 import { listarLojasAcessiveis } from '../api/authApi'
@@ -75,8 +77,8 @@ export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) 
           Olá, <strong>{usuarioLogado?.nome}</strong>. Escolha em qual loja você quer trabalhar.
         </p>
 
-        <span className="p-input-icon-left selecao-loja__busca">
-          <i className="pi pi-search" aria-hidden="true" />
+        <IconField iconPosition="left" className="selecao-loja__busca">
+          <InputIcon className="pi pi-search" />
           <InputText
             type="search"
             placeholder="Buscar loja pelo nome"
@@ -86,7 +88,7 @@ export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) 
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
-        </span>
+        </IconField>
 
         <div className="selecao-loja__lista">
           {carregando && (

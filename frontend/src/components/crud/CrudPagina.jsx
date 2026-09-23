@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { TabMenu } from 'primereact/tabmenu'
 
 /**
  * Moldura padrao das telas de cadastro (CRUD): cabecalho com "voltar", ganchos opcionais
@@ -55,17 +56,11 @@ export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancora
 
         {ancoras && (
           <nav className="crud__ancoras" aria-label="Blocos do cadastro">
-            {ancoras.map((ancora) => (
-              <button
-                key={ancora.id}
-                type="button"
-                className={`crud__ancora ${ativa === ancora.id ? 'crud__ancora--ativa' : ''}`}
-                aria-current={ativa === ancora.id ? 'true' : undefined}
-                onClick={() => irPara(ancora.id)}
-              >
-                {ancora.titulo}
-              </button>
-            ))}
+            <TabMenu
+              model={ancoras.map((ancora) => ({ label: ancora.titulo }))}
+              activeIndex={Math.max(0, ancoras.findIndex((ancora) => ancora.id === ativa))}
+              onTabChange={(e) => irPara(ancoras[e.index].id)}
+            />
           </nav>
         )}
 

@@ -41,3 +41,7 @@ export const removerFotoUsuario = (tenant, id) => http.delete(`${base(tenant)}/$
 /** Altera o e-mail de login (unico caminho para isso). Devolve o usuario atualizado. */
 export const alterarEmailUsuario = (tenant, id, email) =>
   http.put(`${base(tenant)}/${id}/email`, { email }).then((res) => res.data)
+
+/** Define uma senha temporaria; o usuario sera obrigado a troca-la no proximo acesso. */
+export const redefinirSenhaUsuario = (tenant, id, senhaTemporaria) =>
+  http.put(`${base(tenant)}/${id}/senha`, { senhaTemporaria }).then((res) => res.data)

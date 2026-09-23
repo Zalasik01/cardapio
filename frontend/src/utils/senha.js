@@ -47,3 +47,26 @@ export function avaliarSenha(senha, contexto = {}) {
 }
 
 export const ROTULOS_FORCA = ['', 'Fraca', 'Razoável', 'Boa', 'Forte']
+
+const MINUSCULAS = 'abcdefghjkmnpqrstuvwxyz'
+const MAIUSCULAS = 'ABCDEFGHJKMNPQRSTUVWXYZ'
+const NUMEROS = '23456789'
+const SIMBOLOS = '!@#$%&*?'
+
+function sortear(caracteres) {
+  const valor = crypto.getRandomValues(new Uint32Array(1))[0]
+  return caracteres[valor % caracteres.length]
+}
+
+/** Senha temporaria aleatoria (crypto): 12 caracteres, com maiuscula, minuscula, numero e simbolo. */
+export function gerarSenhaTemporaria() {
+  const todos = MINUSCULAS + MAIUSCULAS + NUMEROS + SIMBOLOS
+  const caracteres = [sortear(MINUSCULAS), sortear(MAIUSCULAS), sortear(NUMEROS), sortear(SIMBOLOS)]
+  while (caracteres.length < 12) caracteres.push(sortear(todos))
+  // embaralha (Fisher-Yates) para os 4 primeiros nao ficarem sempre na mesma ordem
+  for (let i = caracteres.length - 1; i > 0; i -= 1) {
+    const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1)
+    ;[caracteres[i], caracteres[j]] = [caracteres[j], caracteres[i]]
+  }
+  return caracteres.join('')
+}

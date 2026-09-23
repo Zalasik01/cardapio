@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { buscarUsuarios } from '../../api/usuariosApi'
 import TelaBusca from '../../components/crud/TelaBusca'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
+import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
 import { STATUS_USUARIO } from './statusUsuario'
 
 const FILTROS = [
@@ -53,6 +54,7 @@ export default function PaginaUsuarios() {
   const { loja } = useAuth()
   const navigate = useNavigate()
   const [usuarioEmail, setUsuarioEmail] = useState(null)
+  const [usuarioSenha, setUsuarioSenha] = useState(null)
   const [versao, setVersao] = useState(0)
 
   return (
@@ -69,12 +71,21 @@ export default function PaginaUsuarios() {
       chaveAtualizacao={versao}
       acoesExtras={(usuario) => [
         { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setUsuarioEmail(usuario) },
+        // quem ainda nao definiu a senha usa o link de acesso (dentro do cadastro)
+        ...(usuario.status !== 'PENDENTE'
+          ? [{ label: 'Redefinir senha', icon: 'pi pi-key', command: () => setUsuarioSenha(usuario) }]
+          : []),
       ]}
     />
     <DialogoAlterarEmail
       usuario={usuarioEmail}
       aoFechar={() => setUsuarioEmail(null)}
       aoAlterado={() => setVersao((atual) => atual + 1)}
+    />
+    <DialogoRedefinirSenha
+      usuario={usuarioSenha}
+      aoFechar={() => setUsuarioSenha(null)}
+      aoRedefinida={() => setVersao((atual) => atual + 1)}
     />
     </>
   )

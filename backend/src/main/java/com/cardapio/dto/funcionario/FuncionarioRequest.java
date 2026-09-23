@@ -5,6 +5,7 @@ import com.cardapio.entity.Sexo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.br.CPF;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.List;
 public record FuncionarioRequest(
         Boolean ativo,
         Sexo sexo,
-        @NotBlank String cpf,
+        @NotBlank @CPF(message = "CPF invalido") String cpf,
         @Size(max = 30) String rg,
         @Size(max = 255) String apelido,
         @NotBlank @Size(max = 255) String nome,

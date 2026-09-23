@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import CampoSenha from '../../components/CampoSenha'
 import FundoLogin from '../../components/FundoLogin'
+import VersaoBuild from '../../components/VersaoBuild'
 import ModalSelecionarLoja from '../../components/ModalSelecionarLoja'
 
 export default function PaginaLogin() {
@@ -39,6 +40,7 @@ export default function PaginaLogin() {
           {carregando ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
+      <VersaoBuild />
 
       {precisaEscolherLoja && (
         <ModalSelecionarLoja aoSelecionar={() => navigate('/admin/dashboard')} aoSair={sair} />

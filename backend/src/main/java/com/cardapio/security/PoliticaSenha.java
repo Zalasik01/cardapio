@@ -1,62 +1,59 @@
 package com.cardapio.security;
 
 import com.cardapio.exception.RegraNegocioException;
+import org.passay.CharacterRule;
+import org.passay.DictionaryRule;
+import org.passay.DictionarySubstringRule;
+import org.passay.EnglishCharacterData;
+import org.passay.LengthRule;
+import org.passay.PasswordData;
+import org.passay.PasswordValidator;
+import org.passay.RepeatCharactersRule;
+import org.passay.RuleResult;
+import org.passay.dictionary.ArrayWordList;
+import org.passay.dictionary.WordListDictionary;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.stream.Stream;
 
 /**
- * Regras de senha forte. O frontend replica as mesmas regras para orientar o
- * usuario, mas a validacao valida e sempre a do backend.
+ * Politica de senha forte, montada com o Passay (biblioteca padrao de validacao de senhas).
+ * O frontend replica as mesmas regras para orientar o usuario enquanto ele digita, mas a
+ * validacao valida e sempre a do backend.
  */
 public final class PoliticaSenha {
 
     public static final int TAMANHO_MINIMO = 8;
     public static final int TAMANHO_MAXIMO = 72;
+    private static final int REPETICAO_MAXIMA = 4;
+    private static final int TAMANHO_MINIMO_DADO_PESSOAL = 4;
 
-    private static final Set<String> COMUNS = Set.of(
-            "12345678", "123456789", "1234567890", "87654321", "11111111", "00000000",
-            "password", "password1", "passw0rd", "senha123", "senha1234", "senhasenha",
-            "qwerty123", "qwertyui", "abc12345", "abcd1234", "admin123", "admin1234",
-            "mudar123", "trocar123", "brasil123", "iloveyou");
+    private static final String[] COMUNS = {
+            "12345678", "123456789", "1234567890", "87654321", "password", "password1", "passw0rd", "senha123",
+            "senha1234", "senhasenha", "qwerty123", "qwertyui", "abc12345", "abcd1234", "admin123", "admin1234",
+            "mudar123", "trocar123", "brasil123", "iloveyou",
+    };
+
+    private static final WordListDictionary DICIONARIO_COMUNS = new WordListDictionary(
+            new ArrayWordList(ordenado(COMUNS), false));
 
     private PoliticaSenha() {
     }
 
-    /** Lista as regras que a senha nao cumpre (vazia se for forte). */
+    /** Lista as regras que a senha nao cumpre, em portugues (vazia se for forte). */
     public static List<String> violacoes(String senha, String email, String nome) {
-        List<String> violacoes = new ArrayList<>();
-        if (senha == null || senha.length() < TAMANHO_MINIMO) {
-            violacoes.add("ter pelo menos " + TAMANHO_MINIMO + " caracteres");
-            if (senha == null) {
-                return violacoes;
-            }
-        }
-        if (senha.length() > TAMANHO_MAXIMO) {
-            violacoes.add("ter no maximo " + TAMANHO_MAXIMO + " caracteres");
-        }
-        if (senha.chars().noneMatch(Character::isLowerCase)) {
-            violacoes.add("ter uma letra minuscula");
-        }
-        if (senha.chars().noneMatch(Character::isUpperCase)) {
-            violacoes.add("ter uma letra maiuscula");
-        }
-        if (senha.chars().noneMatch(Character::isDigit)) {
-            violacoes.add("ter um numero");
-        }
-        if (senha.chars().allMatch(c -> Character.isLetterOrDigit(c))) {
-            violacoes.add("ter um simbolo (por exemplo ! @ # $ %)");
-        }
+        RuleResult resultado = validador(email, nome).validate(new PasswordData(senha == null ? "" : senha));
 
-        String minuscula = senha.toLowerCase(Locale.ROOT);
-        if (COMUNS.contains(minuscula) || senha.chars().distinct().count() <= 2) {
-            violacoes.add("nao ser uma senha comum ou repetitiva");
-        }
-        if (contemDadosPessoais(minuscula, email, nome)) {
-            violacoes.add("nao conter seu nome ou e-mail");
-        }
+        List<String> violacoes = new ArrayList<>();
+        resultado.getDetails().forEach(detalhe -> {
+            String mensagem = traduzir(detalhe.getErrorCode());
+            if (!violacoes.contains(mensagem)) {
+                violacoes.add(mensagem);
+            }
+        });
         return violacoes;
     }
 
@@ -68,20 +65,54 @@ public final class PoliticaSenha {
         }
     }
 
-    private static boolean contemDadosPessoais(String senhaMinuscula, String email, String nome) {
-        if (email != null) {
-            String usuarioEmail = email.toLowerCase(Locale.ROOT).split("@")[0];
-            if (usuarioEmail.length() >= 4 && senhaMinuscula.contains(usuarioEmail)) {
-                return true;
-            }
+    private static PasswordValidator validador(String email, String nome) {
+        List<org.passay.Rule> regras = new ArrayList<>(List.of(
+                new LengthRule(TAMANHO_MINIMO, TAMANHO_MAXIMO),
+                new CharacterRule(EnglishCharacterData.LowerCase, 1),
+                new CharacterRule(EnglishCharacterData.UpperCase, 1),
+                new CharacterRule(EnglishCharacterData.Digit, 1),
+                new CharacterRule(EnglishCharacterData.Special, 1),
+                new RepeatCharactersRule(REPETICAO_MAXIMA),
+                new DictionaryRule(DICIONARIO_COMUNS)));
+
+        // nome e e-mail do usuario nao podem aparecer dentro da senha
+        String[] dadosPessoais = dadosPessoais(email, nome);
+        if (dadosPessoais.length > 0) {
+            regras.add(new DictionarySubstringRule(new WordListDictionary(new ArrayWordList(dadosPessoais, false))));
         }
-        if (nome != null) {
-            for (String parte : nome.toLowerCase(Locale.ROOT).split("\\s+")) {
-                if (parte.length() >= 4 && senhaMinuscula.contains(parte)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return new PasswordValidator(regras);
+    }
+
+    /** Partes do e-mail (antes do @) e do nome com tamanho suficiente para serem significativas, ordenadas. */
+    private static String[] dadosPessoais(String email, String nome) {
+        Stream<String> partes = Stream.concat(
+                email == null ? Stream.empty() : Stream.of(email.split("@")[0]),
+                nome == null ? Stream.empty() : Arrays.stream(nome.trim().split("\\s+")));
+        return ordenado(partes
+                .map(parte -> parte.toLowerCase(Locale.ROOT))
+                .filter(parte -> parte.length() >= TAMANHO_MINIMO_DADO_PESSOAL)
+                .distinct()
+                .toArray(String[]::new));
+    }
+
+    private static String[] ordenado(String[] palavras) {
+        String[] copia = palavras.clone();
+        Arrays.sort(copia, String.CASE_INSENSITIVE_ORDER); // o ArrayWordList exige a lista ordenada
+        return copia;
+    }
+
+    private static String traduzir(String codigo) {
+        return switch (codigo) {
+            case "TOO_SHORT" -> "ter pelo menos " + TAMANHO_MINIMO + " caracteres";
+            case "TOO_LONG" -> "ter no maximo " + TAMANHO_MAXIMO + " caracteres";
+            case "INSUFFICIENT_LOWERCASE" -> "ter uma letra minuscula";
+            case "INSUFFICIENT_UPPERCASE" -> "ter uma letra maiuscula";
+            case "INSUFFICIENT_DIGIT" -> "ter um numero";
+            case "INSUFFICIENT_SPECIAL" -> "ter um simbolo (por exemplo ! @ # $ %)";
+            case "ILLEGAL_MATCH", "ILLEGAL_WORD" -> "nao ser uma senha comum";
+            case "ILLEGAL_WORD_SUBSTRING", "ILLEGAL_SUBSTRING" -> "nao conter seu nome ou e-mail";
+            case "ILLEGAL_REPEATED_CHARS", "ILLEGAL_REPEAT_CHARS" -> "nao ter " + REPETICAO_MAXIMA + " ou mais caracteres iguais seguidos";
+            default -> "cumprir as regras de seguranca";
+        };
     }
 }

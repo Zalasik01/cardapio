@@ -136,10 +136,8 @@ public class FuncionarioService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Funcionario nao encontrado"));
     }
 
+    /** O formato e os digitos verificadores ja foram validados pelo @CPF do request; aqui so normaliza. */
     private String validarCpf(String cpf) {
-        if (!Documentos.cpfValido(cpf)) {
-            throw new RegraNegocioException("CPF invalido");
-        }
         return Documentos.soDigitos(cpf);
     }
 
@@ -252,9 +250,8 @@ public class FuncionarioService {
                     filtros.add(cb.like(cpf, "%" + digitos + "%"));
                 }
             }
-            if (filtro.ativo() != null) {
-                filtros.add(cb.equal(root.get("ativo"), filtro.ativo()));
-            }
+            // por padrao so lista registros ativos; o filtro "Inativo" permite consultar os demais
+            filtros.add(cb.equal(root.get("ativo"), filtro.ativo() == null || filtro.ativo()));
 
             if (query.getResultType() != Long.class) {
                 query.orderBy(cb.asc(nome));

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
+import ModalSelecionarLoja from '../../components/ModalSelecionarLoja'
 
 const CHAVE_MENU_RECOLHIDO = 'cardapio_menu_recolhido'
 
@@ -16,6 +17,7 @@ export default function LayoutAdmin() {
   const [erroMenu, setErroMenu] = useState(null)
   const [abertas, setAbertas] = useState({})
   const [menuMobileAberto, setMenuMobileAberto] = useState(false)
+  const [trocandoLoja, setTrocandoLoja] = useState(false)
   const [recolhido, setRecolhido] = useState(() => {
     try {
       return localStorage.getItem(CHAVE_MENU_RECOLHIDO) === '1'
@@ -120,9 +122,17 @@ export default function LayoutAdmin() {
           <span className="menu-admin__loja-rotulo">Loja</span>
           <strong title={loja?.nome}>{loja?.nome}</strong>
         </div>
-        <Link to="/admin/selecionar-loja" className="menu-admin__trocar-loja" title="Trocar de loja">
+        <button
+          type="button"
+          className="menu-admin__trocar-loja"
+          title="Trocar de loja"
+          onClick={() => {
+            setMenuMobileAberto(false)
+            setTrocandoLoja(true)
+          }}
+        >
           <i className="fa-solid fa-repeat" aria-hidden="true" /> <span>Trocar de loja</span>
-        </Link>
+        </button>
 
         <nav aria-label="Menu principal" className="menu-admin__nav">
           {carregandoMenu && <MenuSkeleton />}
@@ -177,6 +187,16 @@ export default function LayoutAdmin() {
       <main className="conteudo-admin">
         <Outlet />
       </main>
+
+      {trocandoLoja && (
+        <ModalSelecionarLoja
+          aoFechar={() => setTrocandoLoja(false)}
+          aoSelecionar={() => {
+            setTrocandoLoja(false)
+            navigate('/admin')
+          }}
+        />
+      )}
     </div>
   )
 }

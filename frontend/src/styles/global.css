@@ -519,6 +519,38 @@ a {
   font-weight: 600;
 }
 
+.campo-senha {
+  position: relative;
+  display: block;
+}
+
+.campo-senha input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.campo-senha__alternar {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--cor-texto-suave);
+}
+
+.campo-senha__alternar:hover {
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+}
+
+.campo-senha__alternar:active {
+  transform: translateY(-50%);
+}
+
 /* ==========================================================================
    Painel administrativo
    ========================================================================== */
@@ -654,6 +686,11 @@ a {
 }
 
 .menu-admin__trocar-loja {
+  width: calc(100% - 0.5rem);
+  background: transparent;
+  text-align: left;
+  min-height: 40px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -932,25 +969,51 @@ a {
 /* ==========================================================================
    Selecao de loja
    ========================================================================== */
-.pagina-selecao {
-  min-height: 100vh;
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 3rem 1rem;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .painel-selecao {
   width: 100%;
   max-width: 520px;
+  max-height: calc(100vh - 2rem);
   background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
   border-radius: 14px;
-  box-shadow: var(--sombra);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.painel-selecao__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.painel-selecao__fechar {
+  color: var(--cor-texto-suave);
+  flex-shrink: 0;
+}
+
+.painel-selecao__fechar:hover {
+  background: var(--cor-primaria-suave);
+}
+
+.painel-selecao__lista {
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .painel-selecao__cabecalho h1 {

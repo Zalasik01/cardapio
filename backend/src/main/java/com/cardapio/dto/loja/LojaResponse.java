@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record LojaResponse(
+        Long id,
         UUID tenant,
         String nome,
         String slug,
@@ -30,7 +31,7 @@ public record LojaResponse(
 ) {
     public static LojaResponse of(S_Loja l) {
         return new LojaResponse(
-                l.getGuid(), l.getNome(), l.getSlug(), l.getSituacaoConta().name(), l.getTipoOrganizacao().name(),
+                l.getId(), l.getGuid(), l.getNome(), l.getSlug(), l.getSituacaoConta().name(), l.getTipoOrganizacao().name(),
                 l.getDescricao(), l.getTelefone(), l.getLogoUrl(),
                 l.getEnderecoRua(), l.getEnderecoNumero(), l.getEnderecoBairro(), l.getEnderecoCidade(),
                 l.getEnderecoEstado(), l.getEnderecoCep(), l.getLatitude(), l.getLongitude(),

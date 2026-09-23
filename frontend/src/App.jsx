@@ -11,7 +11,6 @@ import PaginaCheckout from './pages/cliente/PaginaCheckout'
 import PaginaConfirmacaoPedido from './pages/cliente/PaginaConfirmacaoPedido'
 
 import PaginaLogin from './pages/admin/PaginaLogin'
-import PaginaSelecionarLoja from './pages/admin/PaginaSelecionarLoja'
 import LayoutAdmin from './pages/admin/LayoutAdmin'
 import PaginaCategorias from './pages/admin/PaginaCategorias'
 import PaginaProdutos from './pages/admin/PaginaProdutos'
@@ -27,14 +26,6 @@ export default function App() {
           <Route path="/" element={<PaginaInicial />} />
 
           <Route path="/admin/login" element={<PaginaLogin />} />
-          <Route
-            path="/admin/selecionar-loja"
-            element={
-              <RotaProtegida exigirLoja={false}>
-                <PaginaSelecionarLoja />
-              </RotaProtegida>
-            }
-          />
           <Route
             path="/admin"
             element={

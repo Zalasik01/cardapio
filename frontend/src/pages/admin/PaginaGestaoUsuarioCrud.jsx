@@ -15,7 +15,7 @@ import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import DialogoLinkAcesso from '../../components/DialogoLinkAcesso'
 import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
-import { FormularioSkeleton } from '../../components/Skeleton'
+import { CrudSkeleton } from '../../components/Skeleton'
 
 const ROTA_LISTA = '/admin/gestao-usuarios'
 
@@ -157,7 +157,7 @@ export default function PaginaGestaoUsuarioCrud() {
           />
         )}
       >
-        {carregando ? <FormularioSkeleton campos={4} /> : conteudo}
+        {carregando ? <CrudSkeleton blocos={[[6, 6, 6]]} /> : conteudo}
       </CrudPagina>
 
       <DialogoAlterarEmail

@@ -24,3 +24,8 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+// esqueleto dos cadastros em blocos: título e grade de campos dentro do cartão
+.crud-skeleton__grade {
+  margin-top: 1rem;
+}

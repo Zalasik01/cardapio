@@ -22,6 +22,26 @@ export function FormularioSkeleton({ campos = 4 }) {
   )
 }
 
+/**
+ * Esqueleto dos cadastros em blocos: um cartão por bloco (mesma moldura das seções reais), com o título
+ * e a grade de campos. blocos: lista de blocos; cada bloco é a lista de larguras (colunas de 12) dos campos.
+ */
+export function CrudSkeleton({ blocos }) {
+  return blocos.map((campos, i) => (
+    <div key={i} className="secao-crud" aria-busy="true" aria-label="Carregando bloco do cadastro">
+      <Skeleton largura="9rem" altura="1.1rem" raio="6px" />
+      <div className="grade-campos crud-skeleton__grade">
+        {campos.map((tamanho, j) => (
+          <div key={j} className={`campo campo--${tamanho} skeleton-campo`}>
+            <Skeleton largura="35%" altura="0.8rem" />
+            <Skeleton altura="2.4rem" raio="6px" />
+          </div>
+        ))}
+      </div>
+    </div>
+  ))
+}
+
 export function MenuSkeleton() {
   return (
     <div className="menu-skeleton" aria-busy="true" aria-label="Carregando menu">

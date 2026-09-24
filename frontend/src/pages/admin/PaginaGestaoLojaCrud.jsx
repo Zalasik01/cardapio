@@ -14,7 +14,7 @@ import Endereco from '../../components/crud/Endereco'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import SecaoMensalidades from '../../components/gestao/SecaoMensalidades'
-import { FormularioSkeleton } from '../../components/Skeleton'
+import { CrudSkeleton } from '../../components/Skeleton'
 import { buscarEmpresaPorCnpj } from '../../api/cnpjApi'
 import { formatarCnpj, soDigitos } from '../../utils/formatadores'
 import { ENDERECO_VAZIO } from '../../utils/pessoa'
@@ -278,7 +278,7 @@ export default function PaginaGestaoLojaCrud() {
           />
         )}
       >
-        {carregando ? <FormularioSkeleton campos={6} /> : conteudo}
+        {carregando ? <CrudSkeleton blocos={[[4, 4, 4, 4, 4, 4, 12, 12], [2, 5, 2, 3, 5, 5, 2], [6, 6, 12], [3, 3, 12]]} /> : conteudo}
       </CrudPagina>
     </form>
   )

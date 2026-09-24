@@ -21,7 +21,7 @@ import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import DialogoCpfExistente from '../../components/crud/DialogoCpfExistente'
 import SecaoContatos from '../../components/crud/SecaoContatos'
-import { FormularioSkeleton } from '../../components/Skeleton'
+import { CrudSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCnpj, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
 import {
   emailsParaFormulario, emailsParaRequisicao, ENDERECO_VAZIO, enderecoParaFormulario, enderecoParaRequisicao,
@@ -413,7 +413,7 @@ export default function PaginaPessoaCrud() {
           />
         )}
       >
-        {carregando ? <FormularioSkeleton campos={6} /> : conteudo}
+        {carregando ? <CrudSkeleton blocos={[[12, 4, 8, 3, 3, 6, 12, 4, 3, 2, 3, 12], [2, 5, 2, 3, 5, 5, 2], [6, 6]]} /> : conteudo}
       </CrudPagina>
     </form>
   )

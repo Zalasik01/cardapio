@@ -20,7 +20,7 @@ import Endereco from '../../components/crud/Endereco'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import SecaoContatos from '../../components/crud/SecaoContatos'
-import { FormularioSkeleton } from '../../components/Skeleton'
+import { CrudSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
 import {
   emailsParaFormulario, emailsParaRequisicao, ENDERECO_VAZIO, enderecoParaFormulario, enderecoParaRequisicao,
@@ -304,7 +304,7 @@ export default function PaginaFuncionarioCrud() {
           />
         )}
       >
-        {carregando ? <FormularioSkeleton campos={6} /> : conteudo}
+        {carregando ? <CrudSkeleton blocos={[[12, 12, 3, 3, 6, 12, 5, 4, 3, 4, 3, 2, 3, 12], [2, 5, 2, 3, 5, 5, 2], [6, 6]]} /> : conteudo}
       </CrudPagina>
     </form>
   )

@@ -20,12 +20,12 @@ function salvarLinha(lista, linha) {
 }
 
 /**
- * Seção "Contatos" dos cadastros de pessoa: tabelas de telefones e e-mails, com inclusão e
+ * Bloco "Contatos" dos cadastros (funcionário, cliente/fornecedor, loja...): tabelas de telefones e e-mails, com inclusão e
  * edição em modal (o cadastro não tem scroll lateral).
  *
  * Props: telefones, emails (linhas com _id) e aoAlterar('telefones' | 'emails', novaLista).
  */
-export default function SecaoContatos({ telefones, emails, aoAlterar }) {
+export default function Contatos({ telefones, emails, aoAlterar }) {
   const [dialogoTelefone, setDialogoTelefone] = useState(null) // { _id?, tipo, numero, observacao }
   const [dialogoEmail, setDialogoEmail] = useState(null) // { _id?, email, observacao }
 

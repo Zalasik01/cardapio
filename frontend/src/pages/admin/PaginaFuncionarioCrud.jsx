@@ -19,7 +19,7 @@ import CampoAtivo from '../../components/crud/CampoAtivo'
 import Endereco from '../../components/crud/Endereco'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
-import SecaoContatos from '../../components/crud/SecaoContatos'
+import Contatos from '../../components/crud/Contatos'
 import { CrudSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
 import {
@@ -283,7 +283,7 @@ export default function PaginaFuncionarioCrud() {
         aoCancelar={cancelarCpfExistente}
       />
       <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} />
-      <SecaoContatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
+      <Contatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
     </>
   )
 

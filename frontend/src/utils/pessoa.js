@@ -55,3 +55,30 @@ export const telefonesParaRequisicao = (telefones) =>
 
 export const emailsParaRequisicao = (emails) =>
   emails.filter((e) => e.email).map(({ email, observacao }) => ({ email, observacao }))
+
+/** Telefone da BrasilAPI (DDD + número, só dígitos): 9 dígitos após o DDD é celular. */
+function telefoneDaEmpresa(numero) {
+  const digitos = String(numero).replace(/\D/g, '')
+  const celular = digitos.length === 11
+  return {
+    tipo: celular ? 'CELULAR' : 'COMERCIAL',
+    numero: celular
+      ? digitos.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+      : digitos.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3'),
+    observacao: '',
+  }
+}
+
+/** Soma aos contatos do formulário os da empresa consultada, sem repetir telefone nem e-mail já cadastrados. */
+export function mesclarContatosDaEmpresa(telefones, emails, empresa) {
+  const jaCadastrados = telefones.map((t) => String(t.numero).replace(/\D/g, ''))
+  const novosTelefones = empresa.telefones
+    .map(telefoneDaEmpresa)
+    .filter((t) => !jaCadastrados.includes(t.numero.replace(/\D/g, '')))
+    .map((t) => ({ ...t, _id: idLocal() }))
+  const emailNovo = empresa.email && !emails.some((e) => e.email.toLowerCase() === empresa.email.toLowerCase())
+  return {
+    telefones: [...telefones, ...novosTelefones],
+    emails: emailNovo ? [...emails, { email: empresa.email.toLowerCase(), observacao: '', _id: idLocal() }] : emails,
+  }
+}

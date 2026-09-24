@@ -53,3 +53,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// observação truncada + olho (tooltip com o texto completo; clicar copia)
+.observacao-celula {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  .celula-truncada {
+    max-width: 10rem;
+  }
+}
+
+.tooltip-observacao {
+  max-width: 24rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

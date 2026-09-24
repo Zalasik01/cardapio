@@ -20,12 +20,12 @@ import Endereco from '../../components/crud/Endereco'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import DialogoCpfExistente from '../../components/crud/DialogoCpfExistente'
-import SecaoContatos from '../../components/crud/SecaoContatos'
+import Contatos from '../../components/crud/Contatos'
 import { CrudSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCnpj, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
 import {
   emailsParaFormulario, emailsParaRequisicao, ENDERECO_VAZIO, enderecoParaFormulario, enderecoParaRequisicao,
-  ESTADOS_CIVIS, idLocal, SEXOS, telefonesParaFormulario, telefonesParaRequisicao,
+  ESTADOS_CIVIS, mesclarContatosDaEmpresa, SEXOS, telefonesParaFormulario, telefonesParaRequisicao,
 } from '../../utils/pessoa'
 
 const ROTA_LISTA = '/admin/pessoas'
@@ -114,14 +114,6 @@ function paraRequisicao(form) {
   }
 }
 
-/** Telefone da BrasilAPI (DDD + número, só dígitos): 9 dígitos após o DDD é celular. */
-function telefoneDaEmpresa(numero) {
-  const digitos = soDigitos(numero)
-  return { tipo: digitos.length === 11 ? 'CELULAR' : 'COMERCIAL', numero: digitos.length === 11
-    ? digitos.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-    : digitos.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3'), observacao: '' }
-}
-
 /** Cadastro de cliente/fornecedor: /admin/pessoas/novo e /admin/pessoas/:id. */
 export default function PaginaPessoaCrud() {
   const { id } = useParams()
@@ -208,22 +200,12 @@ export default function PaginaPessoaCrud() {
         return
       }
       setForm((atual) => {
-        const numerosJaCadastrados = atual.telefones.map((t) => soDigitos(t.numero))
-        const novosTelefones = empresa.telefones
-          .map(telefoneDaEmpresa)
-          .filter((t) => !numerosJaCadastrados.includes(soDigitos(t.numero)))
-          .map((t) => ({ ...t, _id: idLocal() }))
-        const emailNovo = empresa.email
-          && !atual.emails.some((e) => e.email.toLowerCase() === empresa.email.toLowerCase())
         return {
           ...atual,
           razaoSocial: empresa.razaoSocial || atual.razaoSocial,
           nomeFantasia: empresa.nomeFantasia || atual.nomeFantasia,
           endereco: { ...atual.endereco, ...empresa.endereco },
-          telefones: [...atual.telefones, ...novosTelefones],
-          emails: emailNovo
-            ? [...atual.emails, { email: empresa.email.toLowerCase(), observacao: '', _id: idLocal() }]
-            : atual.emails,
+          ...mesclarContatosDaEmpresa(atual.telefones, atual.emails, empresa),
         }
       })
       if (empresa.situacao && empresa.situacao.toUpperCase() !== 'ATIVA') {
@@ -391,7 +373,7 @@ export default function PaginaPessoaCrud() {
         aoCancelar={cancelarCpfExistente}
       />
       <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} />
-      <SecaoContatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
+      <Contatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
     </>
   )
 

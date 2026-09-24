@@ -180,3 +180,60 @@
     padding-top: 1rem;
   }
 }
+
+// Bloco de anotações: campo para escrever e lista com autor, data e ações
+.anotacoes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.anotacoes__nova {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.anotacoes__nova textarea {
+  width: 100%;
+}
+
+.anotacoes__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.anotacao {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cor-borda);
+  border-left: 3px solid var(--cor-primaria);
+  border-radius: 3px;
+  background: var(--cor-fundo);
+}
+
+.anotacao__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  small {
+    color: var(--cor-texto-suave);
+  }
+}
+
+.anotacao__acoes {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.anotacao__texto {
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

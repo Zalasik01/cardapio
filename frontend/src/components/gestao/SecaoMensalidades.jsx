@@ -120,6 +120,16 @@ export default function SecaoMensalidades({ lojaId, valorMensalidade, diaVencime
     }
   }
 
+  /** Copia a observação completa (o texto da tabela fica truncado). */
+  async function copiarObservacao(texto) {
+    try {
+      await navigator.clipboard.writeText(texto)
+      dispatchMsgSuccess('Observação copiada')
+    } catch {
+      dispatchMsgError('Não foi possível copiar a observação.')
+    }
+  }
+
   async function registrarPagamento(m) {
     try {
       await atualizarMensalidade(lojaId, m.id, {
@@ -180,6 +190,15 @@ export default function SecaoMensalidades({ lojaId, valorMensalidade, diaVencime
             <Column header="Valor" body={(m) => formatarMoeda(m.valor)} />
             <Column header="Situação" body={(m) => <SeloSituacao mensalidade={m} />} />
             <Column header="Pago em" body={(m) => formatarData(m.dataPagamento)} />
+            <Column header="Observação" body={(m) => (m.observacao ? (
+              <span className="observacao-celula">
+                <span className="celula-truncada">{m.observacao}</span>
+                <Button type="button" icon="pi pi-eye" rounded text severity="secondary" size="small"
+                        aria-label="Copiar observação" tooltip={m.observacao}
+                        tooltipOptions={{ position: 'top', className: 'tooltip-observacao' }}
+                        onClick={() => copiarObservacao(m.observacao)} />
+              </span>
+            ) : '—')} />
             <Column style={{ width: '9rem', textAlign: 'right' }} body={(m) => (
               <span className="contato-acoes">
                 {m.situacao === 'PENDENTE' && (

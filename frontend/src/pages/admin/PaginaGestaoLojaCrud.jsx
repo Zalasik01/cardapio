@@ -6,10 +6,13 @@ import { InputText } from 'primereact/inputtext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import {
-  atualizarLojaGestao, criarLojaGestao, excluirLojaGestao, obterLojaGestao,
+  atualizarAnotacao, atualizarLojaGestao, criarAnotacao, criarLojaGestao, excluirAnotacao, excluirLojaGestao,
+  listarAnotacoes, obterLojaGestao,
 } from '../../api/gestaoLojasApi'
 import CrudPagina from '../../components/crud/CrudPagina'
 import CampoAtivo from '../../components/crud/CampoAtivo'
+import Anotacoes from '../../components/crud/Anotacoes'
+import Contatos from '../../components/crud/Contatos'
 import Endereco from '../../components/crud/Endereco'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
@@ -17,7 +20,10 @@ import SecaoMensalidades from '../../components/gestao/SecaoMensalidades'
 import { CrudSkeleton } from '../../components/Skeleton'
 import { buscarEmpresaPorCnpj } from '../../api/cnpjApi'
 import { formatarCnpj, soDigitos } from '../../utils/formatadores'
-import { ENDERECO_VAZIO } from '../../utils/pessoa'
+import {
+  emailsParaFormulario, emailsParaRequisicao, ENDERECO_VAZIO, mesclarContatosDaEmpresa, telefonesParaFormulario,
+  telefonesParaRequisicao,
+} from '../../utils/pessoa'
 import { SITUACOES_CONTA, TIPOS_ORGANIZACAO } from '../../utils/loja'
 
 const ROTA_LISTA = '/admin/gestao-lojas'
@@ -25,7 +31,9 @@ const ROTA_LISTA = '/admin/gestao-lojas'
 const ANCORAS = [
   { id: 'secao-principal', titulo: 'Principal' },
   { id: 'secao-endereco', titulo: 'Endereço' },
+  { id: 'secao-contatos', titulo: 'Contatos' },
   { id: 'secao-mensalidades', titulo: 'Mensalidades' },
+  { id: 'secao-anotacoes', titulo: 'Anotações' },
 ]
 
 const FORM_VAZIO = {
@@ -36,9 +44,10 @@ const FORM_VAZIO = {
   tipoOrganizacao: 'RESTAURANTE',
   situacaoConta: 'TRIAL',
   descricao: '',
-  telefone: '',
   logoUrl: '',
   endereco: ENDERECO_VAZIO,
+  telefones: [],
+  emails: [],
   valorMensalidade: 0,
   diaVencimento: null,
 }
@@ -53,7 +62,6 @@ function paraFormulario(loja) {
     tipoOrganizacao: loja.tipoOrganizacao,
     situacaoConta: loja.situacaoConta,
     descricao: loja.descricao ?? '',
-    telefone: loja.telefone ?? '',
     logoUrl: loja.logoUrl ?? '',
     endereco: {
       cep: loja.enderecoCep ?? '',
@@ -64,6 +72,8 @@ function paraFormulario(loja) {
       cidade: loja.enderecoCidade ?? '',
       estado: loja.enderecoEstado ?? null,
     },
+    telefones: telefonesParaFormulario(loja.telefones),
+    emails: emailsParaFormulario(loja.emails),
     valorMensalidade: loja.valorMensalidade ?? 0,
     diaVencimento: loja.diaVencimento,
   }
@@ -78,7 +88,6 @@ function paraRequisicao(form) {
     tipoOrganizacao: form.tipoOrganizacao,
     situacaoConta: form.situacaoConta,
     descricao: form.descricao,
-    telefone: form.telefone,
     logoUrl: form.logoUrl,
     enderecoCep: form.endereco.cep,
     enderecoRua: form.endereco.logradouro,
@@ -87,6 +96,8 @@ function paraRequisicao(form) {
     enderecoBairro: form.endereco.bairro,
     enderecoCidade: form.endereco.cidade,
     enderecoEstado: form.endereco.estado ?? '',
+    telefones: telefonesParaRequisicao(form.telefones),
+    emails: emailsParaRequisicao(form.emails),
     valorMensalidade: form.valorMensalidade,
     diaVencimento: form.diaVencimento,
   }
@@ -129,6 +140,7 @@ export default function PaginaGestaoLojaCrud() {
 
   const definir = (campo) => (valor) => setForm((atual) => ({ ...atual, [campo]: valor }))
   const definirTexto = (campo) => (e) => definir(campo)(e.target.value)
+  const alterarContatos = (lista, novaLista) => setForm((atual) => ({ ...atual, [lista]: novaLista }))
   const alterarEndereco = (campos) => setForm((atual) => ({
     ...atual,
     endereco: { ...atual.endereco, ...(typeof campos === 'function' ? campos(atual.endereco) : campos) },
@@ -146,14 +158,13 @@ export default function PaginaGestaoLojaCrud() {
         return
       }
       const nome = empresa.nomeFantasia || empresa.razaoSocial
-      const telefone = soDigitos(empresa.telefones[0])
       setForm((atual) => ({
         ...atual,
         nome: atual.nome || nome,
         slug: slugEditadoManualmente || atual.slug ? atual.slug : sugerirSlug(nome),
         descricao: atual.descricao || empresa.razaoSocial,
-        telefone: atual.telefone || (telefone.length === 11 ? telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : ''),
         endereco: { ...atual.endereco, ...empresa.endereco },
+        ...mesclarContatosDaEmpresa(atual.telefones, atual.emails, empresa),
       }))
       if (empresa.situacao && empresa.situacao.toUpperCase() !== 'ATIVA') {
         dispatchMsgWarn(`Situação cadastral na Receita: ${empresa.situacao}`)
@@ -228,17 +239,13 @@ export default function PaginaGestaoLojaCrud() {
                        onChange={(e) => { setSlugEditadoManualmente(true); definir('slug')(e.target.value) }} />
           </Campo>
 
-          <Campo id="tipo-organizacao" rotulo="Tipo de organização" obrigatorio tamanho={4}>
+          <Campo id="tipo-organizacao" rotulo="Tipo de organização" obrigatorio tamanho={6}>
             <Dropdown inputId="tipo-organizacao" value={form.tipoOrganizacao} options={TIPOS_ORGANIZACAO}
                       optionLabel="rotulo" optionValue="valor" onChange={(e) => definir('tipoOrganizacao')(e.value)} />
           </Campo>
-          <Campo id="situacao-conta" rotulo="Situação da conta" obrigatorio tamanho={4}>
+          <Campo id="situacao-conta" rotulo="Situação da conta" obrigatorio tamanho={6}>
             <Dropdown inputId="situacao-conta" value={form.situacaoConta} options={SITUACOES_CONTA}
                       optionLabel="rotulo" optionValue="valor" onChange={(e) => definir('situacaoConta')(e.value)} />
-          </Campo>
-          <Campo id="telefone" rotulo="Telefone" tamanho={4}>
-            <InputMask id="telefone" mask="(99) 99999-9999" autoClear={false} value={form.telefone}
-                       onChange={(e) => definir('telefone')(e.target.value ?? '')} />
           </Campo>
 
           <Campo id="descricao" rotulo="Descrição">
@@ -252,11 +259,19 @@ export default function PaginaGestaoLojaCrud() {
 
       <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} />
 
+      <Contatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
       <SecaoMensalidades
         lojaId={editando ? Number(id) : undefined}
         valorMensalidade={form.valorMensalidade}
         diaVencimento={form.diaVencimento}
         aoAlterarConfig={(campo, valor) => definir(campo)(valor)}
+      />
+      <Anotacoes
+        registroId={editando ? Number(id) : undefined}
+        listar={listarAnotacoes}
+        criar={criarAnotacao}
+        atualizar={atualizarAnotacao}
+        excluir={excluirAnotacao}
       />
     </>
   )

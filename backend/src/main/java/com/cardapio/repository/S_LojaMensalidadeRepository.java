@@ -45,4 +45,14 @@ public interface S_LojaMensalidadeRepository extends JpaRepository<S_LojaMensali
             + "and m.situacao = com.cardapio.entity.SituacaoMensalidade.PENDENTE and m.dataVencimento < :hoje "
             + "order by m.dataVencimento asc")
     List<S_LojaMensalidade> atrasadas(@Param("hoje") LocalDate hoje, Pageable pagina);
+
+    @Query("select coalesce(sum(m.valor), 0) from S_LojaMensalidade m where m.deletado = false "
+            + "and m.situacao = com.cardapio.entity.SituacaoMensalidade.PAGA "
+            + "and m.dataPagamento between :inicio and :fim")
+    BigDecimal somarPagasNoPeriodo(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("select count(m) from S_LojaMensalidade m where m.deletado = false "
+            + "and m.situacao = com.cardapio.entity.SituacaoMensalidade.PAGA "
+            + "and m.dataPagamento between :inicio and :fim")
+    long contarPagasNoPeriodo(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 }

@@ -6,6 +6,7 @@ import com.cardapio.dto.gestao.GestaoDashboardResponse.Mensalidades;
 import com.cardapio.dto.gestao.GestaoDashboardResponse.Quantidade;
 import com.cardapio.dto.gestao.GestaoDashboardResponse.Usuarios;
 import com.cardapio.dto.gestao.GestaoDashboardResponse.Vencimento;
+import com.cardapio.dto.gestao.RecebimentosResponse;
 import com.cardapio.entity.S_LojaMensalidade;
 import com.cardapio.entity.SituacaoConta;
 import com.cardapio.entity.SituacaoMensalidade;
@@ -64,6 +65,15 @@ public class GestaoDashboardService {
                         .map(this::vencimento).toList(),
                 mensalidadeRepository.atrasadas(hoje, PageRequest.of(0, ITENS_LISTA)).stream()
                         .map(this::vencimento).toList());
+    }
+
+    /** Widget de período: mensalidades pagas entre inicio e fim (no máximo 90 dias). */
+    @Transactional(readOnly = true)
+    public RecebimentosResponse recebimentos(LocalDate inicio, LocalDate fim) {
+        PeriodoFiltro.validar(inicio, fim);
+        return new RecebimentosResponse(inicio, fim,
+                mensalidadeRepository.somarPagasNoPeriodo(inicio, fim),
+                mensalidadeRepository.contarPagasNoPeriodo(inicio, fim));
     }
 
     private java.math.BigDecimal somaDaCompetencia(LocalDate competencia, SituacaoMensalidade situacao) {

@@ -54,6 +54,34 @@
 }
 
 // Gestão Interna > Dashboards: blocos com distribuição por categoria e listas de vencimentos
+// ícone "!" com tooltip explicando o número ou gráfico
+.dica {
+  color: var(--cor-texto-suave);
+  cursor: help;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.dica:hover,
+.dica:focus-visible {
+  color: var(--cor-primaria);
+}
+
+.cartao-resumo {
+  position: relative;
+}
+
+.cartao-resumo > .dica {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+}
+
+.dica__tooltip {
+  max-width: 18rem;
+  font-size: 0.8rem;
+}
+
 .cartao-resumo__apoio {
   display: block;
   color: var(--cor-texto-suave);
@@ -72,6 +100,10 @@
   box-shadow: var(--sombra);
 
   h2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
     font-size: 1rem;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;

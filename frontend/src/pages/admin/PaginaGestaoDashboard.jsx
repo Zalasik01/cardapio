@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { obterDashboardGestao } from '../../api/gestaoDashboardApi'
+import Dica from '../../components/Dica'
 import { Skeleton } from '../../components/Skeleton'
 import { dispatchMsgError } from '../../store/dispatchMsg'
 import { formatarMoeda, isoParaData } from '../../utils/formatadores'
@@ -10,9 +11,10 @@ const formatarData = (iso) => isoParaData(iso).toLocaleDateString('pt-BR')
 const nomeMes = (iso) => isoParaData(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
 /** Cartão de número: rótulo, valor e uma linha de apoio opcional. */
-function Cartao({ rotulo, valor, apoio, icone, carregando }) {
+function Cartao({ rotulo, valor, apoio, icone, dica, carregando }) {
   return (
     <div className="cartao-resumo">
+      <Dica texto={dica} />
       <span className="cartao-resumo__icone" aria-hidden="true"><i className={icone} /></span>
       <div>
         <span className="cartao-resumo__rotulo">{rotulo}</span>
@@ -86,42 +88,54 @@ export default function PaginaGestaoDashboard() {
   const { lojas, mensalidades, usuarios } = dados ?? { lojas: {}, mensalidades: {}, usuarios: {} }
 
   const cartoes = [
-    { rotulo: 'Lojas', valor: lojas.total, apoio: `${lojas.ativas} ativas · ${lojas.inativas} inativas`, icone: 'fa-solid fa-store' },
+    {
+      rotulo: 'Lojas',
+      valor: lojas.total,
+      apoio: `${lojas.ativas} ativas · ${lojas.inativas} inativas`,
+      icone: 'fa-solid fa-store',
+      dica: 'Total de lojas cadastradas (não excluídas). Inativas não aparecem nas listas por padrão.',
+    },
     {
       rotulo: 'Receita recorrente',
       valor: formatarMoeda(mensalidades.receitaRecorrente),
       apoio: 'Mensalidades das lojas com conta ativa',
       icone: 'fa-solid fa-sack-dollar',
+      dica: 'Soma da mensalidade padrão das lojas ativas com conta ATIVA: quanto a plataforma deveria faturar por mês.',
     },
     {
       rotulo: 'Recebido no mês',
       valor: formatarMoeda(mensalidades.recebido),
       apoio: `de ${formatarMoeda(mensalidades.previsto)} previstos`,
       icone: 'fa-solid fa-circle-check',
+      dica: 'Mensalidades do mês corrente já pagas. Embaixo, o total previsto (pagas + pendentes do mês).',
     },
     {
       rotulo: 'A receber no mês',
       valor: formatarMoeda(mensalidades.pendente),
       apoio: mensalidades.competencia && nomeMes(mensalidades.competencia),
       icone: 'fa-solid fa-hourglass-half',
+      dica: 'Mensalidades do mês corrente que ainda estão pendentes de pagamento.',
     },
     {
       rotulo: 'Mensalidades atrasadas',
       valor: mensalidades.quantidadeAtrasadas,
       apoio: formatarMoeda(mensalidades.valorAtrasadas),
       icone: 'fa-solid fa-triangle-exclamation',
+      dica: 'Mensalidades pendentes com o vencimento já passado (de qualquer mês) e o valor somado.',
     },
     {
       rotulo: 'Sem mensalidade no mês',
       valor: mensalidades.lojasSemLancamento,
       apoio: 'Lojas ativas ou inadimplentes',
       icone: 'fa-solid fa-file-circle-question',
+      dica: 'Lojas ativas, com conta ativa ou inadimplente, que ainda não têm a mensalidade do mês lançada.',
     },
     {
       rotulo: 'Usuários internos',
       valor: usuarios.internos,
       apoio: `${usuarios.administradores} administradores · ${usuarios.pendentes} pendentes`,
       icone: 'fa-solid fa-user-shield',
+      dica: 'Equipe da plataforma: usuários de suporte e administradores. Pendentes ainda não definiram a senha.',
     },
   ]
 
@@ -136,20 +150,32 @@ export default function PaginaGestaoDashboard() {
 
       <div className="blocos-dashboard">
         <section className="bloco-dashboard">
-          <h2>Lojas por situação da conta</h2>
+          <h2>
+            Lojas por situação da conta
+            <Dica texto="Quantas lojas há em cada situação: período de teste, ativa, inadimplente, bloqueada ou cancelada." />
+          </h2>
           <Barras itens={dados?.lojas.porSituacao ?? []} rotulo={rotuloSituacaoConta} carregando={carregando} />
         </section>
         <section className="bloco-dashboard">
-          <h2>Lojas por tipo de organização</h2>
+          <h2>
+            Lojas por tipo de organização
+            <Dica texto="Distribuição das lojas por tipo de estabelecimento (restaurante, pizzaria, cafeteria...)." />
+          </h2>
           <Barras itens={dados?.lojas.porTipo ?? []} rotulo={rotuloTipoOrganizacao} carregando={carregando} />
         </section>
         <section className="bloco-dashboard">
-          <h2>Próximos vencimentos</h2>
+          <h2>
+            Próximos vencimentos
+            <Dica texto="As 5 próximas mensalidades pendentes a vencer, da mais próxima para a mais distante. Clique na loja para abrir." />
+          </h2>
           <ListaVencimentos itens={dados?.proximosVencimentos ?? []} carregando={carregando}
                             vazio="Nenhuma mensalidade a vencer." />
         </section>
         <section className="bloco-dashboard">
-          <h2>Mensalidades atrasadas</h2>
+          <h2>
+            Mensalidades atrasadas
+            <Dica texto="As 5 mensalidades pendentes vencidas há mais tempo. Clique na loja para registrar o pagamento." />
+          </h2>
           <ListaVencimentos itens={dados?.atrasadas ?? []} carregando={carregando}
                             vazio="Nenhuma mensalidade atrasada." />
         </section>

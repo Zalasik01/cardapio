@@ -28,7 +28,7 @@ public class MenuService {
      * delas, as paginas filhas (id_pagina_pai), todas ordenadas por "ordem".
      */
     @Transactional(readOnly = true)
-    public List<CategoriaMenuResponse> montarMenu() {
+    public List<CategoriaMenuResponse> montarMenu(boolean usuarioAdministrador) {
         List<S_Pagina> paginas = paginaRepository.findByAtivoTrueAndDeletadoFalseOrderByOrdemAsc();
 
         Map<Long, List<S_Pagina>> filhasPorPai = paginas.stream()
@@ -39,6 +39,8 @@ public class MenuService {
                 .collect(Collectors.groupingBy(pagina -> pagina.getCategoriaMenu().getId()));
 
         return categoriaMenuRepository.findByAtivoTrueAndDeletadoFalseOrderByOrdemAsc().stream()
+                // categorias de gestao interna so existem no menu de quem administra a plataforma
+                .filter(categoria -> usuarioAdministrador || !categoria.isSomenteAdministrador())
                 .map(categoria -> CategoriaMenuResponse.of(
                         categoria,
                         raizesPorCategoria.getOrDefault(categoria.getId(), List.of()).stream()

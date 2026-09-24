@@ -18,6 +18,7 @@ import java.util.UUID;
 public class AppUserDetails implements UserDetails {
 
     public static final String PAPEL_USUARIO = "ROLE_USUARIO";
+    public static final String PAPEL_ADMINISTRADOR = "ROLE_ADMINISTRADOR_PLATAFORMA";
 
     private final S_Usuario usuario;
     private final UUID tenant;
@@ -35,7 +36,10 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(perfil));
+        // o papel de administrador vem do cadastro do usuario a cada requisicao, nunca do token
+        return usuario.isUsuarioAdministrador()
+                ? List.of(new SimpleGrantedAuthority(perfil), new SimpleGrantedAuthority(PAPEL_ADMINISTRADOR))
+                : List.of(new SimpleGrantedAuthority(perfil));
     }
 
     @Override

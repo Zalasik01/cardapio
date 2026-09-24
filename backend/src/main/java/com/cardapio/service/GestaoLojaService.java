@@ -1,0 +1,138 @@
+package com.cardapio.service;
+
+import com.cardapio.dto.PaginaResponse;
+import com.cardapio.dto.gestao.FiltroLojaGestao;
+import com.cardapio.dto.gestao.LojaGestaoRequest;
+import com.cardapio.dto.gestao.LojaGestaoResponse;
+import com.cardapio.dto.gestao.LojaGestaoResumoResponse;
+import com.cardapio.entity.S_Loja;
+import com.cardapio.exception.RecursoNaoEncontradoException;
+import com.cardapio.exception.RegraNegocioException;
+import com.cardapio.repository.S_LojaRepository;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/** Gestão Interna: cadastro das lojas da plataforma (s_loja). Só o usuário administrador acessa (SecurityConfig). */
+@Service
+@RequiredArgsConstructor
+public class GestaoLojaService {
+
+    private static final int TAMANHO_MAXIMO_PAGINA = 50;
+
+    private final S_LojaRepository lojaRepository;
+
+    @Transactional(readOnly = true)
+    public PaginaResponse<LojaGestaoResumoResponse> buscar(FiltroLojaGestao filtro, int pagina, int tamanho) {
+        int tamanhoLimitado = Math.min(Math.max(tamanho, 1), TAMANHO_MAXIMO_PAGINA);
+        var resultado = lojaRepository.findAll(especificacao(filtro), PageRequest.of(Math.max(pagina, 0), tamanhoLimitado));
+        return PaginaResponse.of(resultado, LojaGestaoResumoResponse::of);
+    }
+
+    @Transactional(readOnly = true)
+    public LojaGestaoResponse obter(Long id) {
+        return LojaGestaoResponse.of(buscarLoja(id));
+    }
+
+    @Transactional
+    public LojaGestaoResponse criar(LojaGestaoRequest request) {
+        if (lojaRepository.existsBySlug(request.slug())) {
+            throw new RegraNegocioException("Já existe uma loja com o endereço (slug): " + request.slug());
+        }
+        S_Loja loja = S_Loja.builder().build();
+        preencher(loja, request);
+        return LojaGestaoResponse.of(lojaRepository.save(loja));
+    }
+
+    @Transactional
+    public LojaGestaoResponse atualizar(Long id, LojaGestaoRequest request) {
+        S_Loja loja = buscarLoja(id);
+        if (!loja.getSlug().equals(request.slug()) && lojaRepository.existsBySlug(request.slug())) {
+            throw new RegraNegocioException("Já existe uma loja com o endereço (slug): " + request.slug());
+        }
+        preencher(loja, request);
+        return LojaGestaoResponse.of(lojaRepository.save(loja));
+    }
+
+    /** Exclusão lógica; o slug é liberado para uma nova loja usá-lo. */
+    @Transactional
+    public void excluir(Long id) {
+        S_Loja loja = buscarLoja(id);
+        loja.setSlug(loja.getSlug() + "-excluida-" + loja.getId());
+        loja.setDeletado(true);
+        loja.setAtivo(false);
+        lojaRepository.save(loja);
+    }
+
+    private S_Loja buscarLoja(Long id) {
+        return lojaRepository.findById(id)
+                .filter(loja -> !loja.isDeletado())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja não encontrada"));
+    }
+
+    private void preencher(S_Loja loja, LojaGestaoRequest r) {
+        if (r.ativo() != null) {
+            loja.setAtivo(r.ativo());
+        }
+        loja.setNome(r.nome().trim());
+        loja.setSlug(r.slug());
+        loja.setTipoOrganizacao(r.tipoOrganizacao());
+        loja.setSituacaoConta(r.situacaoConta());
+        loja.setDescricao(vazioParaNulo(r.descricao()));
+        loja.setTelefone(vazioParaNulo(r.telefone()));
+        loja.setLogoUrl(vazioParaNulo(r.logoUrl()));
+        loja.setEnderecoRua(vazioParaNulo(r.enderecoRua()));
+        loja.setEnderecoNumero(vazioParaNulo(r.enderecoNumero()));
+        loja.setEnderecoBairro(vazioParaNulo(r.enderecoBairro()));
+        loja.setEnderecoCidade(vazioParaNulo(r.enderecoCidade()));
+        String estado = vazioParaNulo(r.enderecoEstado());
+        loja.setEnderecoEstado(estado == null ? null : estado.toUpperCase(Locale.ROOT));
+        loja.setEnderecoCep(vazioParaNulo(r.enderecoCep()));
+        loja.setLatitude(r.latitude());
+        loja.setLongitude(r.longitude());
+        loja.setTaxaEntregaBase(r.taxaEntregaBase() != null ? r.taxaEntregaBase() : BigDecimal.ZERO);
+        loja.setTaxaEntregaPorKm(r.taxaEntregaPorKm() != null ? r.taxaEntregaPorKm() : BigDecimal.ZERO);
+        loja.setDistanciaMaximaEntregaKm(r.distanciaMaximaEntregaKm());
+        loja.setValorMinimoPedido(r.valorMinimoPedido() != null ? r.valorMinimoPedido() : BigDecimal.ZERO);
+    }
+
+    private Specification<S_Loja> especificacao(FiltroLojaGestao filtro) {
+        return (root, query, cb) -> {
+            List<Predicate> filtros = new ArrayList<>();
+            filtros.add(cb.isFalse(root.get("deletado")));
+            // por padrão só lista lojas ativas; "Mostrar inativos" inclui as demais
+            if (!filtro.mostrarInativos()) {
+                filtros.add(cb.isTrue(root.get("ativo")));
+            }
+            if (filtro.busca() != null && !filtro.busca().isBlank()) {
+                String padrao = "%" + filtro.busca().trim().toLowerCase(Locale.ROOT)
+                        .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                filtros.add(cb.or(
+                        cb.like(cb.lower(root.get("nome")), padrao, '\\'),
+                        cb.like(cb.lower(root.get("slug")), padrao, '\\')));
+            }
+            if (filtro.situacaoConta() != null) {
+                filtros.add(cb.equal(root.get("situacaoConta"), filtro.situacaoConta()));
+            }
+            if (filtro.tipoOrganizacao() != null) {
+                filtros.add(cb.equal(root.get("tipoOrganizacao"), filtro.tipoOrganizacao()));
+            }
+            if (query.getResultType() != Long.class) {
+                query.orderBy(cb.asc(cb.lower(root.get("nome"))));
+            }
+            return cb.and(filtros.toArray(new Predicate[0]));
+        };
+    }
+
+    private String vazioParaNulo(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim();
+    }
+}

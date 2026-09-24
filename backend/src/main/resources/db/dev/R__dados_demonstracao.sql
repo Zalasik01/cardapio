@@ -2,8 +2,11 @@
 -- Migration repetivel e idempotente: nao duplica o que ja existir.
 --
 -- Logins de teste:
---   admin@cardapio.com / admin123  (usuario do sistema: suporte, sem perfil de loja)
+--   admin@cardapio.com / admin123  (usuario do sistema: suporte, sem perfil de loja, e administrador da plataforma)
 --   nonna@cardapio.com / nonna123  (administrador da loja Cantina da Nonna)
+
+-- administrador da plataforma: enxerga a categoria "Gestao Interna" (a coluna nasce na migration V12)
+UPDATE s_usuario SET usuario_administrador = true WHERE email = 'admin@cardapio.com';
 
 INSERT INTO s_loja (guid, nome, situacao_conta, tipo_organizacao, slug, descricao, telefone,
                     endereco_bairro, endereco_cidade, latitude, longitude,

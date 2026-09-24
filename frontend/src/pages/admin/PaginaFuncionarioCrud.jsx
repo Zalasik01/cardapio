@@ -14,6 +14,8 @@ import { confirmar } from '../../utils/confirmar'
 import {
   atualizarFuncionario, criarFuncionario, excluirFuncionario, obterFuncionario,
 } from '../../api/funcionariosApi'
+import { consultarPessoaPorCpf } from '../../api/pessoasApi'
+import DialogoCpfExistente from '../../components/crud/DialogoCpfExistente'
 import CrudPagina from '../../components/crud/CrudPagina'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import SecaoContatos from '../../components/crud/SecaoContatos'
@@ -108,6 +110,7 @@ export default function PaginaFuncionarioCrud() {
   const [form, setForm] = useState(FORM_VAZIO)
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
+  const [cpfExistente, setCpfExistente] = useState(null) // pessoa que já usa o CPF digitado
 
   useEffect(() => {
     definirMigalha(editando ? 'Editando funcionário' : 'Novo funcionário')
@@ -130,6 +133,45 @@ export default function PaginaFuncionarioCrud() {
     endereco: { ...atual.endereco, ...(typeof campos === 'function' ? campos(atual.endereco) : campos) },
   }))
   const alterarContatos = (lista, novaLista) => setForm((atual) => ({ ...atual, [lista]: novaLista }))
+
+  /** Ao completar o CPF, verifica se a pessoa já existe na loja (ex.: é cliente ou fornecedor). */
+  async function verificarCpf(cpf) {
+    try {
+      setCpfExistente(await consultarPessoaPorCpf(loja.tenant, cpf))
+    } catch {
+      // sem a consulta o cadastro segue normal; o servidor também trata o CPF repetido ao salvar
+    }
+  }
+
+  /** Assume os dados do cadastro existente: ao salvar, o servidor atualiza essa mesma pessoa. */
+  function usarCadastroExistente() {
+    const e = cpfExistente
+    setForm((atual) => ({
+      ...atual,
+      cpf: formatarCpf(e.cpf),
+      nome: e.nome ?? '',
+      apelido: e.apelido ?? '',
+      rg: e.rg ?? '',
+      sexo: e.sexo,
+      naturalidade: e.naturalidade ?? atual.naturalidade,
+      nacionalidade: e.nacionalidade ?? atual.nacionalidade,
+      numeroCnh: e.numeroCnh ?? atual.numeroCnh,
+      vencimentoCnh: e.vencimentoCnh ? isoParaData(e.vencimentoCnh) : atual.vencimentoCnh,
+      dataNascimento: isoParaData(e.dataNascimento),
+      estadoCivil: e.estadoCivil,
+      profissao: e.profissao ?? '',
+      observacao: e.observacao ?? '',
+      endereco: enderecoParaFormulario(e.endereco),
+      telefones: telefonesParaFormulario(e.telefones),
+      emails: emailsParaFormulario(e.emails),
+    }))
+    setCpfExistente(null)
+  }
+
+  function cancelarCpfExistente() {
+    setCpfExistente(null)
+    setForm((atual) => ({ ...atual, cpf: '' }))
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -190,7 +232,8 @@ export default function PaginaFuncionarioCrud() {
 
           <Campo id="cpf" rotulo="CPF" obrigatorio tamanho={3}>
             <InputMask id="cpf" mask="999.999.999-99" required autoClear={false} value={form.cpf}
-                       onChange={(e) => definir('cpf')(e.target.value ?? '')} />
+                       onChange={(e) => definir('cpf')(e.target.value ?? '')}
+                       onComplete={editando ? undefined : (e) => verificarCpf(e.value)} />
           </Campo>
           <Campo id="rg" rotulo="RG" tamanho={3}>
             <InputText id="rg" maxLength={30} value={form.rg} onChange={definirTexto('rg')} />
@@ -237,6 +280,13 @@ export default function PaginaFuncionarioCrud() {
         </GradeCampos>
       </SecaoCrud>
 
+      <DialogoCpfExistente
+        existente={cpfExistente}
+        jaPossuiCadastro={!!cpfExistente && !!cpfExistente.funcionarioId}
+        aoUsar={usarCadastroExistente}
+        aoAbrir={() => navigate(`${ROTA_LISTA}/${cpfExistente.funcionarioId}`)}
+        aoCancelar={cancelarCpfExistente}
+      />
       <SecaoEndereco endereco={form.endereco} aoAlterar={alterarEndereco} />
       <SecaoContatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
     </>

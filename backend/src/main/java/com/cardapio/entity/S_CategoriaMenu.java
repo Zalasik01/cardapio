@@ -36,4 +36,9 @@ public class S_CategoriaMenu extends SystemAbstract {
     @Column(nullable = false)
     @Builder.Default
     private Integer ordem = 0;
+
+    /** Categoria exibida (e liberada na API) somente para o usuario administrador da plataforma. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean somenteAdministrador = false;
 }

@@ -43,6 +43,11 @@ public class S_Usuario extends SystemAbstract {
     @lombok.Builder.Default
     private boolean usuarioSuporte = false;
 
+    /** Administra a plataforma: enxerga a categoria de menu "Gestão Interna" e usa a API de gestão. */
+    @Column(nullable = false)
+    @lombok.Builder.Default
+    private boolean usuarioAdministrador = false;
+
     @Column(nullable = false)
     @lombok.Builder.Default
     private boolean exigeTrocarSenha = false;

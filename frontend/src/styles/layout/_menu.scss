@@ -23,8 +23,37 @@
   color: #fff;
 }
 
+// Destaque em 3 níveis, do mais claro ao mais forte: a área da categoria aberta, o grupo (ex.: Pessoas)
+// que contém a tela e, dentro dele, a própria página (.active).
 .menu-subgrupo__titulo--ativo {
+  background: var(--cor-menu-grupo-ativo);
   color: #fff;
+  font-weight: 700;
+}
+
+.menu-subgrupo__titulo--ativo:hover {
+  background: var(--cor-menu-grupo-ativo);
+}
+
+// categoria que contém a tela aberta: faixa forte no título e área tingida em todo o submenu
+// (o título continua destacado com o menu recolhido)
+.menu-grupo__titulo--ativo {
+  background: var(--cor-menu-categoria-ativa);
+  color: #fff;
+  font-weight: 700;
+
+  .menu-grupo__icone {
+    color: #fff;
+  }
+}
+
+.menu-grupo__titulo--ativo:hover {
+  background: var(--cor-menu-categoria-ativa);
+}
+
+.menu-grupo--ativo > .submenu {
+  background: var(--cor-menu-area-ativa);
+  border-radius: 0 0 8px 8px;
 }
 
 .menu-grupo__paginas--aninhada {

@@ -197,11 +197,12 @@ export default function LayoutAdmin() {
           {menu.map((categoria) => {
             const aberta = !!abertas[categoria.guid]
             const idSubmenu = `submenu-${categoria.guid}`
+            const contemPaginaAtual = categoria.paginas.some((pagina) => contemRota(pagina, pathname))
             return (
-              <div key={categoria.guid} className="menu-grupo">
+              <div key={categoria.guid} className={`menu-grupo ${contemPaginaAtual ? 'menu-grupo--ativo' : ''}`}>
                 <button
                   type="button"
-                  className="menu-grupo__titulo"
+                  className={`menu-grupo__titulo ${contemPaginaAtual ? 'menu-grupo__titulo--ativo' : ''}`}
                   aria-expanded={aberta}
                   aria-controls={idSubmenu}
                   title={categoria.nome}

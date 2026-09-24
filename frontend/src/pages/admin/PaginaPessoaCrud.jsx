@@ -12,9 +12,12 @@ import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import { buscarEmpresaPorCnpj } from '../../api/cnpjApi'
-import { atualizarPessoa, criarPessoa, excluirPessoa, obterPessoa } from '../../api/pessoasApi'
+import {
+  atualizarPessoa, consultarPessoaPorCpf, criarPessoa, excluirPessoa, obterPessoa,
+} from '../../api/pessoasApi'
 import CrudPagina from '../../components/crud/CrudPagina'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
+import DialogoCpfExistente from '../../components/crud/DialogoCpfExistente'
 import SecaoContatos from '../../components/crud/SecaoContatos'
 import SecaoEndereco from '../../components/crud/SecaoEndereco'
 import { FormularioSkeleton } from '../../components/Skeleton'
@@ -131,6 +134,7 @@ export default function PaginaPessoaCrud() {
   const [salvando, setSalvando] = useState(false)
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
   const consultaCnpj = useRef(0) // ignora respostas de consultas antigas
+  const [cpfExistente, setCpfExistente] = useState(null) // pessoa que já usa o CPF digitado
 
   const fisica = form.tipo === 'FISICA'
 
@@ -155,6 +159,41 @@ export default function PaginaPessoaCrud() {
     endereco: { ...atual.endereco, ...(typeof campos === 'function' ? campos(atual.endereco) : campos) },
   }))
   const alterarContatos = (lista, novaLista) => setForm((atual) => ({ ...atual, [lista]: novaLista }))
+
+  /** Ao completar o CPF, verifica se a pessoa já existe na loja (ex.: é funcionário). */
+  async function verificarCpf(cpf) {
+    try {
+      setCpfExistente(await consultarPessoaPorCpf(loja.tenant, cpf))
+    } catch {
+      // sem a consulta o cadastro segue normal; o servidor também trata o CPF repetido ao salvar
+    }
+  }
+
+  /** Assume os dados do cadastro existente: ao salvar, o servidor atualiza essa mesma pessoa. */
+  function usarCadastroExistente() {
+    const e = cpfExistente
+    setForm((atual) => ({
+      ...atual,
+      cpf: formatarCpf(e.cpf),
+      nome: e.nome ?? '',
+      apelido: e.apelido ?? '',
+      rg: e.rg ?? '',
+      sexo: e.sexo,
+      dataNascimento: isoParaData(e.dataNascimento),
+      estadoCivil: e.estadoCivil,
+      profissao: e.profissao ?? '',
+      observacao: e.observacao ?? '',
+      endereco: enderecoParaFormulario(e.endereco),
+      telefones: telefonesParaFormulario(e.telefones),
+      emails: emailsParaFormulario(e.emails),
+    }))
+    setCpfExistente(null)
+  }
+
+  function cancelarCpfExistente() {
+    setCpfExistente(null)
+    setForm((atual) => ({ ...atual, cpf: '' }))
+  }
 
   /** Ao completar o CNPJ, busca razão social, fantasia, endereço e contatos na BrasilAPI. */
   async function preencherPorCnpj(cnpj) {
@@ -276,7 +315,8 @@ export default function PaginaPessoaCrud() {
             <>
               <Campo id="cpf" rotulo="CPF" tamanho={3}>
                 <InputMask id="cpf" mask="999.999.999-99" autoClear={false} value={form.cpf}
-                           onChange={(e) => definir('cpf')(e.target.value ?? '')} />
+                           onChange={(e) => definir('cpf')(e.target.value ?? '')}
+                           onComplete={editando ? undefined : (e) => verificarCpf(e.value)} />
               </Campo>
               <Campo id="rg" rotulo="RG" tamanho={3}>
                 <InputText id="rg" maxLength={30} value={form.rg} onChange={definirTexto('rg')} />
@@ -347,6 +387,13 @@ export default function PaginaPessoaCrud() {
         </GradeCampos>
       </SecaoCrud>
 
+      <DialogoCpfExistente
+        existente={cpfExistente}
+        jaPossuiCadastro={!!cpfExistente && (cpfExistente.cliente || cpfExistente.fornecedor)}
+        aoUsar={usarCadastroExistente}
+        aoAbrir={() => navigate(`${ROTA_LISTA}/${cpfExistente.pessoaId}`)}
+        aoCancelar={cancelarCpfExistente}
+      />
       <SecaoEndereco endereco={form.endereco} aoAlterar={alterarEndereco} />
       <SecaoContatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
     </>

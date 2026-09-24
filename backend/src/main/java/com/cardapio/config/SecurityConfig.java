@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/admin/lojas/{tenant}", "/api/admin/lojas/{tenant}/**")
                         .access(this::acessoAoTenantDaSessao)
+                        .requestMatchers("/api/admin/gestao/**").hasAuthority(AppUserDetails.PAPEL_ADMINISTRADOR)
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN_LOJA")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))

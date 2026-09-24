@@ -51,6 +51,7 @@ export default function SeletorPeriodo({ selecao, presetAtivo, aoAlterar }) {
           value={selecao}
                     minDate={minimo}
           maxDate={maximo}
+          viewDate={fim ?? inicio ?? hoje}
           onChange={(e) => aoAlterar(e.value)}
         />
         <p className="seletor-periodo__resumo" aria-live="polite">

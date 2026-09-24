@@ -15,7 +15,7 @@ import './styles/main.scss'
 
 // sem StrictMode: em desenvolvimento ele executa cada useEffect duas vezes (montar, desmontar, montar), duplicando as requisicoes
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <PrimeReactProvider>
+  <PrimeReactProvider value={{ locale: 'pt-BR' }}>
     <Provider store={store}>
       <App />
       <CentralMensagens />

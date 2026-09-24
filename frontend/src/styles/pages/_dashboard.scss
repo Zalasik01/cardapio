@@ -173,6 +173,7 @@
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--espaco-blocos);
   align-items: stretch;
+  grid-auto-flow: dense; // cartões menores preenchem os vãos deixados pelos blocos largos
 }
 
 .painel-dashboard__barra {

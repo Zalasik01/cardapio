@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
+import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { dataParaIso } from '../../utils/formatadores'
 import { PRESETS_PERIODO } from '../../utils/periodo'
 import SeletorPeriodo from './SeletorPeriodo'
 
 /**
- * Filtro de período em modal ("Filtrar período" do menu "..." dos widgets). Aplica sozinho: ao escolher um
- * atalho ou ao clicar na segunda data do calendário. Devolve { preset } (atalho, que acompanha os dias) ou
- * { inicio, fim } em ISO. "Limpar seleção" recomeça a escolha; "Cancelar" fecha sem mudar nada.
+ * Filtro de período em modal ("Filtrar período" do menu "..." dos widgets). Escolher um atalho ou as duas
+ * datas só monta a seleção: o período vale (e o modal fecha) ao clicar em "Aplicar". Devolve { preset }
+ * (atalho, que acompanha os dias) ou { inicio, fim } em ISO. "Limpar seleção" recomeça a escolha e
+ * "Cancelar" fecha sem mudar nada.
  *
  * Props: aberto, periodo (guardado: { preset } | { inicio, fim }), atual ({ inicio, fim } Date), aoFechar, aoAplicar(periodo).
  */
@@ -26,14 +28,16 @@ export default function DialogoPeriodo({ aberto, periodo, atual, aoFechar, aoApl
   function alterar(novaSelecao, presetId = null) {
     setSelecao(novaSelecao)
     setPreset(presetId)
-    const [inicio, fim] = novaSelecao ?? []
-    if (presetId) {
-      aoAplicar({ preset: presetId })
-      aoFechar()
-    } else if (inicio && fim) { // segunda data escolhida: o período está completo
-      aoAplicar({ inicio: dataParaIso(inicio), fim: dataParaIso(fim) })
-      aoFechar()
-    }
+  }
+
+  // só uma data escolhida vale como um dia (início e fim iguais)
+  const inicio = selecao?.[0]
+  const fim = selecao?.[1] ?? selecao?.[0]
+
+  function aplicar() {
+    if (!inicio) return
+    aoAplicar(preset ? { preset } : { inicio: dataParaIso(inicio), fim: dataParaIso(fim) })
+    aoFechar()
   }
 
   function limpar() {
@@ -51,6 +55,7 @@ export default function DialogoPeriodo({ aberto, periodo, atual, aoFechar, aoApl
         <div className="seletor-periodo__rodape">
           <button type="button" className="seletor-periodo__link" onClick={limpar}>Limpar seleção</button>
           <button type="button" className="seletor-periodo__link" onClick={aoFechar}>Cancelar</button>
+          <Button type="button" label="Aplicar" size="small" disabled={!inicio} onClick={aplicar} />
         </div>
       )}
     >

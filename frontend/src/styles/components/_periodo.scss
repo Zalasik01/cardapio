@@ -56,9 +56,10 @@
 }
 
 .seletor-periodo__calendario {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 
 .seletor-periodo__resumo {
@@ -70,6 +71,9 @@
 
 // calendário do PrimeReact sem moldura: cabeçalho centralizado, dias em cinza como na referência
 .seletor-periodo .p-datepicker {
+  display: block;
+  min-width: 0;
+  overflow: visible;
   border: none;
   box-shadow: none;
   background: transparent;
@@ -83,6 +87,17 @@
   padding: 0.25rem 0 0.75rem;
 }
 
+.seletor-periodo .p-datepicker .p-datepicker-prev,
+.seletor-periodo .p-datepicker .p-datepicker-next {
+  color: var(--cor-texto);
+  background: transparent;
+}
+
+.seletor-periodo .p-datepicker .p-datepicker-prev:hover,
+.seletor-periodo .p-datepicker .p-datepicker-next:hover {
+  background: var(--cor-fundo);
+}
+
 .seletor-periodo .p-datepicker .p-datepicker-title {
   font-weight: 600;
 }
@@ -93,7 +108,12 @@
   text-transform: lowercase;
 }
 
+.seletor-periodo .p-datepicker table td {
+  padding: 0.15rem;
+}
+
 .seletor-periodo .p-datepicker table td > span {
+  margin: 0 auto;
   width: 2.6rem;
   height: 2.6rem;
   border-radius: 6px;
@@ -117,6 +137,7 @@
 
 .seletor-periodo__rodape {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 1.75rem;
 }
@@ -132,4 +153,12 @@
 .seletor-periodo__link:hover {
   background: transparent;
   color: var(--cor-primaria-escura);
+}
+
+// setas de mês: o svg do PrimeReact chegava com largura 0 dentro do botão flex
+.seletor-periodo .p-datepicker .p-datepicker-prev svg,
+.seletor-periodo .p-datepicker .p-datepicker-next svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
 }

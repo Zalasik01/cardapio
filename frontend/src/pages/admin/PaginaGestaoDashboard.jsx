@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { obterDashboardGestao } from '../../api/gestaoDashboardApi'
-import Dica from '../../components/Dica'
+import { obterDashboardGestao, obterRecebimentos } from '../../api/gestaoDashboardApi'
+import PainelDashboard from '../../components/dashboard/PainelDashboard'
 import { Skeleton } from '../../components/Skeleton'
 import { dispatchMsgError } from '../../store/dispatchMsg'
 import { formatarMoeda, isoParaData } from '../../utils/formatadores'
 import { rotuloSituacaoConta, rotuloTipoOrganizacao } from '../../utils/loja'
+import { periodoParaIso } from '../../utils/periodo'
 
 const formatarData = (iso) => isoParaData(iso).toLocaleDateString('pt-BR')
 const nomeMes = (iso) => isoParaData(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
-/** Cartão de número: rótulo, valor e uma linha de apoio opcional. */
-function Cartao({ rotulo, valor, apoio, icone, dica, carregando }) {
+/** Conteúdo de um cartão de número: ícone, rótulo, valor e uma linha de apoio. */
+function ConteudoCartao({ rotulo, valor, apoio, icone, carregando }) {
   return (
     <div className="cartao-resumo">
-      <Dica texto={dica} />
       <span className="cartao-resumo__icone" aria-hidden="true"><i className={icone} /></span>
       <div>
         <span className="cartao-resumo__rotulo">{rotulo}</span>
         {carregando ? <Skeleton largura="70px" altura="1.6rem" /> : <strong className="cartao-resumo__valor">{valor}</strong>}
-        {!carregando && apoio && <small className="cartao-resumo__apoio">{apoio}</small>}
+        {carregando ? <Skeleton largura="90%" altura="0.7rem" /> : apoio && <small className="cartao-resumo__apoio">{apoio}</small>}
       </div>
     </div>
   )
@@ -70,6 +70,37 @@ function ListaVencimentos({ itens, carregando, vazio }) {
   )
 }
 
+/** Widget de período: mensalidades pagas entre inicio e fim (busca de novo quando o período muda). */
+function CartaoRecebimentos({ periodo }) {
+  const [dados, setDados] = useState(null)
+  const inicio = periodoParaIso(periodo).inicio
+  const fim = periodoParaIso(periodo).fim
+
+  useEffect(() => {
+    let descartada = false
+    setDados(null)
+    obterRecebimentos(inicio, fim)
+      .then((resposta) => !descartada && setDados(resposta))
+      .catch((e) => dispatchMsgError(e.mensagem))
+    return () => {
+      descartada = true
+    }
+  }, [inicio, fim])
+
+  return (
+    <ConteudoCartao
+      rotulo="Recebimentos no período"
+      valor={dados && formatarMoeda(dados.total)}
+      apoio={dados && `${dados.quantidade} mensalidade(s) paga(s) · ${periodo.rotulo}`}
+      icone="fa-solid fa-calendar-check"
+      carregando={dados === null}
+    />
+  )
+}
+
+const PERIODOS_PADRAO = { recebimentos: { preset: 'ultimos-30' } }
+const ESQUELETO = { cartoes: 8, blocos: 4 }
+
 /** Gestão Interna > Dashboards: números da plataforma (somente usuário administrador). */
 export default function PaginaGestaoDashboard() {
   const [dados, setDados] = useState(null)
@@ -85,101 +116,81 @@ export default function PaginaGestaoDashboard() {
   }, [])
 
   const carregando = dados === null && !erro
-  const { lojas, mensalidades, usuarios } = dados ?? { lojas: {}, mensalidades: {}, usuarios: {} }
 
-  const cartoes = [
-    {
-      rotulo: 'Lojas',
-      valor: lojas.total,
-      apoio: `${lojas.ativas} ativas · ${lojas.inativas} inativas`,
-      icone: 'fa-solid fa-store',
-      dica: 'Total de lojas cadastradas (não excluídas). Inativas não aparecem nas listas por padrão.',
-    },
-    {
-      rotulo: 'Receita recorrente',
-      valor: formatarMoeda(mensalidades.receitaRecorrente),
-      apoio: 'Mensalidades das lojas com conta ativa',
-      icone: 'fa-solid fa-sack-dollar',
-      dica: 'Soma da mensalidade padrão das lojas ativas com conta ATIVA: quanto a plataforma deveria faturar por mês.',
-    },
-    {
-      rotulo: 'Recebido no mês',
-      valor: formatarMoeda(mensalidades.recebido),
-      apoio: `de ${formatarMoeda(mensalidades.previsto)} previstos`,
-      icone: 'fa-solid fa-circle-check',
-      dica: 'Mensalidades do mês corrente já pagas. Embaixo, o total previsto (pagas + pendentes do mês).',
-    },
-    {
-      rotulo: 'A receber no mês',
-      valor: formatarMoeda(mensalidades.pendente),
-      apoio: mensalidades.competencia && nomeMes(mensalidades.competencia),
-      icone: 'fa-solid fa-hourglass-half',
-      dica: 'Mensalidades do mês corrente que ainda estão pendentes de pagamento.',
-    },
-    {
-      rotulo: 'Mensalidades atrasadas',
-      valor: mensalidades.quantidadeAtrasadas,
-      apoio: formatarMoeda(mensalidades.valorAtrasadas),
-      icone: 'fa-solid fa-triangle-exclamation',
-      dica: 'Mensalidades pendentes com o vencimento já passado (de qualquer mês) e o valor somado.',
-    },
-    {
-      rotulo: 'Sem mensalidade no mês',
-      valor: mensalidades.lojasSemLancamento,
-      apoio: 'Lojas ativas ou inadimplentes',
-      icone: 'fa-solid fa-file-circle-question',
-      dica: 'Lojas ativas, com conta ativa ou inadimplente, que ainda não têm a mensalidade do mês lançada.',
-    },
-    {
-      rotulo: 'Usuários internos',
-      valor: usuarios.internos,
-      apoio: `${usuarios.administradores} administradores · ${usuarios.pendentes} pendentes`,
-      icone: 'fa-solid fa-user-shield',
-      dica: 'Equipe da plataforma: usuários de suporte e administradores. Pendentes ainda não definiram a senha.',
-    },
-  ]
+  const widgets = useMemo(() => {
+    const { lojas, mensalidades, usuarios } = dados ?? { lojas: {}, mensalidades: {}, usuarios: {} }
+    const cartao = (id, dica, props) => ({
+      id, tamanho: 'cartao', dica, conteudo: () => <ConteudoCartao {...props} carregando={carregando} />,
+    })
+    return [
+      cartao('lojas', 'Total de lojas cadastradas (não excluídas). Inativas não aparecem nas listas por padrão.', {
+        rotulo: 'Lojas', valor: lojas.total, apoio: `${lojas.ativas} ativas · ${lojas.inativas} inativas`, icone: 'fa-solid fa-store',
+      }),
+      cartao('receita-recorrente', 'Soma da mensalidade padrão das lojas ativas com conta ATIVA: quanto a plataforma deveria faturar por mês.', {
+        rotulo: 'Receita recorrente', valor: formatarMoeda(mensalidades.receitaRecorrente),
+        apoio: 'Mensalidades das lojas com conta ativa', icone: 'fa-solid fa-sack-dollar',
+      }),
+      cartao('recebido-mes', 'Mensalidades do mês corrente já pagas. Embaixo, o total previsto (pagas + pendentes do mês).', {
+        rotulo: 'Recebido no mês', valor: formatarMoeda(mensalidades.recebido),
+        apoio: `de ${formatarMoeda(mensalidades.previsto)} previstos`, icone: 'fa-solid fa-circle-check',
+      }),
+      cartao('a-receber-mes', 'Mensalidades do mês corrente que ainda estão pendentes de pagamento.', {
+        rotulo: 'A receber no mês', valor: formatarMoeda(mensalidades.pendente),
+        apoio: mensalidades.competencia && nomeMes(mensalidades.competencia), icone: 'fa-solid fa-hourglass-half',
+      }),
+      {
+        id: 'recebimentos-periodo',
+        tamanho: 'cartao',
+        periodo: 'recebimentos',
+        dica: 'Mensalidades pagas no período escolhido (pela data do pagamento). Use o menu "..." para filtrar o período: no máximo 90 dias.',
+        conteudo: (ctx) => <CartaoRecebimentos periodo={ctx.periodo('recebimentos')} />,
+      },
+      cartao('atrasadas', 'Mensalidades pendentes com o vencimento já passado (de qualquer mês) e o valor somado.', {
+        rotulo: 'Mensalidades atrasadas', valor: mensalidades.quantidadeAtrasadas,
+        apoio: formatarMoeda(mensalidades.valorAtrasadas), icone: 'fa-solid fa-triangle-exclamation',
+      }),
+      cartao('sem-mensalidade', 'Lojas ativas, com conta ativa ou inadimplente, que ainda não têm a mensalidade do mês lançada.', {
+        rotulo: 'Sem mensalidade no mês', valor: mensalidades.lojasSemLancamento,
+        apoio: 'Lojas ativas ou inadimplentes', icone: 'fa-solid fa-file-circle-question',
+      }),
+      cartao('usuarios-internos', 'Equipe da plataforma: usuários de suporte e administradores. Pendentes ainda não definiram a senha.', {
+        rotulo: 'Usuários internos', valor: usuarios.internos,
+        apoio: `${usuarios.administradores} administradores · ${usuarios.pendentes} pendentes`, icone: 'fa-solid fa-user-shield',
+      }),
+      {
+        id: 'lojas-situacao', tamanho: 'bloco', titulo: 'Lojas por situação da conta',
+        dica: 'Quantas lojas há em cada situação: período de teste, ativa, inadimplente, bloqueada ou cancelada.',
+        conteudo: () => <Barras itens={dados?.lojas.porSituacao ?? []} rotulo={rotuloSituacaoConta} carregando={carregando} />,
+      },
+      {
+        id: 'lojas-tipo', tamanho: 'bloco', titulo: 'Lojas por tipo de organização',
+        dica: 'Distribuição das lojas por tipo de estabelecimento (restaurante, pizzaria, cafeteria...).',
+        conteudo: () => <Barras itens={dados?.lojas.porTipo ?? []} rotulo={rotuloTipoOrganizacao} carregando={carregando} />,
+      },
+      {
+        id: 'proximos-vencimentos', tamanho: 'bloco', titulo: 'Próximos vencimentos',
+        dica: 'As 5 próximas mensalidades pendentes a vencer, da mais próxima para a mais distante. Clique na loja para abrir.',
+        conteudo: () => (
+          <ListaVencimentos itens={dados?.proximosVencimentos ?? []} carregando={carregando} vazio="Nenhuma mensalidade a vencer." />
+        ),
+      },
+      {
+        id: 'atrasadas-lista', tamanho: 'bloco', titulo: 'Mensalidades atrasadas',
+        dica: 'As 5 mensalidades pendentes vencidas há mais tempo. Clique na loja para registrar o pagamento.',
+        conteudo: () => (
+          <ListaVencimentos itens={dados?.atrasadas ?? []} carregando={carregando} vazio="Nenhuma mensalidade atrasada." />
+        ),
+      },
+    ]
+  }, [dados, carregando])
 
   return (
     <div className="pagina-admin">
       <h1>Dashboards</h1>
-      <p className="texto-auxiliar">Números da plataforma: lojas, mensalidades e equipe interna.</p>
-
-      <div className="cartoes-resumo" aria-busy={carregando}>
-        {cartoes.map((cartao) => <Cartao key={cartao.rotulo} {...cartao} carregando={carregando} />)}
-      </div>
-
-      <div className="blocos-dashboard">
-        <section className="bloco-dashboard">
-          <h2>
-            Lojas por situação da conta
-            <Dica texto="Quantas lojas há em cada situação: período de teste, ativa, inadimplente, bloqueada ou cancelada." />
-          </h2>
-          <Barras itens={dados?.lojas.porSituacao ?? []} rotulo={rotuloSituacaoConta} carregando={carregando} />
-        </section>
-        <section className="bloco-dashboard">
-          <h2>
-            Lojas por tipo de organização
-            <Dica texto="Distribuição das lojas por tipo de estabelecimento (restaurante, pizzaria, cafeteria...)." />
-          </h2>
-          <Barras itens={dados?.lojas.porTipo ?? []} rotulo={rotuloTipoOrganizacao} carregando={carregando} />
-        </section>
-        <section className="bloco-dashboard">
-          <h2>
-            Próximos vencimentos
-            <Dica texto="As 5 próximas mensalidades pendentes a vencer, da mais próxima para a mais distante. Clique na loja para abrir." />
-          </h2>
-          <ListaVencimentos itens={dados?.proximosVencimentos ?? []} carregando={carregando}
-                            vazio="Nenhuma mensalidade a vencer." />
-        </section>
-        <section className="bloco-dashboard">
-          <h2>
-            Mensalidades atrasadas
-            <Dica texto="As 5 mensalidades pendentes vencidas há mais tempo. Clique na loja para registrar o pagamento." />
-          </h2>
-          <ListaVencimentos itens={dados?.atrasadas ?? []} carregando={carregando}
-                            vazio="Nenhuma mensalidade atrasada." />
-        </section>
-      </div>
+      <p className="texto-auxiliar">
+        Números da plataforma: lojas, mensalidades e equipe interna. Arraste os quadros pela alça para reposicioná-los.
+      </p>
+      <PainelDashboard chave="dashboard-gestao" widgets={widgets} periodosPadrao={PERIODOS_PADRAO} esqueleto={ESQUELETO} />
     </div>
   )
 }

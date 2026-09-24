@@ -42,6 +42,37 @@ export function CrudSkeleton({ blocos }) {
   ))
 }
 
+/**
+ * Esqueleto dos dashboards (mesma grade e mesmas molduras dos widgets): cartoes de número e blocos maiores.
+ * Aparece enquanto as preferências do usuário (posição dos widgets) carregam.
+ */
+export function DashboardSkeleton({ cartoes = 6, blocos = 2 }) {
+  return (
+    <div className="painel-dashboard" aria-busy="true" aria-label="Carregando dashboard">
+      {Array.from({ length: cartoes }, (_, i) => (
+        <div key={`c${i}`} className="widget widget--cartao">
+          <div className="cartao-resumo cartao-resumo--esqueleto">
+            <Skeleton largura="44px" altura="44px" raio="10px" />
+            <div className="skeleton-campo" style={{ flex: 1 }}>
+              <Skeleton largura="55%" altura="0.8rem" />
+              <Skeleton largura="70px" altura="1.6rem" />
+              <Skeleton largura="80%" altura="0.7rem" />
+            </div>
+          </div>
+        </div>
+      ))}
+      {Array.from({ length: blocos }, (_, i) => (
+        <div key={`b${i}`} className="widget widget--bloco">
+          <Skeleton largura="45%" altura="1.1rem" raio="6px" />
+          <div className="barras" style={{ marginTop: '1rem' }}>
+            {[80, 55, 30].map((largura) => <Skeleton key={largura} altura="1.4rem" raio="3px" largura={`${largura}%`} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function MenuSkeleton() {
   return (
     <div className="menu-skeleton" aria-busy="true" aria-label="Carregando menu">

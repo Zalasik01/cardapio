@@ -166,3 +166,91 @@
     border-bottom: none;
   }
 }
+
+// Painel de widgets: grade que o usuário reposiciona arrastando pela alça
+.painel-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--espaco-blocos);
+  align-items: stretch;
+}
+
+.painel-dashboard__barra {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.widget {
+  position: relative;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-bloco);
+  box-shadow: var(--sombra);
+}
+
+.widget--bloco {
+  grid-column: span 2;
+  padding: 1.25rem;
+}
+
+@include ate-tablet {
+  .widget--bloco {
+    grid-column: span 1;
+  }
+}
+
+.widget--arrastando {
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  opacity: 0.92;
+}
+
+// alça, dica e menu no canto do widget
+.widget__acoes {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.widget__alca {
+  color: var(--cor-texto-suave);
+  cursor: grab;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity var(--transicao);
+  line-height: 1;
+}
+
+.widget:hover .widget__alca,
+.widget__alca:focus-visible,
+.widget--arrastando .widget__alca {
+  opacity: 1;
+}
+
+.widget--arrastando .widget__alca {
+  cursor: grabbing;
+}
+
+.widget__titulo {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  padding: 0 4.5rem 0.5rem 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+// dentro do widget o cartão de número não tem moldura própria
+.widget--cartao .cartao-resumo {
+  height: 100%;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.widget__apoio {
+  display: block;
+  color: var(--cor-texto-suave);
+}

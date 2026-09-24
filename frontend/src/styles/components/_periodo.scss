@@ -1,0 +1,135 @@
+// Seletor de período: atalhos em lista (estilo radio) ao lado de um calendário de um mês
+@use '../abstracts' as *;
+
+.seletor-periodo {
+  display: grid;
+  grid-template-columns: 13rem 1fr;
+  gap: 1rem;
+}
+
+@include ate-tablet {
+  .seletor-periodo {
+    grid-template-columns: 1fr;
+  }
+}
+
+.seletor-periodo__atalhos {
+  list-style: none;
+  margin: 0;
+  padding: 0 1rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  border-right: 1px solid var(--cor-borda);
+}
+
+.seletor-periodo__atalho {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.5rem;
+  background: transparent;
+  color: var(--cor-texto);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  border-radius: 3px;
+}
+
+.seletor-periodo__atalho:hover {
+  background: var(--cor-fundo);
+}
+
+.seletor-periodo__radio {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 2px solid var(--cor-borda);
+  border-radius: 50%;
+  background: var(--cor-superficie);
+}
+
+.seletor-periodo__atalho--ativo .seletor-periodo__radio {
+  border-color: var(--cor-primaria);
+  box-shadow: inset 0 0 0 4px var(--cor-superficie), inset 0 0 0 20px var(--cor-primaria);
+}
+
+.seletor-periodo__calendario {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.seletor-periodo__resumo {
+  margin: 0.5rem 0 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+// calendário do PrimeReact sem moldura: cabeçalho centralizado, dias em cinza como na referência
+.seletor-periodo .p-datepicker {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+}
+
+.seletor-periodo .p-datepicker .p-datepicker-header {
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0 0.75rem;
+}
+
+.seletor-periodo .p-datepicker .p-datepicker-title {
+  font-weight: 600;
+}
+
+.seletor-periodo .p-datepicker table th {
+  color: var(--cor-texto);
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.seletor-periodo .p-datepicker table td > span {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 6px;
+}
+
+.seletor-periodo .p-datepicker table td.p-datepicker-other-month {
+  color: var(--cor-texto-suave);
+  opacity: 0.55;
+}
+
+// hoje: caixa cinza clara; dias do período escolhido: cinza mais escuro
+.seletor-periodo .p-datepicker table td > span.p-datepicker-today:not(.p-highlight) {
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+.seletor-periodo .p-datepicker table td > span.p-highlight {
+  background: #d1d5db;
+  color: var(--cor-texto);
+}
+
+.seletor-periodo__rodape {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.75rem;
+}
+
+.seletor-periodo__link {
+  background: transparent;
+  color: var(--cor-primaria);
+  font-weight: 700;
+  padding: 0.35rem 0.25rem;
+  min-height: 0;
+}
+
+.seletor-periodo__link:hover {
+  background: transparent;
+  color: var(--cor-primaria-escura);
+}

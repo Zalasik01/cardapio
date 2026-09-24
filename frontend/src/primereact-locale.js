@@ -2,7 +2,7 @@ import { addLocale, locale } from 'primereact/api'
 
 /** Textos do PrimeReact em portugues (calendario, filtros, etc.). */
 addLocale('pt-BR', {
-  firstDayOfWeek: 0,
+  firstDayOfWeek: 1,
   dayNames: ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'],
   dayNamesShort: ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'],
   dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],

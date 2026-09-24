@@ -1,14 +1,20 @@
 package com.cardapio.service;
 
 import com.cardapio.dto.PaginaResponse;
+import com.cardapio.dto.funcionario.EmailDto;
+import com.cardapio.dto.funcionario.TelefoneDto;
 import com.cardapio.dto.gestao.FiltroLojaGestao;
 import com.cardapio.dto.gestao.LojaGestaoRequest;
 import com.cardapio.dto.gestao.LojaGestaoResponse;
 import com.cardapio.dto.gestao.LojaGestaoResumoResponse;
 import com.cardapio.entity.S_Loja;
+import com.cardapio.entity.S_LojaEmail;
+import com.cardapio.entity.S_LojaTelefone;
 import com.cardapio.exception.RecursoNaoEncontradoException;
 import com.cardapio.exception.RegraNegocioException;
+import com.cardapio.repository.S_LojaEmailRepository;
 import com.cardapio.repository.S_LojaRepository;
+import com.cardapio.repository.S_LojaTelefoneRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +35,8 @@ public class GestaoLojaService {
     private static final int TAMANHO_MAXIMO_PAGINA = 50;
 
     private final S_LojaRepository lojaRepository;
+    private final S_LojaTelefoneRepository telefoneRepository;
+    private final S_LojaEmailRepository emailRepository;
 
     @Transactional(readOnly = true)
     public PaginaResponse<LojaGestaoResumoResponse> buscar(FiltroLojaGestao filtro, int pagina, int tamanho) {
@@ -39,7 +47,7 @@ public class GestaoLojaService {
 
     @Transactional(readOnly = true)
     public LojaGestaoResponse obter(Long id) {
-        return LojaGestaoResponse.of(buscarLoja(id));
+        return resposta(buscarLoja(id));
     }
 
     @Transactional
@@ -50,7 +58,9 @@ public class GestaoLojaService {
         validarCnpjLivre(request.cnpj(), null);
         S_Loja loja = S_Loja.builder().build();
         preencher(loja, request);
-        return LojaGestaoResponse.of(lojaRepository.save(loja));
+        loja = lojaRepository.save(loja);
+        salvarContatos(loja, request);
+        return resposta(loja);
     }
 
     @Transactional
@@ -61,7 +71,9 @@ public class GestaoLojaService {
         }
         validarCnpjLivre(request.cnpj(), loja.getId());
         preencher(loja, request);
-        return LojaGestaoResponse.of(lojaRepository.save(loja));
+        loja = lojaRepository.save(loja);
+        salvarContatos(loja, request);
+        return resposta(loja);
     }
 
     /** Exclusão lógica; o slug é liberado para uma nova loja usá-lo. */
@@ -72,6 +84,39 @@ public class GestaoLojaService {
         loja.setDeletado(true);
         loja.setAtivo(false);
         lojaRepository.save(loja);
+    }
+
+    /**
+     * Os contatos enviados substituem os anteriores (lista nula = não mexer). O primeiro telefone é copiado
+     * para s_loja.telefone, que o cardápio público exibe.
+     */
+    private void salvarContatos(S_Loja loja, LojaGestaoRequest request) {
+        if (request.telefones() != null) {
+            telefoneRepository.deleteByLojaId(loja.getId());
+            telefoneRepository.flush();
+            telefoneRepository.saveAll(request.telefones().stream()
+                    .map(dto -> S_LojaTelefone.builder().loja(loja).tipo(dto.tipo()).numero(dto.numero().trim())
+                            .observacao(vazioParaNulo(dto.observacao())).build())
+                    .toList());
+            loja.setTelefone(request.telefones().isEmpty() ? null : request.telefones().get(0).numero().trim());
+            lojaRepository.save(loja);
+        }
+        if (request.emails() != null) {
+            emailRepository.deleteByLojaId(loja.getId());
+            emailRepository.flush();
+            emailRepository.saveAll(request.emails().stream()
+                    .map(dto -> S_LojaEmail.builder().loja(loja).email(dto.email().trim().toLowerCase(Locale.ROOT))
+                            .observacao(vazioParaNulo(dto.observacao())).build())
+                    .toList());
+        }
+    }
+
+    private LojaGestaoResponse resposta(S_Loja loja) {
+        List<TelefoneDto> telefones = telefoneRepository.findByLojaIdOrderByIdAsc(loja.getId()).stream()
+                .map(t -> new TelefoneDto(t.getTipo(), t.getNumero(), t.getObservacao())).toList();
+        List<EmailDto> emails = emailRepository.findByLojaIdOrderByIdAsc(loja.getId()).stream()
+                .map(e -> new EmailDto(e.getEmail(), e.getObservacao())).toList();
+        return LojaGestaoResponse.of(loja, telefones, emails);
     }
 
     private S_Loja buscarLoja(Long id) {
@@ -89,7 +134,6 @@ public class GestaoLojaService {
         loja.setTipoOrganizacao(r.tipoOrganizacao());
         loja.setSituacaoConta(r.situacaoConta());
         loja.setDescricao(vazioParaNulo(r.descricao()));
-        loja.setTelefone(vazioParaNulo(r.telefone()));
         loja.setLogoUrl(vazioParaNulo(r.logoUrl()));
         loja.setEnderecoRua(vazioParaNulo(r.enderecoRua()));
         loja.setEnderecoNumero(vazioParaNulo(r.enderecoNumero()));

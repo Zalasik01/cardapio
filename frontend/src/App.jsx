@@ -22,6 +22,8 @@ import PaginaUsuarios from './pages/admin/PaginaUsuarios'
 import PaginaUsuarioCrud from './pages/admin/PaginaUsuarioCrud'
 import PaginaFuncionarios from './pages/admin/PaginaFuncionarios'
 import PaginaFuncionarioCrud from './pages/admin/PaginaFuncionarioCrud'
+import PaginaPessoas from './pages/admin/PaginaPessoas'
+import PaginaPessoaCrud from './pages/admin/PaginaPessoaCrud'
 import PaginaNovoUsuario from './pages/admin/PaginaNovoUsuario'
 
 export default function App() {
@@ -50,6 +52,9 @@ export default function App() {
             <Route path="funcionarios" element={<PaginaFuncionarios />} />
             <Route path="funcionarios/novo" element={<PaginaFuncionarioCrud key="novo" />} />
             <Route path="funcionarios/:id" element={<PaginaFuncionarioCrud key="editar" />} />
+            <Route path="pessoas" element={<PaginaPessoas />} />
+            <Route path="pessoas/novo" element={<PaginaPessoaCrud key="novo" />} />
+            <Route path="pessoas/:id" element={<PaginaPessoaCrud key="editar" />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
             <Route path="categorias" element={<PaginaCategorias />} />
             <Route path="produtos" element={<PaginaProdutos />} />

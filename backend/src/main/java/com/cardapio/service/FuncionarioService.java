@@ -79,15 +79,23 @@ public class FuncionarioService {
     @Transactional
     public FuncionarioResponse criar(UUID tenant, FuncionarioRequest request) {
         String cpf = validarCpf(request.cpf());
-        if (pessoaFisicaRepository.existsByTenantAndCpfAndDeletadoFalse(tenant, cpf)) {
-            throw new RegraNegocioException("Já existe um funcionário com este CPF");
+        T_PessoaFisica pessoaFisica = pessoaFisicaRepository.findByTenantAndCpfAndDeletadoFalse(tenant, cpf).orElse(null);
+        T_Pessoa pessoa;
+        if (pessoaFisica == null) {
+            pessoaFisica = T_PessoaFisica.builder().tenant(tenant).build();
+            preencherPessoaFisica(pessoaFisica, request, cpf);
+            pessoaFisica = pessoaFisicaRepository.save(pessoaFisica);
+            pessoa = pessoaRepository.save(T_Pessoa.builder().tenant(tenant).pessoaFisica(pessoaFisica).build());
+        } else {
+            // a pessoa ja existe na loja (ex.: e cliente/fornecedor): passa a ser tambem funcionario
+            pessoa = pessoaRepository.findByPessoaFisicaIdAndDeletadoFalse(pessoaFisica.getId())
+                    .orElseThrow(() -> new RegraNegocioException("Já existe um funcionário com este CPF"));
+            if (funcionarioRepository.existsByPessoaIdAndDeletadoFalse(pessoa.getId())) {
+                throw new RegraNegocioException("Já existe um funcionário com este CPF");
+            }
+            preencherPessoaFisica(pessoaFisica, request, cpf);
+            pessoaFisicaRepository.save(pessoaFisica);
         }
-
-        T_PessoaFisica pessoaFisica = T_PessoaFisica.builder().tenant(tenant).build();
-        preencherPessoaFisica(pessoaFisica, request, cpf);
-        pessoaFisica = pessoaFisicaRepository.save(pessoaFisica);
-
-        T_Pessoa pessoa = pessoaRepository.save(T_Pessoa.builder().tenant(tenant).pessoaFisica(pessoaFisica).build());
 
         T_Funcionario funcionario = T_Funcionario.builder().tenant(tenant).pessoa(pessoa).build();
         preencherFuncionario(funcionario, request);
@@ -133,10 +141,16 @@ public class FuncionarioService {
         funcionario.setAtivo(false);
         funcionarioRepository.save(funcionario);
 
+        if (pessoa.isCliente() || pessoa.isFornecedor()) {
+            return; // a pessoa continua existindo como cliente/fornecedor
+        }
         T_PessoaFisica pessoaFisica = pessoa.getPessoaFisica();
         pessoaFisica.setDeletado(true); // libera o CPF para novo cadastro
         pessoaFisica.setAtivo(false);
         pessoaFisicaRepository.save(pessoaFisica);
+        pessoa.setDeletado(true);
+        pessoa.setAtivo(false);
+        pessoaRepository.save(pessoa);
     }
 
     private T_Funcionario buscarFuncionario(UUID tenant, Long id) {

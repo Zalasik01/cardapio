@@ -22,6 +22,8 @@ public interface T_FuncionarioRepository
     @EntityGraph(attributePaths = {"pessoa", "pessoa.pessoaFisica"})
     List<T_Funcionario> findByPessoaIdIn(Collection<Long> pessoaIds);
 
+    boolean existsByPessoaIdAndDeletadoFalse(Long pessoaId);
+
     @Override
     @EntityGraph(attributePaths = {"pessoa", "pessoa.pessoaFisica"})
     Page<T_Funcionario> findAll(Specification<T_Funcionario> spec, Pageable pageable);

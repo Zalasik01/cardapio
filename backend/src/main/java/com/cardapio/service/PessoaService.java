@@ -2,15 +2,18 @@ package com.cardapio.service;
 
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pessoa.FiltroPessoa;
+import com.cardapio.dto.pessoa.PessoaExistenteResponse;
 import com.cardapio.dto.pessoa.PessoaRequest;
 import com.cardapio.dto.pessoa.PessoaResponse;
 import com.cardapio.dto.pessoa.PessoaResumoResponse;
+import com.cardapio.entity.T_Funcionario;
 import com.cardapio.entity.T_Pessoa;
 import com.cardapio.entity.T_PessoaFisica;
 import com.cardapio.entity.T_PessoaJuridica;
 import com.cardapio.entity.TipoPessoa;
 import com.cardapio.exception.RecursoNaoEncontradoException;
 import com.cardapio.exception.RegraNegocioException;
+import com.cardapio.repository.T_FuncionarioRepository;
 import com.cardapio.repository.T_PessoaEmailRepository;
 import com.cardapio.repository.T_PessoaFisicaRepository;
 import com.cardapio.repository.T_PessoaJuridicaRepository;
@@ -48,6 +51,7 @@ public class PessoaService {
     private final T_PessoaJuridicaRepository pessoaJuridicaRepository;
     private final T_PessoaTelefoneRepository telefoneRepository;
     private final T_PessoaEmailRepository emailRepository;
+    private final T_FuncionarioRepository funcionarioRepository;
     private final PessoaContatoService contatoService;
 
     @Transactional(readOnly = true)
@@ -70,6 +74,29 @@ public class PessoaService {
                 telefones.getOrDefault(p.getId(), List.of()), emails.getOrDefault(p.getId(), List.of())));
     }
 
+    /** Procura, na loja, a pessoa fisica com o CPF informado (para reaproveitar o cadastro). Vazio se nao existe. */
+    @Transactional(readOnly = true)
+    public java.util.Optional<PessoaExistenteResponse> consultarPorCpf(UUID tenant, String cpf) {
+        String digitos = Documentos.soDigitos(cpf);
+        if (!temTexto(digitos)) {
+            return java.util.Optional.empty();
+        }
+        return pessoaFisicaRepository.findByTenantAndCpfAndDeletadoFalse(tenant, digitos)
+                .flatMap(pf -> pessoaRepository.findByPessoaFisicaIdAndDeletadoFalse(pf.getId()).map(pessoa -> {
+                    T_Funcionario funcionario = funcionarioRepository.findByPessoaIdIn(List.of(pessoa.getId())).stream()
+                            .filter(f -> !f.isDeletado()).findFirst().orElse(null);
+                    return new PessoaExistenteResponse(
+                            pessoa.getId(), pf.getNome(), pf.getApelido(), pf.getCpf(), pf.getRg(), pf.getSexo(),
+                            pf.getDataNascimento(), pf.getEstadoCivil(), pf.getProfissao(), pf.getNaturalidade(),
+                            pf.getNacionalidade(), pf.getObservacao(), contatoService.endereco(pessoa.getId()),
+                            contatoService.telefones(pessoa.getId()), contatoService.emails(pessoa.getId()),
+                            funcionario == null ? null : funcionario.getId(),
+                            funcionario == null ? null : funcionario.getNumeroCnh(),
+                            funcionario == null ? null : funcionario.getVencimentoCnh(),
+                            pessoa.isCliente(), pessoa.isFornecedor());
+                }));
+    }
+
     @Transactional(readOnly = true)
     public PessoaResponse obter(UUID tenant, Long id) {
         return montarResposta(buscarPessoa(tenant, id));
@@ -81,12 +108,22 @@ public class PessoaService {
         T_Pessoa pessoa = T_Pessoa.builder().tenant(tenant).build();
         if (request.tipo() == TipoPessoa.FISICA) {
             String cpf = Documentos.soDigitos(request.cpf());
-            if (temTexto(cpf) && pessoaFisicaRepository.existsByTenantAndCpfAndDeletadoFalse(tenant, cpf)) {
-                throw new RegraNegocioException("Já existe uma pessoa com este CPF");
+            T_PessoaFisica existente = temTexto(cpf)
+                    ? pessoaFisicaRepository.findByTenantAndCpfAndDeletadoFalse(tenant, cpf).orElse(null) : null;
+            T_Pessoa pessoaExistente = existente == null ? null
+                    : pessoaRepository.findByPessoaFisicaIdAndDeletadoFalse(existente.getId()).orElse(null);
+            if (pessoaExistente != null && !pessoaExistente.isCliente() && !pessoaExistente.isFornecedor()) {
+                // a pessoa ja existe na loja (ex.: e um funcionario): so passa a ter tambem o papel de cliente/fornecedor
+                pessoa = pessoaExistente;
+                preencherFisica(existente, request);
+                pessoaFisicaRepository.save(existente);
+            } else if (existente != null) {
+                throw new RegraNegocioException("Já existe um cliente/fornecedor com este CPF");
+            } else {
+                T_PessoaFisica fisica = T_PessoaFisica.builder().tenant(tenant).build();
+                preencherFisica(fisica, request);
+                pessoa.setPessoaFisica(pessoaFisicaRepository.save(fisica));
             }
-            T_PessoaFisica fisica = T_PessoaFisica.builder().tenant(tenant).build();
-            preencherFisica(fisica, request);
-            pessoa.setPessoaFisica(pessoaFisicaRepository.save(fisica));
         } else {
             String cnpj = Documentos.soDigitos(request.cnpj());
             if (temTexto(cnpj) && pessoaJuridicaRepository.existsByTenantAndCnpjAndDeletadoFalse(tenant, cnpj)) {
@@ -138,10 +175,19 @@ public class PessoaService {
         return montarResposta(pessoa);
     }
 
-    /** Exclusao logica; libera o CPF/CNPJ para um novo cadastro. */
+    /**
+     * Exclusao logica; libera o CPF/CNPJ para um novo cadastro. Se a pessoa tambem e funcionario,
+     * so deixa de ser cliente/fornecedor (o cadastro dela continua existindo).
+     */
     @Transactional
     public void excluir(UUID tenant, Long id) {
         T_Pessoa pessoa = buscarPessoa(tenant, id);
+        if (funcionarioRepository.existsByPessoaIdAndDeletadoFalse(pessoa.getId())) {
+            pessoa.setCliente(false);
+            pessoa.setFornecedor(false);
+            pessoaRepository.save(pessoa);
+            return;
+        }
         pessoa.setDeletado(true);
         pessoa.setAtivo(false);
         pessoaRepository.save(pessoa);

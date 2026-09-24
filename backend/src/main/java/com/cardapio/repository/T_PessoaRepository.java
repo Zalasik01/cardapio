@@ -16,6 +16,8 @@ public interface T_PessoaRepository extends JpaRepository<T_Pessoa, Long>, JpaSp
     @EntityGraph(attributePaths = {"pessoaFisica", "pessoaJuridica"})
     Optional<T_Pessoa> findByIdAndTenantAndDeletadoFalse(Long id, UUID tenant);
 
+    Optional<T_Pessoa> findByPessoaFisicaIdAndDeletadoFalse(Long pessoaFisicaId);
+
     @Override
     @EntityGraph(attributePaths = {"pessoaFisica", "pessoaJuridica"})
     Page<T_Pessoa> findAll(Specification<T_Pessoa> spec, Pageable pageable);

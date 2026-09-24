@@ -45,4 +45,10 @@ public record PessoaRequest(
         @Valid List<TelefoneDto> telefones,
         @Valid List<EmailDto> emails
 ) {
+
+    /** Documento em branco (campo vazio do formulario) equivale a nao informado: o @CPF/@CNPJ rejeitaria a string vazia. */
+    public PessoaRequest {
+        cpf = cpf == null || cpf.isBlank() ? null : cpf;
+        cnpj = cnpj == null || cnpj.isBlank() ? null : cnpj;
+    }
 }

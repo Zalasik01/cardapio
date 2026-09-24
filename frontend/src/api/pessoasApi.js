@@ -21,3 +21,7 @@ export const atualizarPessoa = (tenant, id, dados) =>
   http.put(`${base(tenant)}/${id}`, dados).then((res) => res.data)
 
 export const excluirPessoa = (tenant, id) => http.delete(`${base(tenant)}/${id}`)
+
+/** Pessoa física que já usa o CPF na loja (funcionário, cliente ou fornecedor), ou null se não existe. */
+export const consultarPessoaPorCpf = (tenant, cpf) =>
+  http.get(`${base(tenant)}/por-cpf/${String(cpf).replace(/\D/g, '')}`).then((res) => res.data || null)

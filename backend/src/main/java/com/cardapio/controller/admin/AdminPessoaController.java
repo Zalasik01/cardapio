@@ -2,6 +2,7 @@ package com.cardapio.controller.admin;
 
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pessoa.FiltroPessoa;
+import com.cardapio.dto.pessoa.PessoaExistenteResponse;
 import com.cardapio.dto.pessoa.PessoaRequest;
 import com.cardapio.dto.pessoa.PessoaResponse;
 import com.cardapio.dto.pessoa.PessoaResumoResponse;
@@ -34,6 +35,14 @@ public class AdminPessoaController {
                                                        @RequestParam(defaultValue = "0") int page,
                                                        @RequestParam(defaultValue = "10") int size) {
         return pessoaService.buscar(tenant, new FiltroPessoa(busca, nome, documento, tipo, papel, mostrarInativos), page, size);
+    }
+
+    /** 200 com a pessoa que ja usa o CPF na loja (funcionario, cliente ou fornecedor) ou 204 se nao existe. */
+    @GetMapping("/por-cpf/{cpf}")
+    public ResponseEntity<PessoaExistenteResponse> consultarPorCpf(@PathVariable UUID tenant, @PathVariable String cpf) {
+        return pessoaService.consultarPorCpf(tenant, cpf)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

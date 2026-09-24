@@ -9,6 +9,13 @@ export function formatarCpf(valor) {
   return digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
 }
 
+/** 14 digitos -> 00.000.000/0000-00 (devolve o valor original se nao tiver 14 digitos). */
+export function formatarCnpj(valor) {
+  const digitos = String(valor ?? '').replace(/\D/g, '')
+  if (digitos.length !== 14) return valor ?? ''
+  return digitos.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+}
+
 export function soDigitos(valor) {
   return String(valor ?? '').replace(/\D/g, '')
 }

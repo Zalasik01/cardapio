@@ -43,7 +43,7 @@ public class FreteService {
         if (request.latitude() == null || request.longitude() == null
                 || loja.getLatitude() == null || loja.getLongitude() == null) {
             return new CalculoFreteResponse(false, null, null, null, "INDISPONIVEL",
-                    "Nao foi possivel calcular o frete: informe um bairro cadastrado ou a localizacao");
+                    "Não foi possível calcular o frete: informe um bairro cadastrado ou a localização");
         }
 
         double distanciaKm = calcularDistanciaHaversine(
@@ -52,7 +52,7 @@ public class FreteService {
 
         if (distanciaKm > loja.getDistanciaMaximaEntregaKm()) {
             return new CalculoFreteResponse(false, null, null, distanciaKm, "DISTANCIA",
-                    "Endereco fora da area de entrega da loja");
+                    "Endereço fora da área de entrega da loja");
         }
 
         BigDecimal taxa = loja.getTaxaEntregaBase()
@@ -62,7 +62,7 @@ public class FreteService {
         int tempoEstimado = (int) Math.ceil(15 + distanciaKm * 4);
 
         return new CalculoFreteResponse(true, taxa, tempoEstimado, distanciaKm, "DISTANCIA",
-                "Frete calculado por distancia (" + String.format("%.1f", distanciaKm) + " km)");
+                "Frete calculado por distância (" + String.format("%.1f", distanciaKm) + " km)");
     }
 
     private double calcularDistanciaHaversine(double lat1, double lon1, double lat2, double lon2) {
@@ -116,6 +116,6 @@ public class FreteService {
 
     private T_ZonaEntrega buscarZona(UUID tenant, UUID zonaGuid) {
         return zonaEntregaRepository.findByGuidAndTenant(zonaGuid, tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Zona de entrega nao encontrada: " + zonaGuid));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Zona de entrega não encontrada: " + zonaGuid));
     }
 }

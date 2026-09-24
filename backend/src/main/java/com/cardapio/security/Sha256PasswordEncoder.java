@@ -33,7 +33,7 @@ public class Sha256PasswordEncoder implements PasswordEncoder {
             byte[] hash = digest.digest(valor.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Algoritmo SHA-256 indisponivel", e);
+            throw new IllegalStateException("Algoritmo SHA-256 indisponível", e);
         }
     }
 }

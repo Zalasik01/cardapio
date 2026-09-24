@@ -36,23 +36,23 @@ public class UsuarioFotoService {
     @Transactional
     public void salvarDoUsuario(Long usuarioId, MultipartFile arquivo) {
         S_Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
 
         if (arquivo == null || arquivo.isEmpty()) {
             throw new RegraNegocioException("Selecione uma imagem");
         }
         if (arquivo.getSize() > TAMANHO_MAXIMO_BYTES) {
-            throw new RegraNegocioException("A imagem deve ter no maximo 2 MB");
+            throw new RegraNegocioException("A imagem deve ter no máximo 2 MB");
         }
         byte[] conteudo;
         try {
             conteudo = arquivo.getBytes();
         } catch (IOException e) {
-            throw new RegraNegocioException("Nao foi possivel ler a imagem");
+            throw new RegraNegocioException("Não foi possível ler a imagem");
         }
         String tipo = detectarTipo(conteudo);
         if (tipo == null) {
-            throw new RegraNegocioException("Formato de imagem nao suportado. Use PNG, JPEG ou WEBP");
+            throw new RegraNegocioException("Formato de imagem não suportado. Use PNG, JPEG ou WEBP");
         }
 
         S_UsuarioFoto foto = fotoRepository.findByUsuarioId(usuario.getId())
@@ -71,7 +71,7 @@ public class UsuarioFotoService {
     public Foto obterDoUsuario(Long usuarioId) {
         return fotoRepository.findByUsuarioId(usuarioId)
                 .map(foto -> new Foto(foto.getTipoConteudo(), foto.getConteudo()))
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario sem foto"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário sem foto"));
     }
 
     @Transactional

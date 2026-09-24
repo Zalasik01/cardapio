@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class NovoUsuarioService {
 
-    private static final String LINK_INVALIDO = "Link invalido ou expirado. Peca um novo link ao administrador.";
+    private static final String LINK_INVALIDO = "Link inválido ou expirado. Peça um novo link ao administrador.";
 
     private final S_UsuarioRepository usuarioRepository;
     private final T_PerfilUsuarioRepository perfilUsuarioRepository;

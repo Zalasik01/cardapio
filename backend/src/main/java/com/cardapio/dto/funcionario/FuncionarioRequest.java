@@ -17,7 +17,7 @@ import java.util.List;
 public record FuncionarioRequest(
         Boolean ativo,
         Sexo sexo,
-        @NotBlank @CPF(message = "CPF invalido") String cpf,
+        @NotBlank @CPF(message = "CPF inválido") String cpf,
         @Size(max = 30) String rg,
         @Size(max = 255) String apelido,
         @NotBlank @Size(max = 255) String nome,

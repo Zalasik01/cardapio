@@ -18,6 +18,6 @@ public class AppUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return usuarioRepository.findByEmail(email)
                 .map(usuario -> new AppUserDetails(usuario, null, null))
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario nao encontrado: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
     }
 }

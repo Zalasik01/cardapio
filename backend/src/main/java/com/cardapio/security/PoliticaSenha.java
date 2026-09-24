@@ -104,15 +104,15 @@ public final class PoliticaSenha {
     private static String traduzir(String codigo) {
         return switch (codigo) {
             case "TOO_SHORT" -> "ter pelo menos " + TAMANHO_MINIMO + " caracteres";
-            case "TOO_LONG" -> "ter no maximo " + TAMANHO_MAXIMO + " caracteres";
-            case "INSUFFICIENT_LOWERCASE" -> "ter uma letra minuscula";
-            case "INSUFFICIENT_UPPERCASE" -> "ter uma letra maiuscula";
-            case "INSUFFICIENT_DIGIT" -> "ter um numero";
-            case "INSUFFICIENT_SPECIAL" -> "ter um simbolo (por exemplo ! @ # $ %)";
-            case "ILLEGAL_MATCH", "ILLEGAL_WORD" -> "nao ser uma senha comum";
-            case "ILLEGAL_WORD_SUBSTRING", "ILLEGAL_SUBSTRING" -> "nao conter seu nome ou e-mail";
-            case "ILLEGAL_REPEATED_CHARS", "ILLEGAL_REPEAT_CHARS" -> "nao ter " + REPETICAO_MAXIMA + " ou mais caracteres iguais seguidos";
-            default -> "cumprir as regras de seguranca";
+            case "TOO_LONG" -> "ter no máximo " + TAMANHO_MAXIMO + " caracteres";
+            case "INSUFFICIENT_LOWERCASE" -> "ter uma letra minúscula";
+            case "INSUFFICIENT_UPPERCASE" -> "ter uma letra maiúscula";
+            case "INSUFFICIENT_DIGIT" -> "ter um número";
+            case "INSUFFICIENT_SPECIAL" -> "ter um símbolo (por exemplo ! @ # $ %)";
+            case "ILLEGAL_MATCH", "ILLEGAL_WORD" -> "não ser uma senha comum";
+            case "ILLEGAL_WORD_SUBSTRING", "ILLEGAL_SUBSTRING" -> "não conter seu nome ou e-mail";
+            case "ILLEGAL_REPEATED_CHARS", "ILLEGAL_REPEAT_CHARS" -> "não ter " + REPETICAO_MAXIMA + " ou mais caracteres iguais seguidos";
+            default -> "cumprir as regras de segurança";
         };
     }
 }

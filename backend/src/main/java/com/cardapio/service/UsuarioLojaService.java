@@ -91,9 +91,9 @@ public class UsuarioLojaService {
     @Transactional
     public UsuarioConviteResponse criar(UUID tenant, UsuarioLojaRequest request) {
         S_Loja loja = lojaRepository.findByGuid(tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja nao encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja não encontrada"));
         S_Perfil papel = perfilRepository.findByCodigo(PAPEL_PADRAO)
-                .orElseThrow(() -> new IllegalStateException("Perfil " + PAPEL_PADRAO + " nao cadastrado"));
+                .orElseThrow(() -> new IllegalStateException("Perfil " + PAPEL_PADRAO + " não cadastrado"));
         T_Funcionario funcionario = buscarFuncionario(tenant, request.funcionarioId());
 
         String email = request.email().trim().toLowerCase(Locale.ROOT);
@@ -104,7 +104,7 @@ public class UsuarioLojaService {
                 ? null
                 : perfilUsuarioRepository.findByUsuarioIdAndTenant(usuario.getId(), tenant).orElse(null);
         if (vinculo != null && !vinculo.isDeletado()) {
-            throw new RegraNegocioException("Este e-mail ja esta cadastrado nesta loja");
+            throw new RegraNegocioException("Este e-mail já está cadastrado nesta loja");
         }
         validarFuncionarioLivre(funcionario, null);
 
@@ -149,7 +149,7 @@ public class UsuarioLojaService {
         // o funcionario do usuario nao muda depois do cadastro
         T_Funcionario funcionario = buscarFuncionario(tenant, request.funcionarioId());
         if (!funcionario.getPessoa().getId().equals(vinculo.getPessoa().getId())) {
-            throw new RegraNegocioException("O funcionario do usuario nao pode ser alterado");
+            throw new RegraNegocioException("O funcionário do usuário não pode ser alterado");
         }
 
         S_Usuario usuario = vinculo.getUsuario();
@@ -179,10 +179,10 @@ public class UsuarioLojaService {
                     .anyMatch(outro -> !tenant.equals(outro.getTenant()));
             if (emOutraLoja) {
                 throw new RegraNegocioException(
-                        "Este usuario tambem pertence a outras lojas, entao o e-mail nao pode ser alterado por aqui");
+                        "Este usuário também pertence a outras lojas, então o e-mail não pode ser alterado por aqui");
             }
             if (usuarioRepository.existsByEmail(email)) {
-                throw new RegraNegocioException("Este e-mail ja esta em uso");
+                throw new RegraNegocioException("Este e-mail já está em uso");
             }
             usuario.setEmail(email);
             usuarioRepository.save(usuario);
@@ -202,16 +202,16 @@ public class UsuarioLojaService {
         S_Usuario usuario = vinculo.getUsuario();
 
         if (usuario.getId().equals(usuarioLogadoId)) {
-            throw new RegraNegocioException("Para alterar a propria senha use \"Seu perfil\"");
+            throw new RegraNegocioException("Para alterar a própria senha use \"Seu perfil\"");
         }
         if (vinculo.getStatus() == StatusPerfilUsuario.PENDENTE) {
-            throw new RegraNegocioException("O usuario ainda nao definiu a senha: gere um novo link de acesso");
+            throw new RegraNegocioException("O usuário ainda não definiu a senha: gere um novo link de acesso");
         }
         boolean emOutraLoja = perfilUsuarioRepository.findByUsuarioIdAndDeletadoFalse(usuario.getId()).stream()
                 .anyMatch(outro -> !tenant.equals(outro.getTenant()));
         if (emOutraLoja) {
             throw new RegraNegocioException(
-                    "Este usuario tambem pertence a outras lojas, entao a senha nao pode ser redefinida por aqui");
+                    "Este usuário também pertence a outras lojas, então a senha não pode ser redefinida por aqui");
         }
         PoliticaSenha.validar(senhaTemporaria, usuario.getEmail(), usuario.getNome());
 
@@ -228,7 +228,7 @@ public class UsuarioLojaService {
     public UsuarioLojaResponse alterarAtivo(UUID tenant, Long usuarioId, boolean ativo, Long usuarioLogadoId) {
         T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
         if (!ativo && vinculo.getUsuario().getId().equals(usuarioLogadoId)) {
-            throw new RegraNegocioException("Voce nao pode inativar o proprio usuario");
+            throw new RegraNegocioException("Você não pode inativar o próprio usuário");
         }
         vinculo.setAtivo(ativo);
         return resposta(perfilUsuarioRepository.save(vinculo));
@@ -239,7 +239,7 @@ public class UsuarioLojaService {
     public void excluir(UUID tenant, Long usuarioId, Long usuarioLogadoId) {
         T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
         if (vinculo.getUsuario().getId().equals(usuarioLogadoId)) {
-            throw new RegraNegocioException("Voce nao pode excluir o proprio usuario");
+            throw new RegraNegocioException("Você não pode excluir o próprio usuário");
         }
         vinculo.setDeletado(true);
         vinculo.setAtivo(false);
@@ -252,7 +252,7 @@ public class UsuarioLojaService {
         T_PerfilUsuario vinculo = buscarVinculo(tenant, usuarioId);
         S_Usuario usuario = vinculo.getUsuario();
         if (!usuario.isExigeTrocarSenha()) {
-            throw new RegraNegocioException("Este usuario ja definiu a senha");
+            throw new RegraNegocioException("Este usuário já definiu a senha");
         }
         prepararConvite(usuario);
         usuarioRepository.save(usuario);
@@ -262,14 +262,14 @@ public class UsuarioLojaService {
     /** Vinculo do usuario na loja; usado tambem pelo servico de foto. */
     T_PerfilUsuario buscarVinculo(UUID tenant, Long usuarioId) {
         return perfilUsuarioRepository.findByUsuarioIdAndTenantAndDeletadoFalse(usuarioId, tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
     }
 
     private T_Funcionario buscarFuncionario(UUID tenant, Long funcionarioId) {
         T_Funcionario funcionario = funcionarioRepository.findByIdAndTenantAndDeletadoFalse(funcionarioId, tenant)
-                .orElseThrow(() -> new RegraNegocioException("Funcionario nao encontrado"));
+                .orElseThrow(() -> new RegraNegocioException("Funcionário não encontrado"));
         if (!funcionario.isAtivo()) {
-            throw new RegraNegocioException("O funcionario selecionado esta inativo");
+            throw new RegraNegocioException("O funcionário selecionado está inativo");
         }
         return funcionario;
     }
@@ -279,7 +279,7 @@ public class UsuarioLojaService {
         perfilUsuarioRepository.findFirstByPessoaIdAndDeletadoFalse(funcionario.getPessoa().getId())
                 .filter(outro -> atual == null || !outro.getId().equals(atual.getId()))
                 .ifPresent(outro -> {
-                    throw new RegraNegocioException("Este funcionario ja possui um usuario");
+                    throw new RegraNegocioException("Este funcionário já possui um usuário");
                 });
     }
 

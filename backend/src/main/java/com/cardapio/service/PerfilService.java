@@ -27,7 +27,7 @@ public class PerfilService {
 
         String digitos = Documentos.soDigitos(whatsapp);
         if (digitos != null && !digitos.isEmpty() && (digitos.length() < 10 || digitos.length() > 13)) {
-            throw new RegraNegocioException("WhatsApp invalido: informe DDD e numero");
+            throw new RegraNegocioException("WhatsApp inválido: informe DDD e número");
         }
 
         usuario.setNome(nome.trim());
@@ -44,7 +44,7 @@ public class PerfilService {
         if (usuario.isExigeTrocarSenha()) {
             // troca obrigatoria (senha temporaria): so exige que a nova seja diferente da temporaria
             if (passwordEncoder.matches(novaSenha, usuario.getSenha())) {
-                throw new RegraNegocioException("A nova senha deve ser diferente da senha temporaria");
+                throw new RegraNegocioException("A nova senha deve ser diferente da senha temporária");
             }
         } else {
             if (senhaAtual == null || !passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
@@ -63,6 +63,6 @@ public class PerfilService {
 
     private S_Usuario buscar(Long usuarioId) {
         return usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
     }
 }

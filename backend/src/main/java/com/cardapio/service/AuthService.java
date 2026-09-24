@@ -73,7 +73,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public List<LojaResponse> listarLojasAcessiveis(Long usuarioId, String busca) {
         S_Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new AccessDeniedException("Usuario nao encontrado"));
+                .orElseThrow(() -> new AccessDeniedException("Usuário não encontrado"));
         List<T_PerfilUsuario> perfis = perfilUsuarioRepository.buscarAtivosPorUsuario(usuarioId);
         boolean usuarioSistema = ehUsuarioDoSistema(usuario, perfis);
         String termo = busca == null ? "" : busca.trim();
@@ -92,7 +92,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse selecionarLoja(Long usuarioId, UUID lojaGuid) {
         S_Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new AccessDeniedException("Usuario nao encontrado"));
+                .orElseThrow(() -> new AccessDeniedException("Usuário não encontrado"));
         return criarSessao(usuario, lojaGuid);
     }
 
@@ -102,7 +102,7 @@ public class AuthService {
         Claims claims = jwtService.lerRefreshToken(refreshToken);
         S_Usuario usuario = buscarPorEmail(claims.getSubject());
         if (!usuario.isAtivo() || usuario.isDeletado()) {
-            throw new AccessDeniedException("Usuario inativo");
+            throw new AccessDeniedException("Usuário inativo");
         }
 
         String tenant = claims.get("tenant", String.class);
@@ -123,7 +123,7 @@ public class AuthService {
             loja = lojas.stream()
                     .filter(l -> l.getGuid().equals(lojaGuid))
                     .findFirst()
-                    .orElseThrow(() -> new AccessDeniedException("Voce nao tem acesso a esta loja"));
+                    .orElseThrow(() -> new AccessDeniedException("Você não tem acesso a esta loja"));
         } else if (!usuarioSistema && lojas.size() == 1) {
             loja = lojas.get(0);
         }
@@ -159,7 +159,7 @@ public class AuthService {
 
     private S_Usuario buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new AccessDeniedException("Usuario nao encontrado"));
+                .orElseThrow(() -> new AccessDeniedException("Usuário não encontrado"));
     }
 
     private boolean ehUsuarioDoSistema(S_Usuario usuario, List<T_PerfilUsuario> perfis) {

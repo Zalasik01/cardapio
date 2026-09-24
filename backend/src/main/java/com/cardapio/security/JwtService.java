@@ -71,7 +71,7 @@ public class JwtService {
     private Claims ler(String token, String tipoEsperado) {
         Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
         if (!tipoEsperado.equals(claims.get(CLAIM_TIPO, String.class))) {
-            throw new JwtException("Tipo de token invalido");
+            throw new JwtException("Tipo de token inválido");
         }
         return claims;
     }

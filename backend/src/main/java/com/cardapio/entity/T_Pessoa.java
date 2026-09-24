@@ -34,4 +34,9 @@ public class T_Pessoa extends TenantAbstract {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_pessoa_juridica")
     private T_PessoaJuridica pessoaJuridica;
+
+    /** Papeis na loja: pode ser cliente, fornecedor ou os dois. */
+    private boolean cliente;
+
+    private boolean fornecedor;
 }

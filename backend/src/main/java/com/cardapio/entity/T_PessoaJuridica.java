@@ -29,5 +29,12 @@ public class T_PessoaJuridica extends TenantAbstract {
     @Column(length = 18)
     private String cnpj;
 
-    private String telefone;
+    @Column(length = 30)
+    private String inscricaoEstadual;
+
+    @Column(length = 30)
+    private String inscricaoMunicipal;
+
+    @Column(length = 2000)
+    private String observacao;
 }

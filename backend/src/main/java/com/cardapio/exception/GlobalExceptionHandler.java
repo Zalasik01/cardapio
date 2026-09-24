@@ -35,17 +35,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErroResposta> handleCredenciaisInvalidas(BadCredentialsException ex) {
-        return construirResposta(HttpStatus.UNAUTHORIZED, "Email ou senha invalidos", null);
+        return construirResposta(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos", null);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErroResposta> handleAutenticacao(AuthenticationException ex) {
-        return construirResposta(HttpStatus.UNAUTHORIZED, "Nao foi possivel autenticar", null);
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Não foi possível autenticar", null);
     }
 
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ErroResposta> handleTokenInvalido(JwtException ex) {
-        return construirResposta(HttpStatus.UNAUTHORIZED, "Sessao invalida ou expirada", null);
+        return construirResposta(HttpStatus.UNAUTHORIZED, "Sessão inválida ou expirada", null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -55,17 +55,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErroResposta> handleCorpoInvalido(HttpMessageNotReadableException ex) {
-        return construirResposta(HttpStatus.BAD_REQUEST, "Requisicao invalida: corpo ausente ou mal formatado", null);
+        return construirResposta(HttpStatus.BAD_REQUEST, "Requisição inválida: corpo ausente ou mal formatado", null);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErroResposta> handleRotaInexistente(NoResourceFoundException ex) {
-        return construirResposta(HttpStatus.NOT_FOUND, "Recurso nao encontrado", null);
+        return construirResposta(HttpStatus.NOT_FOUND, "Recurso não encontrado", null);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErroResposta> handleArquivoGrande(MaxUploadSizeExceededException ex) {
-        return construirResposta(HttpStatus.PAYLOAD_TOO_LARGE, "Arquivo muito grande (maximo 2 MB)", null);
+        return construirResposta(HttpStatus.PAYLOAD_TOO_LARGE, "Arquivo muito grande (máximo 2 MB)", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -73,17 +73,17 @@ public class GlobalExceptionHandler {
         Map<String, String> campos = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(erro ->
                 campos.put(erro.getField(), erro.getDefaultMessage()));
-        return construirResposta(HttpStatus.BAD_REQUEST, "Dados invalidos", campos);
+        return construirResposta(HttpStatus.BAD_REQUEST, "Dados inválidos", campos);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErroResposta> handleTipoInvalido(MethodArgumentTypeMismatchException ex) {
-        return construirResposta(HttpStatus.BAD_REQUEST, "Valor invalido para o parametro '" + ex.getName() + "'", null);
+        return construirResposta(HttpStatus.BAD_REQUEST, "Valor inválido para o parâmetro '" + ex.getName() + "'", null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErroResposta> handleGenerica(Exception ex) {
-        log.error("Erro nao tratado", ex);
+        log.error("Erro não tratado", ex);
         return construirResposta(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno no servidor", null);
     }
 

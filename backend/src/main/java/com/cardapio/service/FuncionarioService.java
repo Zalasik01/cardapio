@@ -1,25 +1,18 @@
 package com.cardapio.service;
 
 import com.cardapio.dto.PaginaResponse;
-import com.cardapio.dto.funcionario.EmailDto;
-import com.cardapio.dto.funcionario.EnderecoDto;
 import com.cardapio.dto.funcionario.FiltroFuncionario;
 import com.cardapio.dto.funcionario.FuncionarioRequest;
 import com.cardapio.dto.funcionario.FuncionarioResponse;
 import com.cardapio.dto.funcionario.FuncionarioResumoResponse;
-import com.cardapio.dto.funcionario.TelefoneDto;
 import com.cardapio.entity.T_Funcionario;
 import com.cardapio.entity.T_Pessoa;
-import com.cardapio.entity.T_PessoaEmail;
-import com.cardapio.entity.T_PessoaEndereco;
 import com.cardapio.entity.T_PessoaFisica;
-import com.cardapio.entity.T_PessoaTelefone;
 import com.cardapio.exception.RecursoNaoEncontradoException;
 import com.cardapio.exception.RegraNegocioException;
 import com.cardapio.repository.T_FuncionarioRepository;
 import com.cardapio.repository.T_PerfilUsuarioRepository;
 import com.cardapio.repository.T_PessoaEmailRepository;
-import com.cardapio.repository.T_PessoaEnderecoRepository;
 import com.cardapio.repository.T_PessoaFisicaRepository;
 import com.cardapio.repository.T_PessoaRepository;
 import com.cardapio.repository.T_PessoaTelefoneRepository;
@@ -52,9 +45,9 @@ public class FuncionarioService {
     private final T_FuncionarioRepository funcionarioRepository;
     private final T_PessoaRepository pessoaRepository;
     private final T_PessoaFisicaRepository pessoaFisicaRepository;
-    private final T_PessoaEnderecoRepository enderecoRepository;
     private final T_PessoaTelefoneRepository telefoneRepository;
     private final T_PessoaEmailRepository emailRepository;
+    private final PessoaContatoService contatoService;
     private final T_PerfilUsuarioRepository perfilUsuarioRepository;
 
     @Transactional(readOnly = true)
@@ -87,7 +80,7 @@ public class FuncionarioService {
     public FuncionarioResponse criar(UUID tenant, FuncionarioRequest request) {
         String cpf = validarCpf(request.cpf());
         if (pessoaFisicaRepository.existsByTenantAndCpfAndDeletadoFalse(tenant, cpf)) {
-            throw new RegraNegocioException("Ja existe um funcionario com este CPF");
+            throw new RegraNegocioException("Já existe um funcionário com este CPF");
         }
 
         T_PessoaFisica pessoaFisica = T_PessoaFisica.builder().tenant(tenant).build();
@@ -100,8 +93,8 @@ public class FuncionarioService {
         preencherFuncionario(funcionario, request);
         funcionario = funcionarioRepository.save(funcionario);
 
-        salvarEndereco(pessoa, request.endereco());
-        salvarContatos(pessoa, request);
+        contatoService.salvarEndereco(pessoa, request.endereco());
+        contatoService.salvarContatos(pessoa, request.telefones(), request.emails());
         return montarResposta(funcionario);
     }
 
@@ -113,7 +106,7 @@ public class FuncionarioService {
 
         String cpf = validarCpf(request.cpf());
         if (pessoaFisicaRepository.existsByTenantAndCpfAndDeletadoFalseAndIdNot(tenant, cpf, pessoaFisica.getId())) {
-            throw new RegraNegocioException("Ja existe outro funcionario com este CPF");
+            throw new RegraNegocioException("Já existe outro funcionário com este CPF");
         }
 
         preencherPessoaFisica(pessoaFisica, request, cpf);
@@ -121,8 +114,8 @@ public class FuncionarioService {
         preencherFuncionario(funcionario, request);
         funcionarioRepository.save(funcionario);
 
-        salvarEndereco(pessoa, request.endereco());
-        salvarContatos(pessoa, request);
+        contatoService.salvarEndereco(pessoa, request.endereco());
+        contatoService.salvarContatos(pessoa, request.telefones(), request.emails());
         return montarResposta(funcionario);
     }
 
@@ -133,7 +126,7 @@ public class FuncionarioService {
         T_Pessoa pessoa = funcionario.getPessoa();
 
         if (perfilUsuarioRepository.existsByPessoaIdAndDeletadoFalse(pessoa.getId())) {
-            throw new RegraNegocioException("Este funcionario possui um usuario vinculado. Exclua o usuario primeiro.");
+            throw new RegraNegocioException("Este funcionário possui um usuário vinculado. Exclua o usuário primeiro.");
         }
 
         funcionario.setDeletado(true);
@@ -148,7 +141,7 @@ public class FuncionarioService {
 
     private T_Funcionario buscarFuncionario(UUID tenant, Long id) {
         return funcionarioRepository.findByIdAndTenantAndDeletadoFalse(id, tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Funcionario nao encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Funcionário não encontrado"));
     }
 
     /** O formato e os digitos verificadores ja foram validados pelo @CPF do request; aqui so normaliza. */
@@ -178,60 +171,16 @@ public class FuncionarioService {
         }
     }
 
-    private void salvarEndereco(T_Pessoa pessoa, EnderecoDto dto) {
-        if (dto == null) {
-            return;
-        }
-        T_PessoaEndereco endereco = enderecoRepository.findByPessoaId(pessoa.getId())
-                .orElseGet(() -> T_PessoaEndereco.builder().tenant(pessoa.getTenant()).pessoa(pessoa).build());
-        endereco.setCep(vazioParaNulo(dto.cep()));
-        endereco.setLogradouro(vazioParaNulo(dto.logradouro()));
-        endereco.setNumero(vazioParaNulo(dto.numero()));
-        endereco.setComplemento(vazioParaNulo(dto.complemento()));
-        endereco.setBairro(vazioParaNulo(dto.bairro()));
-        endereco.setCidade(vazioParaNulo(dto.cidade()));
-        endereco.setEstado(dto.estado() == null || dto.estado().isBlank() ? null : dto.estado().trim().toUpperCase(Locale.ROOT));
-        enderecoRepository.save(endereco);
-    }
-
-    /** Os contatos enviados substituem os anteriores. Lista nula significa "nao mexer". */
-    private void salvarContatos(T_Pessoa pessoa, FuncionarioRequest request) {
-        if (request.telefones() != null) {
-            telefoneRepository.deleteByPessoaId(pessoa.getId());
-            telefoneRepository.flush();
-            telefoneRepository.saveAll(request.telefones().stream()
-                    .map(dto -> T_PessoaTelefone.builder().tenant(pessoa.getTenant()).pessoa(pessoa)
-                            .tipo(dto.tipo()).numero(dto.numero().trim()).observacao(vazioParaNulo(dto.observacao())).build())
-                    .toList());
-        }
-        if (request.emails() != null) {
-            emailRepository.deleteByPessoaId(pessoa.getId());
-            emailRepository.flush();
-            emailRepository.saveAll(request.emails().stream()
-                    .map(dto -> T_PessoaEmail.builder().tenant(pessoa.getTenant()).pessoa(pessoa)
-                            .email(dto.email().trim().toLowerCase(Locale.ROOT)).observacao(vazioParaNulo(dto.observacao())).build())
-                    .toList());
-        }
-    }
-
     private FuncionarioResponse montarResposta(T_Funcionario funcionario) {
         T_Pessoa pessoa = funcionario.getPessoa();
         T_PessoaFisica pf = pessoa.getPessoaFisica();
-
-        EnderecoDto endereco = enderecoRepository.findByPessoaId(pessoa.getId())
-                .map(e -> new EnderecoDto(e.getCep(), e.getLogradouro(), e.getNumero(), e.getComplemento(),
-                        e.getBairro(), e.getCidade(), e.getEstado()))
-                .orElse(new EnderecoDto(null, null, null, null, null, null, null));
-        List<TelefoneDto> telefones = telefoneRepository.findByPessoaIdOrderByIdAsc(pessoa.getId()).stream()
-                .map(t -> new TelefoneDto(t.getTipo(), t.getNumero(), t.getObservacao())).toList();
-        List<EmailDto> emails = emailRepository.findByPessoaIdOrderByIdAsc(pessoa.getId()).stream()
-                .map(e -> new EmailDto(e.getEmail(), e.getObservacao())).toList();
 
         return new FuncionarioResponse(
                 funcionario.getId(), funcionario.isAtivo(), pf.getSexo(), pf.getCpf(),
                 pf.getRg(), pf.getApelido(), pf.getNome(), pf.getNaturalidade(), pf.getNacionalidade(),
                 pf.getDataNascimento(), pf.getProfissao(), pf.getEstadoCivil(), funcionario.getNumeroCnh(),
-                funcionario.getVencimentoCnh(), pf.getObservacao(), endereco, telefones, emails);
+                funcionario.getVencimentoCnh(), pf.getObservacao(), contatoService.endereco(pessoa.getId()),
+                contatoService.telefones(pessoa.getId()), contatoService.emails(pessoa.getId()));
     }
 
     private Specification<T_Funcionario> especificacao(UUID tenant, FiltroFuncionario filtro) {

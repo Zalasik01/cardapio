@@ -51,10 +51,10 @@ public class PedidoService {
         BigDecimal subtotal = BigDecimal.ZERO;
         for (ItemPedidoRequest itemRequest : request.itens()) {
             T_Produto produto = produtoRepository.findByGuidAndTenant(itemRequest.produtoGuid(), tenant)
-                    .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado: " + itemRequest.produtoGuid()));
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + itemRequest.produtoGuid()));
 
             if (!produto.isDisponivel()) {
-                throw new RegraNegocioException("Produto indisponivel: " + produto.getNome());
+                throw new RegraNegocioException("Produto indisponível: " + produto.getNome());
             }
 
             BigDecimal totalItem = produto.getPreco().multiply(BigDecimal.valueOf(itemRequest.quantidade()))
@@ -76,7 +76,7 @@ public class PedidoService {
         }
 
         if (subtotal.compareTo(loja.getValorMinimoPedido()) < 0) {
-            throw new RegraNegocioException("Valor minimo do pedido e R$ " + loja.getValorMinimoPedido());
+            throw new RegraNegocioException("Valor mínimo do pedido é R$ " + loja.getValorMinimoPedido());
         }
 
         BigDecimal taxaEntrega = BigDecimal.ZERO;
@@ -100,7 +100,7 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public T_Pedido buscarPorGuid(UUID guid) {
         return pedidoRepository.buscarComItensPorGuid(guid)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido nao encontrado: " + guid));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido não encontrado: " + guid));
     }
 
     @Transactional(readOnly = true)

@@ -20,18 +20,18 @@ public class LojaService {
 
     public S_Loja buscarPorTenant(UUID tenant) {
         return lojaRepository.findByGuid(tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja nao encontrada: " + tenant));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja não encontrada: " + tenant));
     }
 
     public S_Loja buscarPorSlug(String slug) {
         return lojaRepository.findBySlug(slug)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja nao encontrada: " + slug));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Loja não encontrada: " + slug));
     }
 
     @Transactional
     public S_Loja criar(LojaRequest request) {
         if (lojaRepository.existsBySlug(request.slug())) {
-            throw new RegraNegocioException("Ja existe uma loja com o slug: " + request.slug());
+            throw new RegraNegocioException("Já existe uma loja com o slug: " + request.slug());
         }
 
         S_Loja loja = S_Loja.builder()

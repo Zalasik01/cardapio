@@ -137,11 +137,11 @@ public class CardapioService {
 
     private T_Categoria buscarCategoria(UUID tenant, UUID categoriaGuid) {
         return categoriaRepository.findByGuidAndTenant(categoriaGuid, tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria nao encontrada: " + categoriaGuid));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada: " + categoriaGuid));
     }
 
     private T_Produto buscarProduto(UUID tenant, UUID produtoGuid) {
         return produtoRepository.findByGuidAndTenant(produtoGuid, tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado: " + produtoGuid));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + produtoGuid));
     }
 }

@@ -72,10 +72,9 @@
 
 .secao-crud {
   padding: 1.25rem;
-}
-
-.secao-crud + .secao-crud {
-  border-top: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  border-radius: var(--raio-bloco);
+  box-shadow: var(--sombra);
 }
 
 .secao-crud > h2 {

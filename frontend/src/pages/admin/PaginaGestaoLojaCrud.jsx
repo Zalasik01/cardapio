@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
 import { Checkbox } from 'primereact/checkbox'
 import { Dropdown } from 'primereact/dropdown'
 import { InputMask } from 'primereact/inputmask'
-import { InputNumber } from 'primereact/inputnumber'
 import { InputText } from 'primereact/inputtext'
-import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
+import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import {
   atualizarLojaGestao, criarLojaGestao, excluirLojaGestao, obterLojaGestao,
@@ -14,7 +13,10 @@ import {
 import CrudPagina from '../../components/crud/CrudPagina'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import SecaoEndereco from '../../components/crud/SecaoEndereco'
+import SecaoMensalidades from '../../components/gestao/SecaoMensalidades'
 import { FormularioSkeleton } from '../../components/Skeleton'
+import { buscarEmpresaPorCnpj } from '../../api/cnpjApi'
+import { formatarCnpj, soDigitos } from '../../utils/formatadores'
 import { ENDERECO_VAZIO } from '../../utils/pessoa'
 import { SITUACOES_CONTA, TIPOS_ORGANIZACAO } from '../../utils/loja'
 
@@ -23,25 +25,22 @@ const ROTA_LISTA = '/admin/gestao-lojas'
 const ANCORAS = [
   { id: 'secao-principal', titulo: 'Principal' },
   { id: 'secao-endereco', titulo: 'Endereço' },
-  { id: 'secao-entrega', titulo: 'Entrega' },
+  { id: 'secao-mensalidades', titulo: 'Mensalidades' },
 ]
 
 const FORM_VAZIO = {
   ativo: true,
   nome: '',
   slug: '',
+  cnpj: '',
   tipoOrganizacao: 'RESTAURANTE',
   situacaoConta: 'TRIAL',
   descricao: '',
   telefone: '',
   logoUrl: '',
   endereco: ENDERECO_VAZIO,
-  latitude: null,
-  longitude: null,
-  taxaEntregaBase: 0,
-  taxaEntregaPorKm: 0,
-  distanciaMaximaEntregaKm: null,
-  valorMinimoPedido: 0,
+  valorMensalidade: 0,
+  diaVencimento: null,
 }
 
 /** O endereço da loja usa os mesmos campos do SecaoEndereco (logradouro, número, bairro...). */
@@ -50,6 +49,7 @@ function paraFormulario(loja) {
     ativo: loja.ativo,
     nome: loja.nome,
     slug: loja.slug,
+    cnpj: formatarCnpj(loja.cnpj),
     tipoOrganizacao: loja.tipoOrganizacao,
     situacaoConta: loja.situacaoConta,
     descricao: loja.descricao ?? '',
@@ -64,12 +64,8 @@ function paraFormulario(loja) {
       cidade: loja.enderecoCidade ?? '',
       estado: loja.enderecoEstado ?? null,
     },
-    latitude: loja.latitude,
-    longitude: loja.longitude,
-    taxaEntregaBase: loja.taxaEntregaBase ?? 0,
-    taxaEntregaPorKm: loja.taxaEntregaPorKm ?? 0,
-    distanciaMaximaEntregaKm: loja.distanciaMaximaEntregaKm,
-    valorMinimoPedido: loja.valorMinimoPedido ?? 0,
+    valorMensalidade: loja.valorMensalidade ?? 0,
+    diaVencimento: loja.diaVencimento,
   }
 }
 
@@ -78,6 +74,7 @@ function paraRequisicao(form) {
     ativo: form.ativo,
     nome: form.nome,
     slug: form.slug,
+    cnpj: soDigitos(form.cnpj),
     tipoOrganizacao: form.tipoOrganizacao,
     situacaoConta: form.situacaoConta,
     descricao: form.descricao,
@@ -89,12 +86,8 @@ function paraRequisicao(form) {
     enderecoBairro: form.endereco.bairro,
     enderecoCidade: form.endereco.cidade,
     enderecoEstado: form.endereco.estado ?? '',
-    latitude: form.latitude,
-    longitude: form.longitude,
-    taxaEntregaBase: form.taxaEntregaBase,
-    taxaEntregaPorKm: form.taxaEntregaPorKm,
-    distanciaMaximaEntregaKm: form.distanciaMaximaEntregaKm,
-    valorMinimoPedido: form.valorMinimoPedido,
+    valorMensalidade: form.valorMensalidade,
+    diaVencimento: form.diaVencimento,
   }
 }
 
@@ -104,8 +97,6 @@ function sugerirSlug(nome) {
     .normalize('NFD').replace(/\p{Diacritic}/gu, '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
-
-const moeda = { mode: 'currency', currency: 'BRL', locale: 'pt-BR' }
 
 /** Cadastro de loja: /admin/gestao-lojas/novo e /admin/gestao-lojas/:id. */
 export default function PaginaGestaoLojaCrud() {
@@ -118,6 +109,8 @@ export default function PaginaGestaoLojaCrud() {
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
   const [slugEditadoManualmente, setSlugEditadoManualmente] = useState(editando)
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
+  const consultaCnpj = useRef(0) // ignora respostas de consultas antigas
 
   useEffect(() => {
     definirMigalha(editando ? 'Editando loja' : 'Nova loja')
@@ -139,6 +132,39 @@ export default function PaginaGestaoLojaCrud() {
     ...atual,
     endereco: { ...atual.endereco, ...(typeof campos === 'function' ? campos(atual.endereco) : campos) },
   }))
+
+  /** Ao completar o CNPJ de uma loja nova, preenche nome, endereço público (slug), telefone e endereço pela BrasilAPI. */
+  async function preencherPorCnpj(cnpj) {
+    const consulta = ++consultaCnpj.current
+    setBuscandoCnpj(true)
+    try {
+      const empresa = await buscarEmpresaPorCnpj(cnpj)
+      if (consulta !== consultaCnpj.current) return
+      if (!empresa) {
+        dispatchMsgWarn('CNPJ não encontrado na Receita. Preencha os dados manualmente.')
+        return
+      }
+      const nome = empresa.nomeFantasia || empresa.razaoSocial
+      const telefone = soDigitos(empresa.telefones[0])
+      setForm((atual) => ({
+        ...atual,
+        nome: atual.nome || nome,
+        slug: slugEditadoManualmente || atual.slug ? atual.slug : sugerirSlug(nome),
+        descricao: atual.descricao || empresa.razaoSocial,
+        telefone: atual.telefone || (telefone.length === 11 ? telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : ''),
+        endereco: { ...atual.endereco, ...empresa.endereco, complemento: '' },
+      }))
+      if (empresa.situacao && empresa.situacao.toUpperCase() !== 'ATIVA') {
+        dispatchMsgWarn(`Situação cadastral na Receita: ${empresa.situacao}`)
+      }
+    } catch {
+      if (consulta === consultaCnpj.current) {
+        dispatchMsgWarn('Não foi possível consultar o CNPJ agora. Preencha os dados manualmente.')
+      }
+    } finally {
+      if (consulta === consultaCnpj.current) setBuscandoCnpj(false)
+    }
+  }
 
   /** Ao digitar o nome de uma loja nova, o slug acompanha até ser editado à mão. */
   function alterarNome(e) {
@@ -191,10 +217,16 @@ export default function PaginaGestaoLojaCrud() {
             </span>
           </div>
 
-          <Campo id="nome" rotulo="Nome" obrigatorio tamanho={6}>
+          <Campo id="cnpj" rotulo="CNPJ" tamanho={4}
+                 ajuda={buscandoCnpj ? 'Buscando dados da empresa...' : (editando ? undefined : 'Ao completar o CNPJ, os dados são buscados na BrasilAPI.')}>
+            <InputMask id="cnpj" mask="99.999.999/9999-99" autoClear={false} value={form.cnpj}
+                       onChange={(e) => definir('cnpj')(e.target.value ?? '')}
+                       onComplete={editando ? undefined : (e) => preencherPorCnpj(e.value)} />
+          </Campo>
+          <Campo id="nome" rotulo="Nome" obrigatorio tamanho={4}>
             <InputText id="nome" required maxLength={255} value={form.nome} onChange={alterarNome} />
           </Campo>
-          <Campo id="slug" rotulo="Endereço (slug)" obrigatorio tamanho={6}
+          <Campo id="slug" rotulo="Endereço (slug)" obrigatorio tamanho={4}
                  ajuda="Endereço público da loja: só letras minúsculas, números e hífens.">
             <InputText id="slug" required maxLength={255} value={form.slug}
                        onChange={(e) => { setSlugEditadoManualmente(true); definir('slug')(e.target.value) }} />
@@ -224,34 +256,12 @@ export default function PaginaGestaoLojaCrud() {
 
       <SecaoEndereco endereco={form.endereco} aoAlterar={alterarEndereco} comComplemento={false} />
 
-      <SecaoCrud id="secao-entrega" titulo="Entrega">
-        <GradeCampos>
-          <Campo id="taxa-base" rotulo="Taxa de entrega base" tamanho={3}>
-            <InputNumber inputId="taxa-base" value={form.taxaEntregaBase} min={0} {...moeda}
-                         onValueChange={(e) => definir('taxaEntregaBase')(e.value ?? 0)} />
-          </Campo>
-          <Campo id="taxa-km" rotulo="Taxa por km" tamanho={3}>
-            <InputNumber inputId="taxa-km" value={form.taxaEntregaPorKm} min={0} {...moeda}
-                         onValueChange={(e) => definir('taxaEntregaPorKm')(e.value ?? 0)} />
-          </Campo>
-          <Campo id="valor-minimo" rotulo="Valor mínimo do pedido" tamanho={3}>
-            <InputNumber inputId="valor-minimo" value={form.valorMinimoPedido} min={0} {...moeda}
-                         onValueChange={(e) => definir('valorMinimoPedido')(e.value ?? 0)} />
-          </Campo>
-          <Campo id="distancia-maxima" rotulo="Distância máxima (km)" tamanho={3}>
-            <InputNumber inputId="distancia-maxima" value={form.distanciaMaximaEntregaKm} min={0} maxFractionDigits={1}
-                         onValueChange={(e) => definir('distanciaMaximaEntregaKm')(e.value)} />
-          </Campo>
-          <Campo id="latitude" rotulo="Latitude" tamanho={3}>
-            <InputNumber inputId="latitude" value={form.latitude} minFractionDigits={0} maxFractionDigits={7} useGrouping={false}
-                         onValueChange={(e) => definir('latitude')(e.value)} />
-          </Campo>
-          <Campo id="longitude" rotulo="Longitude" tamanho={3}>
-            <InputNumber inputId="longitude" value={form.longitude} minFractionDigits={0} maxFractionDigits={7} useGrouping={false}
-                         onValueChange={(e) => definir('longitude')(e.value)} />
-          </Campo>
-        </GradeCampos>
-      </SecaoCrud>
+      <SecaoMensalidades
+        lojaId={editando ? Number(id) : undefined}
+        valorMensalidade={form.valorMensalidade}
+        diaVencimento={form.diaVencimento}
+        aoAlterarConfig={(campo, valor) => definir(campo)(valor)}
+      />
     </>
   )
 

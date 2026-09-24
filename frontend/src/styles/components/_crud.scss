@@ -7,7 +7,9 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  border-radius: var(--raio-bloco);
+  box-shadow: var(--sombra);
 }
 
 .pagina-admin .crud__cabecalho h1 {
@@ -34,6 +36,9 @@
 .crud__corpo {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-blocos); // distância entre um bloco (seção) e outro
 }
 
 .campo-checkbox {
@@ -118,7 +123,8 @@
   gap: 0.25rem;
   padding: 0.25rem 1.25rem 0;
   background: var(--cor-superficie);
-  border-bottom: 1px solid var(--cor-borda);
+  border-radius: var(--raio-bloco);
+  box-shadow: var(--sombra);
 }
 
 .secao-crud {
@@ -139,15 +145,22 @@
   }
 }
 
-/* Cadastro: cabecalho, abas/secoes e campos dentro de um unico bloco branco */
-.crud__cartao {
-  background: var(--cor-superficie);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
+/* Cadastro: cabecalho, ganchos e cada secao sao blocos brancos separados por --espaco-blocos */
+.crud__pagina {
+  flex: 1; // ocupa a altura toda: a barra de ações fica na base mesmo em cadastros curtos
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-blocos);
   margin-bottom: 1.25rem;
 }
 
-.crud__cartao .p-tabview-nav-container {
+.crud__abas {
+  background: var(--cor-superficie);
+  border-radius: var(--raio-bloco);
+  box-shadow: var(--sombra);
+}
+
+.crud__abas .p-tabview-nav-container {
   padding: 0 0.5rem;
 }
 

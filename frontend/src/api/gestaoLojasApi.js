@@ -18,3 +18,14 @@ export const criarLojaGestao = (dados) => http.post(base, dados).then((res) => r
 export const atualizarLojaGestao = (id, dados) => http.put(`${base}/${id}`, dados).then((res) => res.data)
 
 export const excluirLojaGestao = (id) => http.delete(`${base}/${id}`)
+
+/** Mensalidades da loja (mais recentes primeiro). */
+export const listarMensalidades = (lojaId) => http.get(`${base}/${lojaId}/mensalidades`).then((res) => res.data)
+
+export const criarMensalidade = (lojaId, dados) =>
+  http.post(`${base}/${lojaId}/mensalidades`, dados).then((res) => res.data)
+
+export const atualizarMensalidade = (lojaId, id, dados) =>
+  http.put(`${base}/${lojaId}/mensalidades/${id}`, dados).then((res) => res.data)
+
+export const excluirMensalidade = (lojaId, id) => http.delete(`${base}/${lojaId}/mensalidades/${id}`)

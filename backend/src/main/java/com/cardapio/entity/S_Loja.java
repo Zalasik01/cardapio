@@ -45,6 +45,17 @@ public class S_Loja extends SystemAbstract {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    /** CNPJ da empresa, so digitos (opcional). */
+    @Column(length = 18)
+    private String cnpj;
+
+    /** Valor padrao da mensalidade cobrada da loja e o dia (1 a 28) em que vence. */
+    @Column(nullable = false)
+    @Builder.Default
+    private BigDecimal valorMensalidade = BigDecimal.ZERO;
+
+    private Integer diaVencimento;
+
     private String descricao;
     private String telefone;
     private String logoUrl;

@@ -25,12 +25,9 @@ public record LojaGestaoResponse(
         String enderecoCidade,
         String enderecoEstado,
         String enderecoCep,
-        Double latitude,
-        Double longitude,
-        BigDecimal taxaEntregaBase,
-        BigDecimal taxaEntregaPorKm,
-        Double distanciaMaximaEntregaKm,
-        BigDecimal valorMinimoPedido
+        String cnpj,
+        BigDecimal valorMensalidade,
+        Integer diaVencimento
 ) {
 
     public static LojaGestaoResponse of(S_Loja l) {
@@ -38,7 +35,6 @@ public record LojaGestaoResponse(
                 l.getId(), l.getGuid(), l.isAtivo(), l.getNome(), l.getSlug(), l.getTipoOrganizacao(), l.getSituacaoConta(),
                 l.getDescricao(), l.getTelefone(), l.getLogoUrl(), l.getEnderecoRua(), l.getEnderecoNumero(),
                 l.getEnderecoBairro(), l.getEnderecoCidade(), l.getEnderecoEstado(), l.getEnderecoCep(),
-                l.getLatitude(), l.getLongitude(), l.getTaxaEntregaBase(), l.getTaxaEntregaPorKm(),
-                l.getDistanciaMaximaEntregaKm(), l.getValorMinimoPedido());
+                l.getCnpj(), l.getValorMensalidade(), l.getDiaVencimento());
     }
 }

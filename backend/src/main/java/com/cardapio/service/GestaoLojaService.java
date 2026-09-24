@@ -47,6 +47,7 @@ public class GestaoLojaService {
         if (lojaRepository.existsBySlug(request.slug())) {
             throw new RegraNegocioException("Já existe uma loja com o endereço (slug): " + request.slug());
         }
+        validarCnpjLivre(request.cnpj(), null);
         S_Loja loja = S_Loja.builder().build();
         preencher(loja, request);
         return LojaGestaoResponse.of(lojaRepository.save(loja));
@@ -58,6 +59,7 @@ public class GestaoLojaService {
         if (!loja.getSlug().equals(request.slug()) && lojaRepository.existsBySlug(request.slug())) {
             throw new RegraNegocioException("Já existe uma loja com o endereço (slug): " + request.slug());
         }
+        validarCnpjLivre(request.cnpj(), loja.getId());
         preencher(loja, request);
         return LojaGestaoResponse.of(lojaRepository.save(loja));
     }
@@ -96,12 +98,25 @@ public class GestaoLojaService {
         String estado = vazioParaNulo(r.enderecoEstado());
         loja.setEnderecoEstado(estado == null ? null : estado.toUpperCase(Locale.ROOT));
         loja.setEnderecoCep(vazioParaNulo(r.enderecoCep()));
-        loja.setLatitude(r.latitude());
-        loja.setLongitude(r.longitude());
-        loja.setTaxaEntregaBase(r.taxaEntregaBase() != null ? r.taxaEntregaBase() : BigDecimal.ZERO);
-        loja.setTaxaEntregaPorKm(r.taxaEntregaPorKm() != null ? r.taxaEntregaPorKm() : BigDecimal.ZERO);
-        loja.setDistanciaMaximaEntregaKm(r.distanciaMaximaEntregaKm());
-        loja.setValorMinimoPedido(r.valorMinimoPedido() != null ? r.valorMinimoPedido() : BigDecimal.ZERO);
+        String cnpj = Documentos.soDigitos(r.cnpj());
+        loja.setCnpj(cnpj == null || cnpj.isEmpty() ? null : cnpj);
+        loja.setValorMensalidade(r.valorMensalidade() != null ? r.valorMensalidade() : BigDecimal.ZERO);
+        loja.setDiaVencimento(r.diaVencimento());
+        // a taxa de entrega, o valor mínimo e a localização são da própria loja ("Minha loja"), não da gestão
+    }
+
+    /** O CNPJ identifica a empresa: só uma loja (não excluída) pode usá-lo. lojaId é a loja em edição, se houver. */
+    private void validarCnpjLivre(String cnpjInformado, Long lojaId) {
+        String cnpj = Documentos.soDigitos(cnpjInformado);
+        if (cnpj == null || cnpj.isEmpty()) {
+            return;
+        }
+        boolean emUso = lojaId == null
+                ? lojaRepository.existsByCnpjAndDeletadoFalse(cnpj)
+                : lojaRepository.existsByCnpjAndDeletadoFalseAndIdNot(cnpj, lojaId);
+        if (emUso) {
+            throw new RegraNegocioException("Já existe uma loja com este CNPJ");
+        }
     }
 
     private Specification<S_Loja> especificacao(FiltroLojaGestao filtro) {

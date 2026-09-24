@@ -24,3 +24,9 @@ export const rotuloSituacaoConta = (valor) => rotulo(SITUACOES_CONTA, valor)
 /** Cor do selo (mesmos tons da tela de busca) de cada situação da conta. */
 const TOM_SITUACAO = { ATIVA: 'sucesso', TRIAL: 'alerta', INADIMPLENTE: 'alerta', BLOQUEADA: 'erro', CANCELADA: 'erro' }
 export const tomSituacaoConta = (valor) => TOM_SITUACAO[valor] ?? 'alerta'
+
+export const SITUACOES_MENSALIDADE = [
+  { valor: 'PENDENTE', rotulo: 'Pendente' },
+  { valor: 'PAGA', rotulo: 'Paga' },
+  { valor: 'CANCELADA', rotulo: 'Cancelada' },
+]

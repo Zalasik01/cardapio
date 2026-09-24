@@ -42,8 +42,8 @@ export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancora
 
   return (
     <div className="pagina-admin crud" ref={raiz}>
-      {/* o cabecalho (voltar + titulo) fica dentro do mesmo bloco branco do cadastro */}
-      <div className="crud__cartao">
+      {/* cabecalho, ganchos e cada secao sao blocos brancos separados por 10px */}
+      <div className="crud__pagina">
         <header className="crud__cabecalho">
           <button type="button" className="botao-icone crud__voltar" aria-label="Voltar" onClick={aoVoltar}>
             <i className="fa-solid fa-arrow-left" aria-hidden="true" />

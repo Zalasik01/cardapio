@@ -2,11 +2,14 @@ package com.cardapio.dto.gestao;
 
 import com.cardapio.entity.SituacaoConta;
 import com.cardapio.entity.TipoOrganizacao;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.br.CNPJ;
 
 import java.math.BigDecimal;
 
@@ -28,11 +31,13 @@ public record LojaGestaoRequest(
         @Size(max = 255) String enderecoCidade,
         @Size(max = 2) String enderecoEstado,
         @Size(max = 9) String enderecoCep,
-        Double latitude,
-        Double longitude,
-        @PositiveOrZero BigDecimal taxaEntregaBase,
-        @PositiveOrZero BigDecimal taxaEntregaPorKm,
-        @PositiveOrZero Double distanciaMaximaEntregaKm,
-        @PositiveOrZero BigDecimal valorMinimoPedido
+        @CNPJ(message = "CNPJ inválido") String cnpj,
+        @PositiveOrZero BigDecimal valorMensalidade,
+        @Min(1) @Max(28) Integer diaVencimento
 ) {
+
+    /** CNPJ em branco (campo vazio do formulário) equivale a não informado: o @CNPJ rejeitaria a string vazia. */
+    public LojaGestaoRequest {
+        cnpj = cnpj == null || cnpj.isBlank() ? null : cnpj;
+    }
 }

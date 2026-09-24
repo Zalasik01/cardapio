@@ -1,0 +1,54 @@
+// Dashboard
+@use '../abstracts' as *;
+
+/* Dashboard */
+.cartoes-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cartao-resumo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.cartao-resumo__icone {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cartao-resumo__rotulo {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.cartao-resumo__valor {
+  font-size: 1.5rem;
+}
+
+@include ate-tablet {
+  .crud__rodape {
+    margin: 1.5rem -1rem 0;
+    padding: 0.85rem 1rem;
+  }
+
+  .barra-busca__novo {
+    flex: 1 1 100%;
+  }
+}

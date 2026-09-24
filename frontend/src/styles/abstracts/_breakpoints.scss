@@ -1,0 +1,14 @@
+// Pontos de quebra do sistema: menu lateral vira gaveta abaixo de 860px
+$largura-tablet: 860px;
+
+@mixin ate-tablet {
+  @media (max-width: $largura-tablet) {
+    @content;
+  }
+}
+
+@mixin a-partir-do-desktop {
+  @media (min-width: $largura-tablet + 1) {
+    @content;
+  }
+}

@@ -1,0 +1,26 @@
+// Skeleton (carregamento)
+@use '../abstracts' as *;
+
+
+/* ==========================================================================
+   Skeleton
+   ========================================================================== */
+.skeleton--escuro {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.skeleton-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,168 @@
+// Estilos de base: reset, tipografia, controles e regra global de foco
+@use '../abstracts' as *;
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--fonte-titulo);
+  line-height: 1.25;
+  margin-top: 0;
+}
+
+
+
+/* Regra global: nenhum contorno nem anel de foco extra em elementos ou componentes (PrimeReact inclusive).
+   O foco dos campos aparece so pela cor da borda. Fica no fim do CSS de base para vencer o tema, que vem em camada. */
+:focus,
+:focus-visible,
+.p-component:focus,
+.p-component:focus-visible,
+.p-component :focus,
+.p-component :focus-visible,
+.p-focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   Controles basicos
+   ========================================================================== */
+@layer base {
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    background: var(--cor-primaria);
+    color: #fff;
+    padding: 0.55rem 1rem;
+    min-height: 36px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background var(--transicao), transform var(--transicao), box-shadow var(--transicao);
+  }
+}
+
+@layer base {
+  button:hover {
+    background: var(--cor-primaria-escura);
+  }
+}
+
+@layer base {
+  button:active {
+    transform: translateY(1px);
+  }
+}
+
+@layer base {
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.botao-secundario {
+  background: transparent;
+  color: var(--cor-primaria-escura);
+  border: 1px solid var(--cor-borda);
+}
+
+.botao-secundario:hover {
+  background: var(--cor-primaria-suave);
+}
+
+.botao-perigo {
+  background: transparent;
+  color: var(--cor-erro);
+  border: 1px solid #f3b8b8;
+}
+
+.botao-perigo:hover {
+  background: var(--cor-erro);
+  color: #fff;
+}
+
+.botao-icone {
+  background: transparent;
+  color: inherit;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.botao-icone:hover {
+  background: var(--cor-menu-hover);
+}
+
+@layer base {
+  input, select, textarea {
+    font-family: inherit;
+    padding: 0.55rem 0.7rem;
+    min-height: 36px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+  }
+}
+
+@layer base {
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  }
+}
+
+@layer base {
+  input[type='checkbox'] {
+    min-height: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--cor-primaria);
+  }
+}
+
+a {
+  color: var(--cor-primaria-escura);
+}
+
+.pagina-centralizada {
+  max-width: 480px;
+  margin: 4rem auto;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.pagina-centralizada--erro {
+  color: var(--cor-erro);
+}
+
+.mensagem-erro {
+  color: var(--cor-erro);
+}
+
+.mensagem-sucesso {
+  color: var(--cor-sucesso);
+}

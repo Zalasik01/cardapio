@@ -1,0 +1,207 @@
+// Formularios de cadastro e contatos
+@use '../abstracts' as *;
+
+/* Formularios de cadastro (grade de 12 colunas) */
+.grade-campos {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  grid-column: span 12;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.campo > label,
+.fieldset-crud legend {
+  font-weight: 600;
+}
+
+.campo__obrigatorio {
+  color: var(--cor-erro);
+}
+
+.campo__ajuda {
+  color: var(--cor-texto-suave);
+  font-weight: 400;
+}
+
+.campo .p-inputtext,
+.campo .p-dropdown,
+.campo .p-calendar,
+.campo .p-autocomplete,
+.campo .p-inputmask {
+  width: 100%;
+}
+
+.campo .p-autocomplete .p-autocomplete-input {
+  flex: 1;
+}
+
+.campo-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.opcoes-radio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  background: var(--cor-superficie);
+}
+
+.fieldset-crud {
+  margin: 0;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 100%;
+}
+
+.secao-crud {
+  padding: 1.25rem;
+}
+
+.secao-crud + .secao-crud {
+  border-top: 1px solid var(--cor-borda);
+}
+
+.secao-crud > h2 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.crud__abas .p-tabview-panels {
+  background: transparent;
+  box-shadow: none;
+  padding: 1.5rem 1.25rem;
+}
+
+.contatos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+.contatos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.contatos__lista .tabela-dados {
+  width: 100%;
+}
+
+.foto-usuario {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.foto-usuario__acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.foto-usuario__previa {
+  width: 180px;
+  height: 220px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.foto-usuario__previa img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.campo--linha {
+  flex-direction: row;
+  align-items: center;
+}
+
+@include a-partir-do-desktop {
+  .campo--2 { grid-column: span 2; }
+  .campo--3 { grid-column: span 3; }
+  .campo--4 { grid-column: span 4; }
+  .campo--5 { grid-column: span 5; }
+  .campo--6 { grid-column: span 6; }
+  .campo--8 { grid-column: span 8; }
+}
+
+/* Contatos do funcionario: tabelas so de leitura (incluir e editar acontece em modal) */
+.contatos {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+}
+
+.contatos__lista {
+  min-width: 0;
+}
+
+.contatos__lista .p-datatable-wrapper {
+  overflow-x: hidden;
+}
+
+.contato-numero {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.contato-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.contato-whatsapp:hover {
+  background: #1ebe5a;
+}
+
+.contato-acoes {
+  display: inline-flex;
+  gap: 0.1rem;
+}
+
+.dialogo-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}

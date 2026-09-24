@@ -1,0 +1,125 @@
+// Tela de busca: barra, tabela, paginacao e selos
+@use '../abstracts' as *;
+
+
+/* ==========================================================================
+   Tela de busca, drawer, CRUD em blocos e componentes de apoio
+   ========================================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.barra-busca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.barra-busca__campo {
+  flex: 1 1 320px;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.barra-busca__campo input {
+  flex: 1;
+  min-width: 0;
+}
+
+.barra-busca__icone {
+  position: relative;
+  color: var(--cor-texto-suave);
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  flex-shrink: 0;
+}
+
+.barra-busca__icone:hover {
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+}
+
+.barra-busca__contador {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--cor-primaria);
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 18px;
+  font-weight: 700;
+}
+
+.barra-busca__novo {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tabela-busca--carregando .tabela-admin {
+  opacity: 0.55;
+  transition: opacity var(--transicao);
+}
+
+.tabela-busca__vazio {
+  text-align: center !important;
+  color: var(--cor-texto-suave);
+  padding: 2rem 1rem !important;
+}
+
+.tabela-busca__acoes {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.linha-clicavel {
+  cursor: pointer;
+}
+
+.paginacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.paginacao__controles {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.selo {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.selo--sucesso { background: #dcfce7; color: #166534; }
+.selo--alerta { background: #fef3c7; color: #92400e; }
+.selo--erro { background: #fee2e2; color: #991b1b; }
+
+.tela-busca__aviso {
+  margin: 16px 0;
+}

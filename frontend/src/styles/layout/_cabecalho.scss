@@ -1,0 +1,143 @@
+// Cabecalho do painel: caminho da tela e cartao do usuario
+@use '../abstracts' as *;
+
+/* Cabecalho do painel: caminho da tela + cartao do usuario */
+.area-admin {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cabecalho-admin {
+  flex-shrink: 0;
+  height: var(--altura-cabecalho);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.cabecalho-admin__menu {
+  display: none;
+  color: var(--cor-texto);
+}
+
+.migalhas__atual {
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.cartao-usuario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  max-width: 320px;
+  padding: 0.3rem 0.75rem 0.3rem 0.4rem;
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-primaria);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.cartao-usuario:hover {
+  background: var(--cor-primaria-suave);
+}
+
+.cartao-usuario__avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cartao-usuario__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cartao-usuario__textos {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.cartao-usuario__textos strong,
+.cartao-usuario__textos small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cartao-usuario__textos small {
+  color: var(--cor-texto-suave);
+  font-weight: 400;
+}
+
+.cartao-usuario__seta {
+  font-size: 0.7rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Cabecalho: badge da loja + cartao do usuario */
+.cabecalho-admin__direita {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-left: auto;
+}
+
+.badge-loja {
+  font-weight: 700;
+}
+
+.p-password {
+  display: block;
+  width: 100%;
+}
+
+.p-password .p-inputtext {
+  width: 100%;
+}
+
+/* Caminho da tela (BreadCrumb) */
+.migalhas.p-breadcrumb {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.95rem;
+}
+
+.migalhas .p-breadcrumb-list {
+  gap: 0.25rem;
+}
+
+.migalhas a {
+  color: var(--cor-primaria);
+  text-decoration: none;
+}
+
+.migalhas a:hover {
+  text-decoration: underline;
+}
+
+.migalhas .p-menuitem-separator {
+  color: var(--cor-primaria);
+  font-size: 0.75rem;
+}

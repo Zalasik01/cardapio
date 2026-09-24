@@ -33,8 +33,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -60,7 +62,20 @@ public class FuncionarioService {
         int tamanhoLimitado = Math.min(Math.max(tamanho, 1), TAMANHO_MAXIMO_PAGINA);
         var resultado = funcionarioRepository.findAll(
                 especificacao(tenant, filtro), PageRequest.of(Math.max(pagina, 0), tamanhoLimitado));
-        return PaginaResponse.of(resultado, FuncionarioResumoResponse::of);
+
+        // telefones e e-mails da pagina inteira em 2 consultas (evita uma consulta por funcionario)
+        List<Long> pessoaIds = resultado.getContent().stream().map(f -> f.getPessoa().getId()).toList();
+        Map<Long, List<String>> telefones = new HashMap<>();
+        Map<Long, List<String>> emails = new HashMap<>();
+        if (!pessoaIds.isEmpty()) {
+            telefoneRepository.findByPessoaIdInOrderByIdAsc(pessoaIds).forEach(t ->
+                    telefones.computeIfAbsent(t.getPessoa().getId(), k -> new ArrayList<>()).add(t.getNumero()));
+            emailRepository.findByPessoaIdInOrderByIdAsc(pessoaIds).forEach(e ->
+                    emails.computeIfAbsent(e.getPessoa().getId(), k -> new ArrayList<>()).add(e.getEmail()));
+        }
+        return PaginaResponse.of(resultado, f -> FuncionarioResumoResponse.of(f,
+                telefones.getOrDefault(f.getPessoa().getId(), List.of()),
+                emails.getOrDefault(f.getPessoa().getId(), List.of())));
     }
 
     @Transactional(readOnly = true)

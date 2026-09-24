@@ -11,7 +11,7 @@ import 'primereact/resources/themes/lara-light-blue/theme.css'
 import 'primereact/resources/primereact.min.css'
 import 'primeicons/primeicons.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
-import './styles/global.css'
+import './styles/main.scss'
 
 // sem StrictMode: em desenvolvimento ele executa cada useEffect duas vezes (montar, desmontar, montar), duplicando as requisicoes
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -1,0 +1,96 @@
+// Modal "Seu perfil"
+@use '../abstracts' as *;
+
+/* Seu perfil */
+.perfil {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.perfil__coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.perfil__coluna > .campo,
+.perfil__senha {
+  width: 100%;
+}
+
+.perfil__coluna--imagem {
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--cor-borda);
+  align-items: stretch;
+}
+
+.perfil__rotulo {
+  color: var(--cor-texto-suave);
+}
+
+.perfil__linha {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.perfil__senha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.perfil__situacao {
+  margin: 0;
+}
+
+.perfil__upload .p-fileupload-content {
+  min-height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.perfil__upload .p-fileupload-buttonbar,
+.perfil__upload-cabecalho {
+  border: none;
+  background: transparent;
+  padding: 0 0 0.75rem;
+}
+
+.perfil__vazio {
+  text-align: center;
+  color: var(--cor-texto-suave);
+  font-weight: 600;
+}
+
+.perfil__vazio i {
+  font-size: 1.5rem;
+}
+
+.perfil__previa {
+  max-width: 100%;
+  max-height: 11rem;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+@include ate-tablet {
+  .perfil {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil__coluna--imagem {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .badge-loja .p-tag-value {
+    display: none;
+  }
+}

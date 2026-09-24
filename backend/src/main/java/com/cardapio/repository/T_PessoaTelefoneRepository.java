@@ -8,5 +8,7 @@ import java.util.List;
 public interface T_PessoaTelefoneRepository extends JpaRepository<T_PessoaTelefone, Long> {
     List<T_PessoaTelefone> findByPessoaIdOrderByIdAsc(Long pessoaId);
 
+    List<T_PessoaTelefone> findByPessoaIdInOrderByIdAsc(java.util.Collection<Long> pessoaIds);
+
     void deleteByPessoaId(Long pessoaId);
 }

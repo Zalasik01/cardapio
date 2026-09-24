@@ -1,0 +1,29 @@
+// Ajustes do tema PrimeReact
+@use '../abstracts' as *;
+
+/* PrimeReact: o tema usa azul fixo; aqui os componentes seguem a cor principal do sistema */
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger) {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+}
+
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(:disabled):hover {
+  background: var(--cor-primaria-escura);
+  border-color: var(--cor-primaria-escura);
+}
+
+.p-button.p-button-outlined:not(.p-button-secondary):not(.p-button-danger) {
+  color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+}
+
+.p-checkbox .p-checkbox-box.p-highlight,
+.p-radiobutton .p-radiobutton-box.p-highlight {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+}
+
+.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+}

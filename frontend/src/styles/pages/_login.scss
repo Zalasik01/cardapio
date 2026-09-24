@@ -1,0 +1,103 @@
+// Telas de acesso: login, convite e fundo com fotos
+@use '../abstracts' as *;
+
+
+/* ==========================================================================
+   Login
+   ========================================================================== */
+.pagina-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background: radial-gradient(circle at 20% 10%, var(--cor-primaria-suave), var(--cor-fundo) 55%);
+}
+
+.formulario-login {
+  background: var(--cor-superficie);
+  padding: 2rem;
+  border-radius: 14px;
+  border: 1px solid var(--cor-borda);
+  box-shadow: var(--sombra);
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formulario-login h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.formulario-login--largo {
+  max-width: 440px;
+}
+
+.convite__form,
+.convite__esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.convite__intro {
+  margin: 0;
+}
+
+.formulario-login label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Fundo das telas de acesso: fotos que se alternam (fade) atras do cartao */
+.pagina-login {
+  position: relative;
+  overflow: hidden;
+}
+
+.fundo-login {
+  position: absolute;
+  inset: 0;
+}
+
+.fundo-login__foto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1400ms ease-in-out;
+}
+
+.fundo-login__foto--ativa {
+  opacity: 1;
+}
+
+.fundo-login__veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.65), rgba(17, 24, 39, 0.3));
+}
+
+.pagina-login .formulario-login {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.versao-build {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  z-index: 1;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}

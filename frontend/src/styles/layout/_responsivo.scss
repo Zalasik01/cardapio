@@ -1,0 +1,50 @@
+// Ajustes responsivos do painel
+@use '../abstracts' as *;
+
+
+/* ==========================================================================
+   Responsivo
+   ========================================================================== */
+@include ate-tablet {
+  .menu-admin {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(300px, 85vw);
+    transform: translateX(-100%);
+    transition: transform 250ms ease;
+  }
+
+  .menu-admin--aberto {
+    transform: translateX(0);
+  }
+
+  .menu-admin__fechar {
+    display: inline-flex;
+  }
+
+  .menu-admin__recolher {
+    display: none;
+  }
+
+  .menu-admin__fundo {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+  }
+
+  .conteudo-admin {
+    padding: 1rem;
+  }
+
+  .tabela-admin {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .linha-formulario {
+    flex-direction: column;
+    gap: 0;
+  }
+}

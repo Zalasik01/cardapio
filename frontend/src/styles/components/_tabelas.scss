@@ -1,0 +1,55 @@
+// Tabelas (PrimeReact DataTable)
+@use '../abstracts' as *;
+
+/* Tabelas (PrimeReact DataTable) */
+.tabela-dados {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.tabela-dados .p-datatable-thead > tr > th {
+  font-weight: 700;
+  color: var(--cor-texto);
+}
+
+.tabela-dados .linha-clicavel {
+  cursor: pointer;
+}
+
+.tabela-dados .p-paginator {
+  justify-content: space-between;
+}
+
+.tabela-dados select {
+  min-height: 34px;
+}
+
+.p-menuitem.item-perigo .p-menuitem-text,
+.p-menuitem.item-perigo .p-menuitem-icon {
+  color: var(--cor-erro);
+}
+
+/* Linhas mais compactas nas tabelas */
+.tabela-dados .p-datatable-thead > tr > th {
+  padding: 0.6rem 0.9rem;
+}
+
+.tabela-dados .p-datatable-tbody > tr > td {
+  padding: 0.35rem 0.9rem;
+}
+
+.tabela-dados .p-datatable-tbody > tr > td .p-button.p-button-icon-only {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.celula-truncada {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

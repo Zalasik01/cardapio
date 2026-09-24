@@ -1,0 +1,42 @@
+// Tokens de design: cores, fontes, espacamentos
+/* ==========================================================================
+   Tokens de design
+   Direcao: fundo cinza claro (#f4f4f4), azul como cor de acao e fonte Nunito.
+   ========================================================================== */
+:root {
+  --cor-primaria: #2563eb;
+  --cor-primaria-escura: #1d4ed8;
+  --cor-primaria-suave: #dbeafe;
+  --cor-destaque: #1d4ed8;
+  --cor-texto: #1f2937;
+  --cor-texto-suave: #4b5563;
+  --cor-fundo: #f4f4f4;
+  --cor-superficie: #ffffff;
+  --cor-borda: #e0e0e0;
+  --cor-sucesso: #15803d;
+  --cor-erro: #b91c1c;
+
+  --cor-menu-fundo: #1f2937;
+  --cor-menu-texto: #e5e7eb;
+  --cor-menu-suave: #9ca3af;
+  --cor-menu-hover: rgba(255, 255, 255, 0.08);
+
+  --altura-cabecalho: 56px;
+  --raio: 10px;
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --transicao: 200ms ease;
+
+  --fonte-titulo: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-texto: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  font-family: var(--fonte-texto);
+
+  /* PrimeReact: usa as cores e a fonte do sistema */
+  --font-family: var(--fonte-texto);
+  --primary-color: var(--cor-primaria);
+  --primary-color-text: #ffffff;
+  --highlight-bg: var(--cor-primaria-suave);
+  --highlight-text-color: var(--cor-primaria-escura);
+  --surface-ground: var(--cor-fundo);
+  --surface-border: var(--cor-borda);
+}

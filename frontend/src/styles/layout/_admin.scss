@@ -1,0 +1,323 @@
+// Estrutura do painel administrativo (menu lateral, area de conteudo)
+@use '../abstracts' as *;
+
+/* ==========================================================================
+   Painel administrativo
+   ========================================================================== */
+.layout-admin {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.marca-admin {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.menu-admin {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--cor-menu-fundo);
+  color: var(--cor-menu-texto);
+  padding: 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.menu-admin__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem 1.25rem;
+}
+
+.menu-admin__fechar {
+  display: none;
+}
+
+.menu-admin__recolher {
+  color: var(--cor-menu-suave);
+}
+
+.menu-admin__recolher:hover {
+  color: #fff;
+}
+
+/* Menu recolhido: so os icones (desktop) */
+@include a-partir-do-desktop {
+  .menu-admin {
+    transition: width 250ms ease;
+  }
+
+  .menu-admin--recolhido {
+    width: 76px;
+  }
+
+  .menu-admin--recolhido .menu-admin__topo {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 1rem;
+  }
+
+  .menu-admin--recolhido .marca-admin span,
+  .menu-admin--recolhido .menu-grupo__titulo span,
+  .menu-admin--recolhido .menu-grupo__seta {
+    opacity: 0;
+    max-width: 0;
+  }
+
+  .menu-admin--recolhido .submenu {
+    grid-template-rows: 0fr;
+  }
+
+  .menu-admin--recolhido .menu-grupo__titulo {
+    gap: 0;
+    padding-left: 0;
+    padding-right: 0;
+    justify-content: center;
+  }
+}
+
+.menu-admin__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.menu-admin__erro {
+  color: #93c5fd;
+  font-size: 0.85rem;
+  padding: 0 0.5rem;
+}
+
+.menu-admin__loja {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.75rem;
+  margin: 0 0.25rem 1rem;
+  background: var(--cor-menu-hover);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.menu-admin__loja-rotulo {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cor-menu-suave);
+}
+
+.menu-admin__loja strong {
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-grupo__titulo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  color: var(--cor-menu-texto);
+  padding: 0.65rem 0.75rem;
+  min-height: 40px;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.menu-grupo__titulo:hover {
+  background: var(--cor-menu-hover);
+}
+
+.menu-grupo__icone {
+  width: 1.25rem;
+  text-align: center;
+  color: #93c5fd;
+}
+
+.menu-grupo__titulo span {
+  flex: 1;
+}
+
+.menu-grupo__seta {
+  font-size: 0.7rem;
+  color: var(--cor-menu-suave);
+  transition: transform var(--transicao);
+}
+
+.menu-grupo__seta--aberta {
+  transform: rotate(180deg);
+}
+
+.menu-grupo__paginas {
+  list-style: none;
+  margin: 0.15rem 0 0.4rem 1.6rem;
+  padding: 0 0 0 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.menu-grupo__paginas a {
+  display: block;
+  color: var(--cor-menu-suave);
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.menu-grupo__paginas a:hover {
+  background: var(--cor-menu-hover);
+  color: #fff;
+}
+
+.menu-grupo__paginas a.active {
+  background: var(--cor-primaria);
+  color: #fff;
+  font-weight: 700;
+}
+
+.menu-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 0.5rem;
+}
+
+.menu-skeleton__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.menu-skeleton__item {
+  margin-left: 1.5rem;
+}
+
+.menu-admin__rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--cor-menu-suave);
+  padding: 1rem 0.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.botao-secundario--escuro {
+  color: var(--cor-menu-texto);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.botao-secundario--escuro:hover {
+  background: var(--cor-menu-hover);
+}
+
+.conteudo-admin {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.pagina-admin h1 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.texto-auxiliar {
+  color: var(--cor-texto-suave);
+  font-size: 0.95rem;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+}
+
+.formulario-inline, .formulario-produto, .formulario-restaurante {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background: var(--cor-superficie);
+  padding: 1rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--cor-borda);
+  box-shadow: var(--sombra);
+}
+
+.formulario-restaurante {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 520px;
+}
+
+.formulario-restaurante label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.formulario-restaurante fieldset {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.tabela-admin {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  overflow: hidden;
+  box-shadow: var(--sombra);
+}
+
+.tabela-admin th, .tabela-admin td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--cor-borda);
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.tabela-admin th {
+  background: var(--cor-primaria-suave);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cor-primaria-escura);
+}
+
+.tabela-admin tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-admin tbody tr:hover {
+  background: #fafafa;
+}
+
+.tabela-admin td button {
+  margin-right: 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+  min-height: 36px;
+}

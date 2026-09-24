@@ -1,0 +1,21 @@
+// Ponto de entrada dos estilos. A ordem segue a cascata do css original.
+@use 'base/tokens';
+@use 'base/base';
+@use 'components/skeleton';
+@use 'pages/cardapio';
+@use 'pages/checkout';
+@use 'pages/login';
+@use 'layout/admin';
+@use 'layout/responsivo';
+@use 'components/selecao-loja';
+@use 'components/tela-busca';
+@use 'components/drawer';
+@use 'components/crud';
+@use 'components/forca-senha';
+@use 'pages/dashboard';
+@use 'components/tabelas';
+@use 'components/formularios';
+@use 'components/primereact';
+@use 'layout/menu';
+@use 'layout/cabecalho';
+@use 'components/perfil';

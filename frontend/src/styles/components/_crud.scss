@@ -1,0 +1,169 @@
+// Cadastros (CRUD) em blocos, secoes e ganchos
+@use '../abstracts' as *;
+
+/* CRUD em blocos */
+.crud__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.pagina-admin .crud__cabecalho h1 {
+  margin: 0;
+}
+
+.crud__voltar {
+  color: var(--cor-texto-suave);
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+}
+
+.crud__voltar:hover {
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-escura);
+}
+
+.crud__subtitulo {
+  margin: 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.crud__corpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.campo-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.6rem !important;
+}
+
+.campo-ajuda {
+  font-weight: 400;
+  color: var(--cor-texto-suave);
+}
+
+.crud__aviso {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--cor-primaria-suave);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* A tela ocupa a altura toda e a barra de acoes fica presa na base, rente as bordas da area de conteudo */
+.conteudo-admin:has(.crud) {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.crud {
+  display: flex;
+  flex-direction: column;
+  padding-top: 2rem;
+  min-height: calc(100vh - var(--altura-cabecalho));
+  min-height: calc(100dvh - var(--altura-cabecalho));
+}
+
+.crud__corpo {
+  flex: 1;
+}
+
+.crud__rodape {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 1.5rem -2rem 0;
+  padding: 0.85rem 2rem;
+  background: var(--cor-superficie);
+  border-top: 1px solid var(--cor-borda);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.crud__acoes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.crud__espaco {
+  flex: 1;
+}
+
+.crud__mensagem {
+  margin: 0 0 0.75rem;
+}
+
+.convite__link {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.convite__link input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Ganchos (atalhos para os blocos) dos cadastros em secoes */
+.crud__ancoras {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem 1.25rem 0;
+  background: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.secao-crud {
+  scroll-margin-top: 3.5rem;
+}
+
+@include ate-tablet {
+  .cabecalho-admin {
+    padding: 0 0.75rem;
+  }
+
+  .cabecalho-admin__menu {
+    display: inline-flex;
+  }
+
+  .cartao-usuario__textos {
+    display: none;
+  }
+}
+
+/* Cadastro: cabecalho, abas/secoes e campos dentro de um unico bloco branco */
+.crud__cartao {
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  margin-bottom: 1.25rem;
+}
+
+.crud__cartao .p-tabview-nav-container {
+  padding: 0 0.5rem;
+}
+
+/* Ganchos dos cadastros (TabMenu) */
+.crud__ancoras .p-tabmenu .p-tabmenu-nav {
+  background: transparent;
+  border: none;
+}
+
+.dialogo-campos__texto {
+  margin: 0;
+  color: var(--cor-texto-suave);
+}
+
+@include ate-tablet {
+  .crud {
+    padding-top: 1rem;
+  }
+}

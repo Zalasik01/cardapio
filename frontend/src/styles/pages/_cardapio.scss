@@ -1,0 +1,153 @@
+// Cardapio do cliente
+@use '../abstracts' as *;
+
+
+/* ==========================================================================
+   Cardapio do cliente
+   ========================================================================== */
+.pagina-cardapio {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 6rem;
+}
+
+.cabecalho-restaurante {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.cabecalho-restaurante h1 {
+  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+}
+
+.cabecalho-restaurante p {
+  margin: 0;
+}
+
+.cabecalho-restaurante img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cabecalho-restaurante__detalhes {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.cabecalho-restaurante__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.secao-categoria {
+  margin-bottom: 2rem;
+}
+
+.secao-categoria > h2 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--cor-primaria-suave);
+}
+
+.grade-produtos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.cartao-produto {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--sombra);
+  transition: transform var(--transicao), box-shadow var(--transicao);
+}
+
+.cartao-produto:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.cartao-produto__imagem {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.cartao-produto__conteudo {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.cartao-produto__conteudo h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cartao-produto__descricao {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+  flex: 1;
+  margin: 0;
+}
+
+.cartao-produto__rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cartao-produto__preco {
+  font-weight: 700;
+  color: var(--cor-destaque);
+  font-size: 1.05rem;
+}
+
+.cartao-produto__acoes {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.cartao-produto__acoes input {
+  width: 56px;
+}
+
+.barra-carrinho {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--cor-primaria);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  transition: background var(--transicao);
+}
+
+.barra-carrinho:hover {
+  background: var(--cor-primaria-escura);
+}

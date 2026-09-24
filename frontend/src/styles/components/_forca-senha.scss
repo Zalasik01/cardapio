@@ -1,0 +1,50 @@
+// Indicador de forca da senha
+@use '../abstracts' as *;
+
+/* Forca da senha */
+.forca-senha__barra {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.forca-senha__nivel {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--cor-borda);
+}
+
+.forca-senha__nivel--1 { background: #dc2626; }
+.forca-senha__nivel--2 { background: #f59e0b; }
+.forca-senha__nivel--3 { background: #eab308; }
+.forca-senha__nivel--4 { background: var(--cor-sucesso); }
+
+.forca-senha__rotulo {
+  margin: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.forca-senha__regras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.forca-senha__regra {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--cor-texto-suave);
+}
+
+.forca-senha__regra i {
+  font-size: 0.75rem;
+}
+
+.forca-senha__regra--ok {
+  color: var(--cor-sucesso);
+}

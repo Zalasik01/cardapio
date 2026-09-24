@@ -2,18 +2,26 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarFuncionarios } from '../../api/funcionariosApi'
 import TelaBusca from '../../components/crud/TelaBusca'
-import { formatarCpf } from '../../utils/formatadores'
+import { formatarCpf, formatarTelefone } from '../../utils/formatadores'
 
 const FILTROS = [
   { nome: 'nome', rotulo: 'Nome', tipo: 'texto' },
   { nome: 'cpf', rotulo: 'CPF', tipo: 'texto' },
 ]
 
+/** Lista separada por virgula, truncada com reticencias (o texto completo fica no title). */
+function listaTruncada(itens) {
+  if (!itens?.length) return '—'
+  const texto = itens.join(', ')
+  return <span className="celula-truncada" title={texto}>{texto}</span>
+}
+
 const COLUNAS = [
   { chave: 'nome', cabecalho: 'Nome' },
-  { chave: 'apelido', cabecalho: 'Apelido', render: (funcionario) => funcionario.apelido || '—' },
   { chave: 'cpf', cabecalho: 'CPF', render: (funcionario) => formatarCpf(funcionario.cpf) || '—' },
-  { chave: 'ativo', cabecalho: 'Ativo', render: (funcionario) => (funcionario.ativo ? 'Sim' : 'Não') },
+  { chave: 'apelido', cabecalho: 'Apelido', render: (funcionario) => funcionario.apelido || '—' },
+  { chave: 'telefones', cabecalho: 'Telefones', render: (funcionario) => listaTruncada(funcionario.telefones?.map(formatarTelefone)) },
+  { chave: 'emails', cabecalho: 'E-mails', render: (funcionario) => listaTruncada(funcionario.emails) },
 ]
 
 export default function PaginaFuncionarios() {

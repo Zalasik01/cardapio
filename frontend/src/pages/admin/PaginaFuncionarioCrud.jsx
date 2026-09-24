@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { Button } from 'primereact/button'
 import { Calendar } from 'primereact/calendar'
-import { Checkbox } from 'primereact/checkbox'
 import { Dropdown } from 'primereact/dropdown'
 import { InputMask } from 'primereact/inputmask'
 import { InputText } from 'primereact/inputtext'
@@ -17,9 +15,11 @@ import {
 import { consultarPessoaPorCpf } from '../../api/pessoasApi'
 import DialogoCpfExistente from '../../components/crud/DialogoCpfExistente'
 import CrudPagina from '../../components/crud/CrudPagina'
+import CampoAtivo from '../../components/crud/CampoAtivo'
+import Endereco from '../../components/crud/Endereco'
+import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import SecaoContatos from '../../components/crud/SecaoContatos'
-import SecaoEndereco from '../../components/crud/SecaoEndereco'
 import { FormularioSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
 import {
@@ -211,12 +211,7 @@ export default function PaginaFuncionarioCrud() {
     <>
       <SecaoCrud id="secao-principal" titulo="Principal">
         <GradeCampos>
-          <div className="campo campo--12 campo--linha">
-            <span className="campo-checkbox">
-              <Checkbox inputId="ativo" checked={form.ativo} onChange={(e) => definir('ativo')(e.checked)} />
-              <label htmlFor="ativo">Ativo</label>
-            </span>
-          </div>
+          <CampoAtivo valor={form.ativo} aoAlterar={definir('ativo')} />
 
           <Campo rotulo="Sexo">
             <div className="opcoes-radio" role="radiogroup" aria-label="Sexo">
@@ -287,7 +282,7 @@ export default function PaginaFuncionarioCrud() {
         aoAbrir={() => navigate(`${ROTA_LISTA}/${cpfExistente.funcionarioId}`)}
         aoCancelar={cancelarCpfExistente}
       />
-      <SecaoEndereco endereco={form.endereco} aoAlterar={alterarEndereco} />
+      <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} />
       <SecaoContatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
     </>
   )
@@ -300,15 +295,13 @@ export default function PaginaFuncionarioCrud() {
         aoVoltar={() => navigate(ROTA_LISTA)}
         ancoras={carregando ? undefined : ANCORAS}
         rodape={(
-          <div className="crud__acoes">
-            {editando && (
-              <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined
-                      disabled={carregando} onClick={handleExcluir} />
-            )}
-            <span className="crud__espaco" />
-            <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
-            <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
-          </div>
+          <RodapeCrud
+            editando={editando}
+            carregando={carregando}
+            salvando={salvando}
+            aoExcluir={handleExcluir}
+            aoFechar={() => navigate(ROTA_LISTA)}
+          />
         )}
       >
         {carregando ? <FormularioSkeleton campos={6} /> : conteudo}

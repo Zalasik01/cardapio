@@ -21,6 +21,7 @@ public record LojaGestaoResponse(
         String logoUrl,
         String enderecoRua,
         String enderecoNumero,
+        String enderecoComplemento,
         String enderecoBairro,
         String enderecoCidade,
         String enderecoEstado,
@@ -33,7 +34,7 @@ public record LojaGestaoResponse(
     public static LojaGestaoResponse of(S_Loja l) {
         return new LojaGestaoResponse(
                 l.getId(), l.getGuid(), l.isAtivo(), l.getNome(), l.getSlug(), l.getTipoOrganizacao(), l.getSituacaoConta(),
-                l.getDescricao(), l.getTelefone(), l.getLogoUrl(), l.getEnderecoRua(), l.getEnderecoNumero(),
+                l.getDescricao(), l.getTelefone(), l.getLogoUrl(), l.getEnderecoRua(), l.getEnderecoNumero(), l.getEnderecoComplemento(),
                 l.getEnderecoBairro(), l.getEnderecoCidade(), l.getEnderecoEstado(), l.getEnderecoCep(),
                 l.getCnpj(), l.getValorMensalidade(), l.getDiaVencimento());
     }

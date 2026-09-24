@@ -3,7 +3,6 @@ import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Button } from 'primereact/button'
 import { FileUpload } from 'primereact/fileupload'
-import { Menu } from 'primereact/menu'
 import { Checkbox } from 'primereact/checkbox'
 import { InputText } from 'primereact/inputtext'
 import { useAuth } from '../../context/AuthContext'
@@ -14,7 +13,9 @@ import {
   obterUsuario, removerFotoUsuario,
 } from '../../api/usuariosApi'
 import { buscarFuncionarios } from '../../api/funcionariosApi'
+import CampoAtivo from '../../components/crud/CampoAtivo'
 import CrudBlocos from '../../components/crud/CrudBlocos'
+import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos } from '../../components/crud/Campo'
 import { FormularioSkeleton } from '../../components/Skeleton'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
@@ -47,7 +48,6 @@ export default function PaginaUsuarioCrud() {
   const [tinhaFoto, setTinhaFoto] = useState(false)
   const [removerFoto, setRemoverFoto] = useState(false)
   const seletorFoto = useRef(null)
-  const menuMaisOpcoes = useRef(null)
   const [alterandoEmail, setAlterandoEmail] = useState(false)
   const [redefinindoSenha, setRedefinindoSenha] = useState(false)
 
@@ -201,14 +201,7 @@ export default function PaginaUsuarioCrud() {
 
   const dadosBasicos = (
     <GradeCampos>
-      {editando && (
-        <div className="campo campo--12 campo--linha">
-          <span className="campo-checkbox">
-            <Checkbox inputId="ativo" checked={form.ativo} onChange={(e) => definir('ativo')(e.checked)} />
-            <label htmlFor="ativo">Ativo</label>
-          </span>
-        </div>
-      )}
+      {editando && <CampoAtivo valor={form.ativo} aoAlterar={definir('ativo')} />}
 
       <Campo id="nome" rotulo="Nome" obrigatorio tamanho={6}>
         <InputText id="nome" required maxLength={255} value={form.nome} onChange={(e) => definir('nome')(e.target.value)} />
@@ -299,24 +292,14 @@ export default function PaginaUsuarioCrud() {
           { id: 'permissoes', titulo: 'Permissões do usuário', conteudo: permissoes },
         ]}
         rodape={(
-          <>
-            <div className="crud__acoes">
-              {editando && (
-                <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined
-                        disabled={carregando} onClick={handleExcluir} />
-              )}
-              <span className="crud__espaco" />
-              {editando && (
-                <>
-                  <Button type="button" icon="pi pi-angle-up" severity="secondary" outlined aria-label="Mais opções"
-                          title="Mais opções" aria-haspopup="menu" onClick={(e) => menuMaisOpcoes.current.toggle(e)} />
-                  <Menu model={itensMaisOpcoes} popup ref={menuMaisOpcoes} />
-                </>
-              )}
-              <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
-              <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
-            </div>
-          </>
+          <RodapeCrud
+            editando={editando}
+            carregando={carregando}
+            salvando={salvando}
+            aoExcluir={handleExcluir}
+            aoFechar={() => navigate(ROTA_LISTA)}
+            maisOpcoes={itensMaisOpcoes}
+          />
         )}
       />
 

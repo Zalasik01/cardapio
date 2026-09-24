@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { Button } from 'primereact/button'
 import { Checkbox } from 'primereact/checkbox'
 import { InputText } from 'primereact/inputtext'
-import { Menu } from 'primereact/menu'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import {
@@ -11,6 +9,8 @@ import {
   gerarNovoLinkUsuarioInterno, obterUsuarioInterno, redefinirSenhaUsuarioInterno,
 } from '../../api/gestaoUsuariosApi'
 import CrudPagina from '../../components/crud/CrudPagina'
+import CampoAtivo from '../../components/crud/CampoAtivo'
+import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import DialogoLinkAcesso from '../../components/DialogoLinkAcesso'
@@ -32,7 +32,6 @@ export default function PaginaGestaoUsuarioCrud() {
   const [convite, setConvite] = useState(null) // { token, expiraEm, nome }
   const [alterandoEmail, setAlterandoEmail] = useState(false)
   const [redefinindoSenha, setRedefinindoSenha] = useState(false)
-  const menuMaisOpcoes = useRef(null)
 
   useEffect(() => {
     definirMigalha(editando ? 'Editando usuário interno' : 'Novo usuário interno')
@@ -113,14 +112,7 @@ export default function PaginaGestaoUsuarioCrud() {
   const conteudo = (
     <SecaoCrud id="secao-principal" titulo="Dados básicos">
       <GradeCampos>
-        {editando && (
-          <div className="campo campo--12 campo--linha">
-            <span className="campo-checkbox">
-              <Checkbox inputId="ativo" checked={form.ativo} onChange={(e) => definir('ativo')(e.checked)} />
-              <label htmlFor="ativo">Ativo</label>
-            </span>
-          </div>
-        )}
+        {editando && <CampoAtivo valor={form.ativo} aoAlterar={definir('ativo')} />}
 
         <Campo id="nome" rotulo="Nome" obrigatorio tamanho={6}>
           <InputText id="nome" required maxLength={255} value={form.nome} onChange={(e) => definir('nome')(e.target.value)} />
@@ -155,22 +147,14 @@ export default function PaginaGestaoUsuarioCrud() {
         subtitulo={editando ? 'Editar usuário interno' : 'Cadastro de usuário interno'}
         aoVoltar={() => navigate(ROTA_LISTA)}
         rodape={(
-          <div className="crud__acoes">
-            {editando && (
-              <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined
-                      disabled={carregando} onClick={handleExcluir} />
-            )}
-            <span className="crud__espaco" />
-            {editando && (
-              <>
-                <Button type="button" icon="pi pi-angle-up" severity="secondary" outlined aria-label="Mais opções"
-                        title="Mais opções" aria-haspopup="menu" onClick={(e) => menuMaisOpcoes.current.toggle(e)} />
-                <Menu model={itensMaisOpcoes} popup ref={menuMaisOpcoes} />
-              </>
-            )}
-            <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
-            <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
-          </div>
+          <RodapeCrud
+            editando={editando}
+            carregando={carregando}
+            salvando={salvando}
+            aoExcluir={handleExcluir}
+            aoFechar={() => navigate(ROTA_LISTA)}
+            maisOpcoes={itensMaisOpcoes}
+          />
         )}
       >
         {carregando ? <FormularioSkeleton campos={4} /> : conteudo}

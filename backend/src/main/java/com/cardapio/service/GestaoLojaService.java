@@ -93,6 +93,7 @@ public class GestaoLojaService {
         loja.setLogoUrl(vazioParaNulo(r.logoUrl()));
         loja.setEnderecoRua(vazioParaNulo(r.enderecoRua()));
         loja.setEnderecoNumero(vazioParaNulo(r.enderecoNumero()));
+        loja.setEnderecoComplemento(vazioParaNulo(r.enderecoComplemento()));
         loja.setEnderecoBairro(vazioParaNulo(r.enderecoBairro()));
         loja.setEnderecoCidade(vazioParaNulo(r.enderecoCidade()));
         String estado = vazioParaNulo(r.enderecoEstado());

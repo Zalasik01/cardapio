@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { Button } from 'primereact/button'
-import { Checkbox } from 'primereact/checkbox'
 import { Dropdown } from 'primereact/dropdown'
 import { InputMask } from 'primereact/inputmask'
 import { InputText } from 'primereact/inputtext'
@@ -11,8 +9,10 @@ import {
   atualizarLojaGestao, criarLojaGestao, excluirLojaGestao, obterLojaGestao,
 } from '../../api/gestaoLojasApi'
 import CrudPagina from '../../components/crud/CrudPagina'
+import CampoAtivo from '../../components/crud/CampoAtivo'
+import Endereco from '../../components/crud/Endereco'
+import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
-import SecaoEndereco from '../../components/crud/SecaoEndereco'
 import SecaoMensalidades from '../../components/gestao/SecaoMensalidades'
 import { FormularioSkeleton } from '../../components/Skeleton'
 import { buscarEmpresaPorCnpj } from '../../api/cnpjApi'
@@ -43,7 +43,7 @@ const FORM_VAZIO = {
   diaVencimento: null,
 }
 
-/** O endereço da loja usa os mesmos campos do SecaoEndereco (logradouro, número, bairro...). */
+/** O endereço da loja usa os mesmos campos do bloco Endereco (logradouro, número, complemento, bairro...). */
 function paraFormulario(loja) {
   return {
     ativo: loja.ativo,
@@ -59,7 +59,7 @@ function paraFormulario(loja) {
       cep: loja.enderecoCep ?? '',
       logradouro: loja.enderecoRua ?? '',
       numero: loja.enderecoNumero ?? '',
-      complemento: '',
+      complemento: loja.enderecoComplemento ?? '',
       bairro: loja.enderecoBairro ?? '',
       cidade: loja.enderecoCidade ?? '',
       estado: loja.enderecoEstado ?? null,
@@ -83,6 +83,7 @@ function paraRequisicao(form) {
     enderecoCep: form.endereco.cep,
     enderecoRua: form.endereco.logradouro,
     enderecoNumero: form.endereco.numero,
+    enderecoComplemento: form.endereco.complemento,
     enderecoBairro: form.endereco.bairro,
     enderecoCidade: form.endereco.cidade,
     enderecoEstado: form.endereco.estado ?? '',
@@ -152,7 +153,7 @@ export default function PaginaGestaoLojaCrud() {
         slug: slugEditadoManualmente || atual.slug ? atual.slug : sugerirSlug(nome),
         descricao: atual.descricao || empresa.razaoSocial,
         telefone: atual.telefone || (telefone.length === 11 ? telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : ''),
-        endereco: { ...atual.endereco, ...empresa.endereco, complemento: '' },
+        endereco: { ...atual.endereco, ...empresa.endereco },
       }))
       if (empresa.situacao && empresa.situacao.toUpperCase() !== 'ATIVA') {
         dispatchMsgWarn(`Situação cadastral na Receita: ${empresa.situacao}`)
@@ -210,12 +211,7 @@ export default function PaginaGestaoLojaCrud() {
     <>
       <SecaoCrud id="secao-principal" titulo="Principal">
         <GradeCampos>
-          <div className="campo campo--12 campo--linha">
-            <span className="campo-checkbox">
-              <Checkbox inputId="ativo" checked={form.ativo} onChange={(e) => definir('ativo')(e.checked)} />
-              <label htmlFor="ativo">Ativa</label>
-            </span>
-          </div>
+          <CampoAtivo valor={form.ativo} aoAlterar={definir('ativo')} rotulo="Ativa" />
 
           <Campo id="cnpj" rotulo="CNPJ" tamanho={4}
                  ajuda={buscandoCnpj ? 'Buscando dados da empresa...' : (editando ? undefined : 'Ao completar o CNPJ, os dados são buscados na BrasilAPI.')}>
@@ -254,7 +250,7 @@ export default function PaginaGestaoLojaCrud() {
         </GradeCampos>
       </SecaoCrud>
 
-      <SecaoEndereco endereco={form.endereco} aoAlterar={alterarEndereco} comComplemento={false} />
+      <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} />
 
       <SecaoMensalidades
         lojaId={editando ? Number(id) : undefined}
@@ -273,15 +269,13 @@ export default function PaginaGestaoLojaCrud() {
         aoVoltar={() => navigate(ROTA_LISTA)}
         ancoras={carregando ? undefined : ANCORAS}
         rodape={(
-          <div className="crud__acoes">
-            {editando && (
-              <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined
-                      disabled={carregando} onClick={handleExcluir} />
-            )}
-            <span className="crud__espaco" />
-            <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
-            <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
-          </div>
+          <RodapeCrud
+            editando={editando}
+            carregando={carregando}
+            salvando={salvando}
+            aoExcluir={handleExcluir}
+            aoFechar={() => navigate(ROTA_LISTA)}
+          />
         )}
       >
         {carregando ? <FormularioSkeleton campos={6} /> : conteudo}

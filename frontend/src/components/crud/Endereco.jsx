@@ -7,13 +7,14 @@ import { UFS } from '../../utils/pessoa'
 import { Campo, GradeCampos, SecaoCrud } from './Campo'
 
 /**
- * Seção "Endereço" dos cadastros de pessoa. Ao completar o CEP, preenche logradouro, bairro,
- * cidade e UF pelo ViaCEP (número e complemento continuam manuais).
+ * Bloco "Endereço" dos cadastros (funcionário, cliente/fornecedor, loja...): CEP, logradouro, número,
+ * complemento, bairro, cidade e UF. Ao completar o CEP, preenche logradouro, bairro, cidade e UF
+ * pelo ViaCEP (número e complemento continuam manuais).
  *
- * Props: endereco (estado do formulário), aoAlterar(campos | (atual) => campos), que mescla no endereço,
- * e comComplemento (padrão true): esconde o campo Complemento em cadastros que não o guardam.
+ * Props: endereco { cep, logradouro, numero, complemento, bairro, cidade, estado } e
+ * aoAlterar(campos | (atual) => campos), que mescla os campos no endereço do formulário.
  */
-export default function SecaoEndereco({ endereco, aoAlterar, comComplemento = true }) {
+export default function Endereco({ endereco, aoAlterar }) {
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [avisoCep, setAvisoCep] = useState(null)
   const numeroRef = useRef(null)
@@ -65,13 +66,11 @@ export default function SecaoEndereco({ endereco, aoAlterar, comComplemento = tr
           <InputText id="numero" ref={numeroRef} maxLength={20} value={endereco.numero}
                      onChange={(e) => definir('numero')(e.target.value)} />
         </Campo>
-        {comComplemento && (
-          <Campo id="complemento" rotulo="Complemento" tamanho={3}>
-            <InputText id="complemento" maxLength={255} value={endereco.complemento}
-                       onChange={(e) => definir('complemento')(e.target.value)} />
-          </Campo>
-        )}
-        <Campo id="bairro" rotulo="Bairro" tamanho={comComplemento ? 5 : 8}>
+        <Campo id="complemento" rotulo="Complemento" tamanho={3}>
+          <InputText id="complemento" maxLength={255} value={endereco.complemento}
+                     onChange={(e) => definir('complemento')(e.target.value)} />
+        </Campo>
+        <Campo id="bairro" rotulo="Bairro" tamanho={5}>
           <InputText id="bairro" maxLength={255} value={endereco.bairro}
                      onChange={(e) => definir('bairro')(e.target.value)} />
         </Campo>

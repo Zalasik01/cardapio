@@ -11,8 +11,9 @@ import { gerarSenhaTemporaria } from '../utils/senha'
  * Redefinir a senha de um usuario da loja: mostra uma senha temporaria; ao confirmar ela passa a
  * valer e o usuario e obrigado a criar uma nova no proximo acesso.
  * usuario: { id, nome } | null (fechado).
+ * salvar(id, senha): grava a senha; o padrao redefine a de um usuario da loja da sessao.
  */
-export default function DialogoRedefinirSenha({ usuario, aoFechar, aoRedefinida }) {
+export default function DialogoRedefinirSenha({ usuario, aoFechar, aoRedefinida, salvar }) {
   const { loja } = useAuth()
   const [senha, setSenha] = useState('')
   const [copiada, setCopiada] = useState(false)
@@ -42,7 +43,7 @@ export default function DialogoRedefinirSenha({ usuario, aoFechar, aoRedefinida 
   async function confirmar() {
     setSalvando(true)
     try {
-      await redefinirSenhaUsuario(loja.tenant, usuario.id, senha)
+      await (salvar ?? ((id, valor) => redefinirSenhaUsuario(loja.tenant, id, valor)))(usuario.id, senha)
       dispatchMsgSuccess('Senha redefinida. O usuário deverá criar uma nova senha no próximo acesso.')
       aoRedefinida?.()
       aoFechar()

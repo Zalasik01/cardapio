@@ -13,8 +13,9 @@ const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * Dialogo para alterar o e-mail de login de um usuario da loja. O e-mail so muda por aqui
  * ("..." da busca de usuarios ou "Mais opcoes" do cadastro).
  * usuario: { id, nome, email } | null (fechado). aoAlterado(usuarioAtualizado) roda apos gravar.
+ * salvar(id, email): grava o novo e-mail; o padrao altera o usuario da loja da sessao.
  */
-export default function DialogoAlterarEmail({ usuario, aoFechar, aoAlterado }) {
+export default function DialogoAlterarEmail({ usuario, aoFechar, aoAlterado, salvar }) {
   const { loja, usuarioLogado, sair } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -37,7 +38,7 @@ export default function DialogoAlterarEmail({ usuario, aoFechar, aoAlterado }) {
 
     setSalvando(true)
     try {
-      const atualizado = await alterarEmailUsuario(loja.tenant, usuario.id, novoEmail)
+      const atualizado = await (salvar ?? ((id, valor) => alterarEmailUsuario(loja.tenant, id, valor)))(usuario.id, novoEmail)
       dispatchMsgSuccess('E-mail alterado com sucesso')
       aoAlterado?.(atualizado)
       aoFechar()

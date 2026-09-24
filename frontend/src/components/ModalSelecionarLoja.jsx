@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { listarLojasAcessiveis } from '../api/authApi'
 import { dispatchMsgError } from '../store/dispatchMsg'
 import { Skeleton } from './Skeleton'
+import { rotuloSituacaoConta, tomSituacaoConta } from '../utils/loja'
 
 const ATRASO_BUSCA_MS = 300
 
@@ -127,7 +128,12 @@ export default function ModalSelecionarLoja({ aoSelecionar, aoFechar, aoSair }) 
                       {loja.logoUrl ? <img src={loja.logoUrl} alt="" /> : <i className="fa-solid fa-store" />}
                     </span>
                     <span className="cartao-loja__textos">
-                      <strong>{loja.id} - {loja.nome}</strong>
+                      <strong>
+                        {loja.id} - {loja.nome} -{' '}
+                        <span className={`selo selo--${tomSituacaoConta(loja.situacaoConta)}`}>
+                          {rotuloSituacaoConta(loja.situacaoConta)}
+                        </span>
+                      </strong>
                       <small>/{loja.slug}</small>
                     </span>
                     {selecionando === loja.tenant

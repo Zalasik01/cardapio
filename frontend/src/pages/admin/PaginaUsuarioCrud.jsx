@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Button } from 'primereact/button'
-import { Dialog } from 'primereact/dialog'
 import { FileUpload } from 'primereact/fileupload'
 import { Menu } from 'primereact/menu'
 import { Checkbox } from 'primereact/checkbox'
@@ -19,6 +18,7 @@ import CrudBlocos from '../../components/crud/CrudBlocos'
 import { Campo, GradeCampos } from '../../components/crud/Campo'
 import { FormularioSkeleton } from '../../components/Skeleton'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
+import DialogoLinkAcesso from '../../components/DialogoLinkAcesso'
 import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
 import { formatarCpf } from '../../utils/formatadores'
 
@@ -40,7 +40,6 @@ export default function PaginaUsuarioCrud() {
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
   const [convite, setConvite] = useState(null) // { token, expiraEm, nome }
-  const [copiado, setCopiado] = useState(false)
 
   // foto: arquivo escolhido (a enviar), previa exibida e se a foto atual deve ser removida
   const [arquivoFoto, setArquivoFoto] = useState(null)
@@ -183,18 +182,6 @@ export default function PaginaUsuarioCrud() {
       setConvite({ token: resposta.token, expiraEm: resposta.expiraEm, nome: resposta.usuario.nome })
     } catch (e) {
       dispatchMsgError(e.mensagem)
-    }
-  }
-
-  const link = convite ? `${window.location.origin}/novo-usuario/${convite.token}` : ''
-
-  async function copiarLink() {
-    try {
-      await navigator.clipboard.writeText(link)
-      setCopiado(true)
-      setTimeout(() => setCopiado(false), 2000)
-    } catch {
-      dispatchMsgError('Não foi possível copiar. Selecione o link e copie manualmente.')
     }
   }
 
@@ -344,28 +331,7 @@ export default function PaginaUsuarioCrud() {
         aoFechar={() => setRedefinindoSenha(false)}
       />
 
-      <Dialog
-        header="Link de acesso"
-        visible={!!convite}
-        onHide={fecharConvite}
-        style={{ width: 'min(32rem, 95vw)' }}
-        footer={<Button type="button" label="Concluir" severity="secondary" outlined onClick={fecharConvite} />}
-      >
-        {convite && (
-          <div className="dialogo-campos">
-            <p className="dialogo-campos__texto">
-              Envie este link para <strong>{convite.nome}</strong> definir a senha. Ele vale até{' '}
-              {new Date(convite.expiraEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} e só
-              pode ser usado uma vez.
-            </p>
-            <div className="convite__link">
-              <InputText readOnly value={link} aria-label="Link de acesso" onFocus={(e) => e.target.select()} />
-              <Button type="button" label={copiado ? 'Copiado' : 'Copiar'} icon={copiado ? 'pi pi-check' : 'pi pi-copy'}
-                      onClick={copiarLink} />
-            </div>
-          </div>
-        )}
-      </Dialog>
+      <DialogoLinkAcesso convite={convite} aoFechar={fecharConvite} />
     </form>
   )
 }

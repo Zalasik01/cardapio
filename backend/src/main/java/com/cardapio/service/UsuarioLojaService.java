@@ -30,10 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,12 +52,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UsuarioLojaService {
 
-    static final long VALIDADE_CONVITE_HORAS = 72;
     // Todos os usuarios de loja usam este papel por enquanto; "administrador" e uma opcao
     // separada, base das permissoes (implementacao futura).
     private static final String PAPEL_PADRAO = "ROLE_ADMIN_LOJA";
     private static final int TAMANHO_MAXIMO_PAGINA = 50;
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final S_UsuarioRepository usuarioRepository;
     private final S_LojaRepository lojaRepository;
@@ -69,6 +64,7 @@ public class UsuarioLojaService {
     private final T_FuncionarioRepository funcionarioRepository;
     private final S_UsuarioFotoRepository fotoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ConviteUsuario convites;
 
     @Transactional(readOnly = true)
     public PaginaResponse<UsuarioLojaResponse> buscar(UUID tenant, FiltroUsuario filtro, int pagina, int tamanho) {
@@ -113,14 +109,14 @@ public class UsuarioLojaService {
             usuario = usuarioRepository.save(S_Usuario.builder()
                     .nome(nome)
                     .email(email)
-                    .senha(passwordEncoder.encode(UUID.randomUUID() + gerarToken())) // inutilizavel ate o convite
+                    .senha(passwordEncoder.encode(UUID.randomUUID() + convites.gerarToken())) // inutilizavel ate o convite
                     .build());
         }
 
         // Quem ainda nao definiu a senha (usuario novo ou convidado antes) fica pendente e recebe um link.
         boolean pendente = novo || usuario.isExigeTrocarSenha();
         if (pendente) {
-            prepararConvite(usuario);
+            convites.preparar(usuario);
             usuarioRepository.save(usuario);
         }
         StatusPerfilUsuario status = pendente ? StatusPerfilUsuario.PENDENTE : StatusPerfilUsuario.ATIVO;
@@ -254,7 +250,7 @@ public class UsuarioLojaService {
         if (!usuario.isExigeTrocarSenha()) {
             throw new RegraNegocioException("Este usuário já definiu a senha");
         }
-        prepararConvite(usuario);
+        convites.preparar(usuario);
         usuarioRepository.save(usuario);
         return convite(vinculo, true);
     }
@@ -309,18 +305,6 @@ public class UsuarioLojaService {
                 resposta(vinculo),
                 comToken ? usuario.getEsqueciSenhaToken() : null,
                 comToken ? usuario.getEsqueciSenhaExpiraEm() : null);
-    }
-
-    private void prepararConvite(S_Usuario usuario) {
-        usuario.setEsqueciSenhaToken(gerarToken());
-        usuario.setEsqueciSenhaExpiraEm(LocalDateTime.now().withNano(0).plusHours(VALIDADE_CONVITE_HORAS));
-        usuario.setExigeTrocarSenha(true);
-    }
-
-    private String gerarToken() {
-        byte[] bytes = new byte[32];
-        RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     private Specification<T_PerfilUsuario> especificacao(UUID tenant, FiltroUsuario filtro) {

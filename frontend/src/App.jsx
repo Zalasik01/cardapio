@@ -22,6 +22,7 @@ import PaginaUsuarios from './pages/admin/PaginaUsuarios'
 import PaginaUsuarioCrud from './pages/admin/PaginaUsuarioCrud'
 import PaginaFuncionarios from './pages/admin/PaginaFuncionarios'
 import PaginaFuncionarioCrud from './pages/admin/PaginaFuncionarioCrud'
+import PaginaGestaoDashboard from './pages/admin/PaginaGestaoDashboard'
 import PaginaGestaoLojas from './pages/admin/PaginaGestaoLojas'
 import PaginaGestaoLojaCrud from './pages/admin/PaginaGestaoLojaCrud'
 import PaginaGestaoUsuarios from './pages/admin/PaginaGestaoUsuarios'
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="pessoas" element={<PaginaPessoas />} />
             <Route path="pessoas/novo" element={<PaginaPessoaCrud key="novo" />} />
             <Route path="pessoas/:id" element={<PaginaPessoaCrud key="editar" />} />
+            <Route path="gestao-dashboard" element={<PaginaGestaoDashboard />} />
             <Route path="gestao-lojas" element={<PaginaGestaoLojas />} />
             <Route path="gestao-lojas/novo" element={<PaginaGestaoLojaCrud key="novo" />} />
             <Route path="gestao-lojas/:id" element={<PaginaGestaoLojaCrud key="editar" />} />

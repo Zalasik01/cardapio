@@ -15,7 +15,9 @@ export default function CampoSenha({ valor, aoAlterar, rotulo, id, autoComplete 
         onChange={(e) => aoAlterar(e.target.value)}
         toggleMask
         feedback={false}
-        inputProps={{ autoComplete, required, ...resto }}
+        autoComplete={autoComplete}
+        required={required}
+        {...resto}
       />
     </div>
   )

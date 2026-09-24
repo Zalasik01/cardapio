@@ -1,4 +1,4 @@
-/* global __DATA_BUILD__ */
+import { dataBuild } from 'virtual:versao-build'
 
 const formatador = new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'short',
@@ -6,7 +6,7 @@ const formatador = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
 })
 
-/** Versao do sistema = data e hora do ultimo build (injetada pelo Vite em __DATA_BUILD__). */
+/** Versão do sistema = data e hora do último build (fornecida pelo plugin versaoBuild do Vite). */
 export default function VersaoBuild() {
-  return <span className="versao-build">Versão build: {formatador.format(new Date(__DATA_BUILD__))}</span>
+  return <span className="versao-build">Versão build: {formatador.format(new Date(dataBuild))}</span>
 }

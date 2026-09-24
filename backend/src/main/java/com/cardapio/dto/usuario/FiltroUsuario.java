@@ -7,7 +7,7 @@ public record FiltroUsuario(
         String busca,
         String nome,
         String email,
-        Boolean ativo,
+        boolean mostrarInativos,
         StatusPerfilUsuario status
 ) {
 }

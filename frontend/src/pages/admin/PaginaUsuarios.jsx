@@ -13,12 +13,6 @@ const FILTROS = [
   { nome: 'nome', rotulo: 'Nome', tipo: 'texto' },
   { nome: 'email', rotulo: 'E-mail', tipo: 'texto' },
   {
-    nome: 'ativo',
-    rotulo: 'Usuário ativo',
-    tipo: 'selecao',
-    opcoes: [{ valor: 'true', rotulo: 'Ativo' }, { valor: 'false', rotulo: 'Inativo' }],
-  },
-  {
     nome: 'status',
     rotulo: 'Situação do acesso',
     tipo: 'selecao',
@@ -79,6 +73,7 @@ export default function PaginaUsuarios() {
     <>
     <TelaBusca
       titulo="Usuários"
+      chaveFiltros="usuarios"
       placeholder="Buscar por nome ou e-mail"
       colunas={COLUNAS}
       filtros={FILTROS}

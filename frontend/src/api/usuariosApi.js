@@ -2,7 +2,7 @@ import http from './http'
 
 const base = (tenant) => `/admin/lojas/${tenant}/usuarios`
 
-/** Busca paginada. filtros: { busca, nome, email, ativo, status }; page comeca em 0. */
+/** Busca paginada. filtros: { busca, nome, email, mostrarInativos, status }; page comeca em 0. */
 export const buscarUsuarios = (tenant, { page = 0, size = 10, ...filtros }) => {
   const params = { page, size }
   Object.entries(filtros).forEach(([chave, valor]) => {

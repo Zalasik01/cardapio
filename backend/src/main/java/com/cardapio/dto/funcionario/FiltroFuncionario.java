@@ -5,6 +5,6 @@ public record FiltroFuncionario(
         String busca,
         String nome,
         String cpf,
-        Boolean ativo
+        boolean mostrarInativos
 ) {
 }

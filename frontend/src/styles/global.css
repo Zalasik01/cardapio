@@ -2083,3 +2083,38 @@ button.cartao-loja:hover .cartao-loja__avatar {
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
+
+.drawer__opcoes {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.drawer__opcao {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.tela-busca__aviso {
+  margin: 16px 0;
+}
+
+/* especificidade maior que "label" do formulario do drawer (que empilha rotulo e campo) */
+.drawer__filtros .drawer__opcao {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.drawer__filtros .drawer__opcoes {
+  gap: 10px 16px;
+}

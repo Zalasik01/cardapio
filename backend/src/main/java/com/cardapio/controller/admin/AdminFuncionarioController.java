@@ -27,10 +27,10 @@ public class AdminFuncionarioController {
                                                             @RequestParam(required = false) String busca,
                                                             @RequestParam(required = false) String nome,
                                                             @RequestParam(required = false) String cpf,
-                                                            @RequestParam(required = false) Boolean ativo,
+                                                            @RequestParam(defaultValue = "false") boolean mostrarInativos,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "10") int size) {
-        return funcionarioService.buscar(tenant, new FiltroFuncionario(busca, nome, cpf, ativo), page, size);
+        return funcionarioService.buscar(tenant, new FiltroFuncionario(busca, nome, cpf, mostrarInativos), page, size);
     }
 
     @GetMapping("/{id}")

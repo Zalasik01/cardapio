@@ -250,8 +250,10 @@ public class FuncionarioService {
                     filtros.add(cb.like(cpf, "%" + digitos + "%"));
                 }
             }
-            // por padrao so lista registros ativos; o filtro "Inativo" permite consultar os demais
-            filtros.add(cb.equal(root.get("ativo"), filtro.ativo() == null || filtro.ativo()));
+            // por padrao so lista registros ativos; "Mostrar inativos" inclui os demais
+            if (!filtro.mostrarInativos()) {
+                filtros.add(cb.isTrue(root.get("ativo")));
+            }
 
             if (query.getResultType() != Long.class) {
                 query.orderBy(cb.asc(nome));

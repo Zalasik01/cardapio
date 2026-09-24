@@ -39,11 +39,11 @@ public class AdminUsuarioController {
                                                       @RequestParam(required = false) String busca,
                                                       @RequestParam(required = false) String nome,
                                                       @RequestParam(required = false) String email,
-                                                      @RequestParam(required = false) Boolean ativo,
+                                                      @RequestParam(defaultValue = "false") boolean mostrarInativos,
                                                       @RequestParam(required = false) StatusPerfilUsuario status,
                                                       @RequestParam(defaultValue = "0") int page,
                                                       @RequestParam(defaultValue = "10") int size) {
-        return usuarioLojaService.buscar(tenant, new FiltroUsuario(busca, nome, email, ativo, status), page, size);
+        return usuarioLojaService.buscar(tenant, new FiltroUsuario(busca, nome, email, mostrarInativos, status), page, size);
     }
 
     @GetMapping("/{usuarioId}")

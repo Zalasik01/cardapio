@@ -343,8 +343,10 @@ public class UsuarioLojaService {
             if (temTexto(filtro.email())) {
                 filtros.add(cb.like(cb.lower(email), padrao(filtro.email()), '\\'));
             }
-            // por padrao so lista registros ativos; o filtro "Inativo" permite consultar os demais
-            filtros.add(cb.equal(root.get("ativo"), filtro.ativo() == null || filtro.ativo()));
+            // por padrao so lista registros ativos; "Mostrar inativos" inclui os demais
+            if (!filtro.mostrarInativos()) {
+                filtros.add(cb.isTrue(root.get("ativo")));
+            }
             if (filtro.status() != null) {
                 filtros.add(cb.equal(root.get("status"), filtro.status()));
             }

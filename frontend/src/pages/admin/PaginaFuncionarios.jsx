@@ -7,12 +7,6 @@ import { formatarCpf } from '../../utils/formatadores'
 const FILTROS = [
   { nome: 'nome', rotulo: 'Nome', tipo: 'texto' },
   { nome: 'cpf', rotulo: 'CPF', tipo: 'texto' },
-  {
-    nome: 'ativo',
-    rotulo: 'Funcionário ativo',
-    tipo: 'selecao',
-    opcoes: [{ valor: 'true', rotulo: 'Ativo' }, { valor: 'false', rotulo: 'Inativo' }],
-  },
 ]
 
 const COLUNAS = [
@@ -29,6 +23,7 @@ export default function PaginaFuncionarios() {
   return (
     <TelaBusca
       titulo="Funcionários"
+      chaveFiltros="funcionarios"
       placeholder="Buscar por nome, apelido ou CPF"
       colunas={COLUNAS}
       filtros={FILTROS}

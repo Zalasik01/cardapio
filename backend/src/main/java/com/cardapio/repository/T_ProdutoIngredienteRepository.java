@@ -15,6 +15,9 @@ public interface T_ProdutoIngredienteRepository extends JpaRepository<T_ProdutoI
 
     void deleteByProdutoId(Long produtoId);
 
+    /** Remove o ingrediente de toda composição (só sobra em produtos já excluídos, pois o uso ativo bloqueia a exclusão). */
+    void deleteByIngredienteId(Long ingredienteId);
+
     /** Quantos produtos finais (não excluídos) usam o ingrediente: ele só pode ser excluído se ninguém usa. */
     @Query("select count(distinct pi.produto.id) from T_ProdutoIngrediente pi "
             + "where pi.ingrediente.id = :ingredienteId and pi.produto.deletado = false")

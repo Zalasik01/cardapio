@@ -83,6 +83,11 @@ public class CardapioService {
     @Transactional
     public void excluirCategoria(UUID tenant, UUID categoriaGuid) {
         T_Categoria categoria = buscarCategoria(tenant, categoriaGuid);
+        long produtos = produtoRepository.countByCategoriaIdAndDeletadoFalse(categoria.getId());
+        if (produtos > 0) {
+            throw new RegraNegocioException("Esta categoria possui " + produtos
+                    + " produto(s) vinculado(s). Mude a categoria deles ou exclua-os antes de excluir a categoria.");
+        }
         categoria.setDeletado(true);
         categoria.setAtivo(false);
         categoriaRepository.save(categoria);

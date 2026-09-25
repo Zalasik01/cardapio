@@ -31,3 +31,7 @@ export const obterProximoCodigo = (tenant) => http.get(`${base(tenant)}/proximo-
 
 /** Ativa ou inativa o produto. */
 export const alterarAtivoProdutoCadastro = (tenant, id, ativo) => http.put(`${base(tenant)}/${id}/ativo`, { ativo })
+
+/** O código está livre na loja? produtoId é o produto em edição (ele não conta contra si mesmo). */
+export const codigoProdutoDisponivel = (tenant, codigo, produtoId) =>
+  http.get(`${base(tenant)}/codigo-disponivel`, { params: { codigo, produtoId } }).then((res) => res.data.disponivel)

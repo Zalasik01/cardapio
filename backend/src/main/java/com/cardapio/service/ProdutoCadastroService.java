@@ -59,10 +59,10 @@ public class ProdutoCadastroService {
                 .map(c -> new OpcaoCategoria(c.getId(), c.getNome())).toList();
     }
 
-    /** Próximo código incremental da loja: o maior código numérico já usado + 1 (o usuário pode trocá-lo). */
+    /** Próximo código da loja: o menor número livre (reaproveita os buracos deixados por exclusões). O usuário pode trocá-lo. */
     @Transactional(readOnly = true)
     public String proximoCodigo(UUID tenant) {
-        return String.valueOf(produtoRepository.maiorCodigoNumerico(tenant) + 1);
+        return String.valueOf(produtoRepository.menorCodigoNumericoLivre(tenant));
     }
 
     @Transactional(readOnly = true)
@@ -112,7 +112,22 @@ public class ProdutoCadastroService {
         produtoRepository.save(produto);
     }
 
-    /** Exclusão lógica. Um ingrediente usado na composição de algum produto não pode ser excluído. */
+    /** O código já está em uso por outro produto da loja? produtoId é o produto em edição (não conta contra ele mesmo). */
+    @Transactional(readOnly = true)
+    public boolean codigoDisponivel(UUID tenant, String codigo, Long produtoId) {
+        if (!temTexto(codigo)) {
+            return true;
+        }
+        return produtoId == null
+                ? !produtoRepository.existsByTenantAndCodigoAndDeletadoFalse(tenant, codigo.trim())
+                : !produtoRepository.existsByTenantAndCodigoAndDeletadoFalseAndIdNot(tenant, codigo.trim(), produtoId);
+    }
+
+    /**
+     * Exclusão definitiva do cadastro (o código fica livre na hora). Só se o produto já foi vendido em algum pedido
+     * é que ele é apenas marcado como excluído, para não quebrar o histórico. Um ingrediente usado na composição
+     * de algum produto não pode ser excluído.
+     */
     @Transactional
     public void excluir(UUID tenant, Long id) {
         T_Produto produto = buscarProduto(tenant, id);
@@ -123,10 +138,20 @@ public class ProdutoCadastroService {
                         + " produto(s). Remova-o das composições antes de excluir.");
             }
         }
-        produto.setDeletado(true);
-        produto.setAtivo(false);
-        produto.setDisponivel(false);
-        produtoRepository.save(produto);
+        if (produto.getTipo() == TipoProduto.INGREDIENTE) {
+            composicaoRepository.deleteByIngredienteId(id);
+        } else {
+            composicaoRepository.deleteByProdutoId(id);
+        }
+        if (produtoRepository.contarItensDePedido(id) > 0) {
+            produto.setDeletado(true);
+            produto.setAtivo(false);
+            produto.setDisponivel(false);
+            produto.setCodigo(null);
+            produtoRepository.save(produto);
+        } else {
+            produtoRepository.delete(produto);
+        }
     }
 
     private T_Produto buscarProduto(UUID tenant, Long id) {

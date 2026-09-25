@@ -17,7 +17,7 @@ export function GradeCampos({ children }) {
  * Campo de formulario com rotulo. `tamanho` e o numero de colunas (de 12) que ele ocupa em
  * telas largas; em telas pequenas ocupa a linha toda.
  */
-export function Campo({ id, rotulo, obrigatorio = false, tamanho = 12, ajuda, children }) {
+export function Campo({ id, rotulo, obrigatorio = false, tamanho = 12, ajuda, erro, children }) {
   return (
     <div className={`campo campo--${tamanho}`}>
       {rotulo && (
@@ -27,7 +27,8 @@ export function Campo({ id, rotulo, obrigatorio = false, tamanho = 12, ajuda, ch
         </label>
       )}
       {children}
-      {ajuda && <small className="campo__ajuda">{ajuda}</small>}
+      {erro && <small className="campo__erro" role="alert">{erro}</small>}
+      {ajuda && !erro && <small className="campo__ajuda">{ajuda}</small>}
     </div>
   )
 }

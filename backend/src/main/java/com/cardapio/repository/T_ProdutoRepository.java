@@ -27,10 +27,23 @@ public interface T_ProdutoRepository extends JpaRepository<T_Produto, Long>, Jpa
     @EntityGraph(attributePaths = {"categoria", "fornecedor", "fornecedor.pessoaFisica", "fornecedor.pessoaJuridica"})
     Optional<T_Produto> findByIdAndTenantAndDeletadoFalse(Long id, UUID tenant);
 
-    /** Maior código numérico já usado na loja (inclusive por produtos excluídos), ou 0. Base do código incremental. */
-    @Query(value = "select coalesce(max(cast(codigo as bigint)), 0) from t_produto "
-            + "where tenant = :tenant and codigo ~ '^[0-9]{1,15}$'", nativeQuery = true)
-    long maiorCodigoNumerico(@Param("tenant") UUID tenant);
+    /**
+     * Menor número (a partir de 1) que nenhum produto não excluído da loja usa como código. Os buracos deixados por
+     * exclusões são reaproveitados: com os códigos 2 e 3 em uso, devolve 1. Só códigos puramente numéricos contam.
+     */
+    @Query(value = "select min(n) from generate_series(1, ("
+            + "select coalesce(max(case when codigo ~ '^[0-9]{1,15}$' then cast(codigo as bigint) end), 0) + 1 "
+            + "from t_produto where tenant = :tenant and deletado = false)) as n "
+            + "where not exists (select 1 from t_produto where tenant = :tenant and deletado = false "
+            + "and case when codigo ~ '^[0-9]{1,15}$' then cast(codigo as bigint) end = n)", nativeQuery = true)
+    long menorCodigoNumericoLivre(@Param("tenant") UUID tenant);
+
+    /** Quantos itens de pedido já venderam o produto: se houver, o histórico impede a exclusão definitiva. */
+    @Query("select count(i) from I_ItemPedido i where i.produto.id = :produtoId")
+    long contarItensDePedido(@Param("produtoId") Long produtoId);
+
+    /** Quantos produtos (não excluídos) pertencem à categoria: ela só pode ser excluída se não houver nenhum. */
+    long countByCategoriaIdAndDeletadoFalse(Long categoriaId);
 
     boolean existsByTenantAndCodigoAndDeletadoFalse(UUID tenant, String codigo);
 

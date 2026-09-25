@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Checkbox } from 'primereact/checkbox'
@@ -12,7 +12,7 @@ import { confirmar } from '../../utils/confirmar'
 import { buscarPessoas } from '../../api/pessoasApi'
 import {
   atualizarProdutoCadastro, criarProdutoCadastro, excluirProdutoCadastro, listarCategoriasCadastro,
-  obterProdutoCadastro, obterProximoCodigo,
+  codigoProdutoDisponivel, obterProdutoCadastro, obterProximoCodigo,
 } from '../../api/produtosCadastroApi'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
@@ -106,6 +106,8 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
   const [salvando, setSalvando] = useState(false)
   const [categorias, setCategorias] = useState([])
   const [sugestoesFornecedor, setSugestoesFornecedor] = useState([])
+  const [erroCodigo, setErroCodigo] = useState(null)
+  const consultaCodigo = useRef(0) // ignora respostas de consultas antigas
 
   useEffect(() => {
     definirMigalha(editando ? `Editando ${config.singular}` : config.novo)
@@ -133,6 +135,21 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
       .finally(() => setCarregando(false))
   }, [editando, id, loja.tenant])
 
+  // valida o código assim que ele muda (com uma pequena espera enquanto digita)
+  useEffect(() => {
+    if (carregando || !form.codigo.trim()) {
+      setErroCodigo(null)
+      return undefined
+    }
+    const consulta = ++consultaCodigo.current
+    const espera = setTimeout(() => {
+      codigoProdutoDisponivel(loja.tenant, form.codigo.trim(), editando ? Number(id) : undefined)
+        .then((livre) => consulta === consultaCodigo.current && setErroCodigo(livre ? null : 'Este código já está em uso por outro produto.'))
+        .catch(() => consulta === consultaCodigo.current && setErroCodigo(null)) // sem a consulta, o servidor valida ao salvar
+    }, 350)
+    return () => clearTimeout(espera)
+  }, [form.codigo, carregando, editando, id, loja.tenant])
+
   const definir = (campo) => (valor) => setForm((atual) => ({ ...atual, [campo]: valor }))
   const definirTexto = (campo) => (e) => definir(campo)(e.target.value)
 
@@ -144,6 +161,10 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (erroCodigo) {
+      dispatchMsgError(erroCodigo)
+      return
+    }
     setSalvando(true)
     try {
       if (editando) {
@@ -163,7 +184,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
 
   function handleExcluir() {
     confirmar({
-      mensagem: `Excluir este ${config.singular}?`,
+      mensagem: `Excluir este ${config.singular}? Essa ação não pode ser desfeita.`,
       aoConfirmar: async () => {
         try {
           await excluirProdutoCadastro(loja.tenant, id)
@@ -187,8 +208,9 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
         <GradeCampos>
           <CampoAtivo valor={form.ativo} aoAlterar={definir('ativo')} />
 
-          <Campo id="codigo" rotulo="Código" tamanho={3} ajuda={editando ? undefined : 'Sugerido em sequência; pode alterar (único por loja).'}>
-            <InputText id="codigo" maxLength={50} value={form.codigo} onChange={definirTexto('codigo')} />
+          <Campo id="codigo" rotulo="Código" tamanho={3} erro={erroCodigo}>
+            <InputText id="codigo" maxLength={50} value={form.codigo} onChange={definirTexto('codigo')}
+                       className={erroCodigo ? 'p-invalid' : undefined} aria-invalid={!!erroCodigo} />
           </Campo>
           <Campo id="nome" rotulo="Nome" obrigatorio tamanho={5}>
             <InputText id="nome" required maxLength={255} value={form.nome} onChange={definirTexto('nome')} />

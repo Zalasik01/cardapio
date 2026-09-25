@@ -82,7 +82,7 @@ export default function PaginaProdutosCadastro({ tipo }) {
 
   function excluir(produto) {
     confirmar({
-      mensagem: `Excluir "${produto.nome}"?`,
+      mensagem: `Excluir "${produto.nome}"? Essa ação não pode ser desfeita.`,
       rotuloConfirmar: 'Excluir',
       aoConfirmar: async () => {
         try {

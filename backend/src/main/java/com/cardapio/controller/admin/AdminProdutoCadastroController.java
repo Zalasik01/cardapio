@@ -49,6 +49,16 @@ public class AdminProdutoCadastroController {
         return new CodigoResponse(produtoService.proximoCodigo(tenant));
     }
 
+    public record DisponibilidadeResponse(boolean disponivel) {
+    }
+
+    /** O código está livre? Usado enquanto o usuário digita. produtoId é o produto em edição, se houver. */
+    @GetMapping("/codigo-disponivel")
+    public DisponibilidadeResponse codigoDisponivel(@PathVariable UUID tenant, @RequestParam String codigo,
+                                                    @RequestParam(required = false) Long produtoId) {
+        return new DisponibilidadeResponse(produtoService.codigoDisponivel(tenant, codigo, produtoId));
+    }
+
     /** Categorias do cardápio (id e nome) para o campo de seleção do produto final. */
     @GetMapping("/categorias")
     public List<OpcaoCategoria> categorias(@PathVariable UUID tenant) {

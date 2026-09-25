@@ -63,6 +63,26 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
     { label: 'Sair', icon: 'pi pi-sign-out', command: aoSair },
   ]
 
+  // TODO temporario: botao de teste de notificacoes (Notification API). Remover quando o fluxo definitivo existir.
+  async function testarNotificacao() {
+    if (!('Notification' in window)) {
+      alert('Este navegador não suporta notificações.')
+      return
+    }
+    let permissao = Notification.permission
+    if (permissao === 'default') {
+      permissao = await Notification.requestPermission()
+    }
+    if (permissao !== 'granted') {
+      alert('Permissão de notificação negada.')
+      return
+    }
+    new Notification('Cardápio Digital', {
+      body: 'Notificação de teste 🔔',
+      icon: '/favicon.svg',
+    })
+  }
+
   return (
     <header className="cabecalho-admin">
       <button type="button" className="botao-icone cabecalho-admin__menu" aria-label="Abrir menu"
@@ -79,6 +99,11 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
           icon={lojaAberta ? 'pi pi-lock-open' : 'pi pi-lock'}
           value={lojaAberta ? 'Loja aberta' : 'Loja fechada'}
         />
+
+      <button type="button" className="botao-icone" aria-label="Testar notificação"
+              title="Testar notificação (temporário)" onClick={testarNotificacao}>
+        <i className="pi pi-bell" aria-hidden="true" />
+      </button>
 
       <button type="button" className="cartao-usuario" aria-haspopup="menu" aria-label="Menu do usuário"
               onClick={(e) => menu.current.toggle(e)}>

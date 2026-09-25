@@ -27,6 +27,8 @@ import PaginaGestaoLojas from './pages/admin/PaginaGestaoLojas'
 import PaginaGestaoLojaCrud from './pages/admin/PaginaGestaoLojaCrud'
 import PaginaGestaoUsuarios from './pages/admin/PaginaGestaoUsuarios'
 import PaginaGestaoUsuarioCrud from './pages/admin/PaginaGestaoUsuarioCrud'
+import PaginaProdutosCadastro from './pages/admin/PaginaProdutosCadastro'
+import PaginaProdutoCadastroCrud from './pages/admin/PaginaProdutoCadastroCrud'
 import PaginaPessoas from './pages/admin/PaginaPessoas'
 import PaginaPessoaCrud from './pages/admin/PaginaPessoaCrud'
 import PaginaNovoUsuario from './pages/admin/PaginaNovoUsuario'
@@ -67,6 +69,12 @@ export default function App() {
             <Route path="gestao-usuarios" element={<PaginaGestaoUsuarios />} />
             <Route path="gestao-usuarios/novo" element={<PaginaGestaoUsuarioCrud key="novo" />} />
             <Route path="gestao-usuarios/:id" element={<PaginaGestaoUsuarioCrud key="editar" />} />
+            <Route path="produtos-finais" element={<PaginaProdutosCadastro tipo="FINAL" />} />
+            <Route path="produtos-finais/novo" element={<PaginaProdutoCadastroCrud tipo="FINAL" key="final-novo" />} />
+            <Route path="produtos-finais/:id" element={<PaginaProdutoCadastroCrud tipo="FINAL" key="final-editar" />} />
+            <Route path="ingredientes" element={<PaginaProdutosCadastro tipo="INGREDIENTE" />} />
+            <Route path="ingredientes/novo" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-novo" />} />
+            <Route path="ingredientes/:id" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-editar" />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
             <Route path="categorias" element={<PaginaCategorias />} />
             <Route path="produtos" element={<PaginaProdutos />} />

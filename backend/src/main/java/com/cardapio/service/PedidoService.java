@@ -53,7 +53,7 @@ public class PedidoService {
             T_Produto produto = produtoRepository.findByGuidAndTenant(itemRequest.produtoGuid(), tenant)
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + itemRequest.produtoGuid()));
 
-            if (!produto.isDisponivel()) {
+            if (!produto.isAtivo() || !produto.isDisponivel() || produto.getTipo() != com.cardapio.entity.TipoProduto.FINAL) {
                 throw new RegraNegocioException("Produto indisponível: " + produto.getNome());
             }
 

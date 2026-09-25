@@ -10,7 +10,8 @@ import { definirMenuRecolhido } from '../../store/preferenciasSlice'
 
 /** A pagina (ou alguma descendente dela) e a rota aberta agora? */
 function contemRota(pagina, pathname) {
-  if (pagina.rota && pathname.startsWith(pagina.rota)) return true
+  // por segmento: "/admin/produtos" não deve casar com "/admin/produtos-finais"
+  if (pagina.rota && (pathname === pagina.rota || pathname.startsWith(`${pagina.rota}/`))) return true
   return (pagina.filhas ?? []).some((filha) => contemRota(filha, pathname))
 }
 

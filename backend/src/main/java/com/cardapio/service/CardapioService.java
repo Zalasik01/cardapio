@@ -34,7 +34,8 @@ public class CardapioService {
         S_Loja loja = lojaService.buscarPorSlug(slug);
         UUID tenant = loja.getGuid();
 
-        List<T_Produto> produtos = produtoRepository.findByTenantAndDisponivelTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(tenant);
+        List<T_Produto> produtos = produtoRepository.findByTenantAndTipoAndAtivoTrueAndDisponivelTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(
+                tenant, com.cardapio.entity.TipoProduto.FINAL);
         List<T_Categoria> categorias = categoriaRepository.findByTenantAndAtivoTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(tenant);
 
         List<CardapioResponse.CategoriaComProdutosResponse> categoriasComProdutos = categorias.stream()

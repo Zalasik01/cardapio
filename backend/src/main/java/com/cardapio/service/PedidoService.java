@@ -106,21 +106,4 @@ public class PedidoService {
         return pedidoRepository.buscarComItensPorGuid(guid)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido não encontrado: " + guid));
     }
-
-    @Transactional(readOnly = true)
-    public List<T_Pedido> listarPorTenant(UUID tenant) {
-        return pedidoRepository.buscarComItensPorTenant(tenant);
-    }
-
-    @Transactional(readOnly = true)
-    public List<T_Pedido> listarPorCliente(Long clienteId) {
-        return pedidoRepository.buscarComItensPorCliente(clienteId);
-    }
-
-    @Transactional
-    public T_Pedido atualizarStatus(UUID guid, StatusPedido novoStatus) {
-        T_Pedido pedido = buscarPorGuid(guid);
-        pedido.setStatus(novoStatus);
-        return pedidoRepository.save(pedido);
-    }
 }

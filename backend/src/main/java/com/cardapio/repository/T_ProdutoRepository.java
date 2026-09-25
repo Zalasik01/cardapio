@@ -45,6 +45,14 @@ public interface T_ProdutoRepository extends JpaRepository<T_Produto, Long>, Jpa
     /** Quantos produtos (não excluídos) pertencem à categoria: ela só pode ser excluída se não houver nenhum. */
     long countByCategoriaIdAndDeletadoFalse(Long categoriaId);
 
+    /** Quantos produtos (inclusive excluídos, já vendidos) ainda apontam para a categoria. */
+    long countByCategoriaId(Long categoriaId);
+
+    /** Quantidade de produtos não excluídos por categoria: linhas [categoriaId, quantidade]. */
+    @Query("select p.categoria.id, count(p) from T_Produto p "
+            + "where p.categoria.id in :ids and p.deletado = false group by p.categoria.id")
+    List<Object[]> contarPorCategoria(@Param("ids") java.util.Collection<Long> ids);
+
     boolean existsByTenantAndCodigoAndDeletadoFalse(UUID tenant, String codigo);
 
     boolean existsByTenantAndCodigoAndDeletadoFalseAndIdNot(UUID tenant, String codigo, Long id);

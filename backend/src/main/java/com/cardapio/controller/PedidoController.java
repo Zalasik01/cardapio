@@ -1,6 +1,5 @@
 package com.cardapio.controller;
 
-import com.cardapio.dto.pedido.AtualizarStatusPedidoRequest;
 import com.cardapio.dto.pedido.PedidoRequest;
 import com.cardapio.dto.pedido.PedidoResponse;
 import com.cardapio.entity.T_Pedido;
@@ -9,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -30,11 +28,5 @@ public class PedidoController {
     @GetMapping("/{guid}")
     public PedidoResponse buscarPorGuid(@PathVariable UUID guid) {
         return PedidoResponse.of(pedidoService.buscarPorGuid(guid));
-    }
-
-    @PatchMapping("/{guid}/status")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN_LOJA')")
-    public PedidoResponse atualizarStatus(@PathVariable UUID guid, @Valid @RequestBody AtualizarStatusPedidoRequest request) {
-        return PedidoResponse.of(pedidoService.atualizarStatus(guid, request.status()));
     }
 }

@@ -2,10 +2,8 @@ package com.cardapio.service;
 
 import com.cardapio.dto.frete.CalculoFreteRequest;
 import com.cardapio.dto.frete.CalculoFreteResponse;
-import com.cardapio.dto.frete.ZonaEntregaRequest;
 import com.cardapio.entity.S_Loja;
 import com.cardapio.entity.T_ZonaEntrega;
-import com.cardapio.exception.RecursoNaoEncontradoException;
 import com.cardapio.repository.T_ZonaEntregaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -75,47 +73,5 @@ public class FreteService {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return RAIO_TERRA_KM * c;
-    }
-
-    @Transactional(readOnly = true)
-    public List<T_ZonaEntrega> listarZonas(UUID tenant) {
-        return zonaEntregaRepository.findByTenantOrderByBairroAsc(tenant);
-    }
-
-    @Transactional
-    public T_ZonaEntrega criarZona(UUID tenant, ZonaEntregaRequest request) {
-        T_ZonaEntrega zona = T_ZonaEntrega.builder()
-                .tenant(tenant)
-                .bairro(request.bairro())
-                .taxa(request.taxa())
-                .tempoEstimadoMinutos(request.tempoEstimadoMinutos() != null ? request.tempoEstimadoMinutos() : 45)
-                .build();
-
-        if (request.ativo() != null) zona.setAtivo(request.ativo());
-
-        return zonaEntregaRepository.save(zona);
-    }
-
-    @Transactional
-    public T_ZonaEntrega atualizarZona(UUID tenant, UUID zonaGuid, ZonaEntregaRequest request) {
-        T_ZonaEntrega zona = buscarZona(tenant, zonaGuid);
-        zona.setBairro(request.bairro());
-        zona.setTaxa(request.taxa());
-        if (request.tempoEstimadoMinutos() != null) zona.setTempoEstimadoMinutos(request.tempoEstimadoMinutos());
-        if (request.ativo() != null) zona.setAtivo(request.ativo());
-        return zonaEntregaRepository.save(zona);
-    }
-
-    @Transactional
-    public void excluirZona(UUID tenant, UUID zonaGuid) {
-        T_ZonaEntrega zona = buscarZona(tenant, zonaGuid);
-        zona.setDeletado(true);
-        zona.setAtivo(false);
-        zonaEntregaRepository.save(zona);
-    }
-
-    private T_ZonaEntrega buscarZona(UUID tenant, UUID zonaGuid) {
-        return zonaEntregaRepository.findByGuidAndTenant(zonaGuid, tenant)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Zona de entrega não encontrada: " + zonaGuid));
     }
 }

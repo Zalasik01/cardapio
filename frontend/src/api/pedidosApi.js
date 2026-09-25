@@ -35,8 +35,9 @@ export const buscarClientesParaPedido = (tenant, busca) =>
 /** Exclusão lógica do pedido. */
 export const excluirPedido = (tenant, id) => http.delete(`${base(tenant)}/${id}`)
 
-export const atualizarStatusPedido = (tenant, id, status) =>
-  http.put(`${base(tenant)}/${id}/status`, { status }).then((res) => res.data)
+/** extra: no cancelamento, { motivo, taxaCancelamento }. */
+export const atualizarStatusPedido = (tenant, id, status, extra = {}) =>
+  http.put(`${base(tenant)}/${id}/status`, { status, ...extra }).then((res) => res.data)
 
 // vários cartões do dashboard pedem o mesmo período ao mesmo tempo: a mesma consulta é reaproveitada por alguns segundos
 const cache = new Map()

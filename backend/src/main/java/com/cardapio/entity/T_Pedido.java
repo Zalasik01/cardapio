@@ -80,6 +80,13 @@ public class T_Pedido extends TenantAbstract {
     @Builder.Default
     private BigDecimal desconto = BigDecimal.ZERO;
 
+    /** Preenchidos ao cancelar: por que foi cancelado e a taxa de cancelamento cobrada (0 = sem taxa). */
+    private String motivoCancelamento;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private BigDecimal taxaCancelamento = BigDecimal.ZERO;
+
     private String formaPagamento;
     private String observacoes;
 

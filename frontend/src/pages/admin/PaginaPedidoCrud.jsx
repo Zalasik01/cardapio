@@ -8,6 +8,7 @@ import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import { atualizarStatusPedido, excluirPedido, obterPedido } from '../../api/pedidosApi'
+import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import CrudPagina from '../../components/crud/CrudPagina'
 import { SecaoCrud } from '../../components/crud/Campo'
 import { CrudSkeleton } from '../../components/Skeleton'
@@ -38,6 +39,7 @@ export default function PaginaPedidoCrud() {
 
   const [pedido, setPedido] = useState(null)
   const [atualizando, setAtualizando] = useState(false)
+  const [cancelando, setCancelando] = useState(false)
 
   useEffect(() => {
     definirMigalha(`Pedido ${id}`)
@@ -50,10 +52,10 @@ export default function PaginaPedidoCrud() {
       .catch((e) => dispatchMsgError(e.mensagem))
   }, [id, loja.tenant])
 
-  async function mudarStatus(status) {
+  async function mudarStatus(status, extra) {
     setAtualizando(true)
     try {
-      setPedido(await atualizarStatusPedido(loja.tenant, id, status))
+      setPedido(await atualizarStatusPedido(loja.tenant, id, status, extra))
       dispatchMsgSuccess('Situação do pedido atualizada')
     } catch (e) {
       dispatchMsgError(e.mensagem)
@@ -83,11 +85,7 @@ export default function PaginaPedidoCrud() {
       mudarStatus(status)
       return
     }
-    confirmar({
-      mensagem: 'Cancelar este pedido? Essa ação não pode ser desfeita.',
-      rotuloConfirmar: 'Cancelar pedido',
-      aoConfirmar: () => mudarStatus(status),
-    })
+    setCancelando(true) // pede o motivo e a taxa de cancelamento
   }
 
   const status = pedido && STATUS_PEDIDO[pedido.status]
@@ -109,6 +107,12 @@ export default function PaginaPedidoCrud() {
           <Dado rotulo="Tipo">{rotuloTipoEntrega(pedido.tipoEntrega)}</Dado>
           {pedido.tipoEntrega === 'ENTREGA' && <Dado rotulo="Endereço de entrega">{endereco}</Dado>}
           <Dado rotulo="Observações">{pedido.observacoes}</Dado>
+          {pedido.status === 'CANCELADO' && <Dado rotulo="Motivo do cancelamento">{pedido.motivoCancelamento}</Dado>}
+          {pedido.status === 'CANCELADO' && (
+            <Dado rotulo="Taxa de cancelamento">
+              {Number(pedido.taxaCancelamento) > 0 ? formatarMoeda(pedido.taxaCancelamento) : 'Sem taxa'}
+            </Dado>
+          )}
         </div>
       </SecaoCrud>
 
@@ -157,6 +161,8 @@ export default function PaginaPedidoCrud() {
         </div>
       )}
     >
+      <DialogoCancelarPedido pedido={cancelando ? { id } : null} enviando={atualizando} aoFechar={() => setCancelando(false)}
+                             aoConfirmar={async (dados) => { await mudarStatus('CANCELADO', dados); setCancelando(false) }} />
       {pedido ? conteudo : <CrudSkeleton blocos={[[4, 4, 4, 4, 4, 4, 12], [12, 12, 12]]} />}
     </CrudPagina>
   )

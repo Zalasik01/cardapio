@@ -1,5 +1,6 @@
 package com.cardapio.service;
 
+import com.cardapio.dto.pedido.AtualizarStatusPedidoRequest;
 import java.math.BigDecimal;
 import com.cardapio.dto.pedido.PedidoRequest;
 import com.cardapio.repository.T_ProdutoRepository;
@@ -105,10 +106,19 @@ public class PedidoAdminService {
 
     /** Move o pedido para o próximo status (ou cancela). Só as transições de proximosStatus são aceitas. */
     @Transactional
-    public PedidoAdminResponse atualizarStatus(UUID tenant, Long id, StatusPedido novoStatus) {
+    public PedidoAdminResponse atualizarStatus(UUID tenant, Long id, AtualizarStatusPedidoRequest request) {
+        StatusPedido novoStatus = request.status();
         T_Pedido pedido = buscarPedido(tenant, id);
         if (!proximosStatus(pedido).contains(novoStatus)) {
             throw new RegraNegocioException("Este pedido não pode ir de " + pedido.getStatus() + " para " + novoStatus);
+        }
+        if (novoStatus == StatusPedido.CANCELADO) {
+            if (request.motivo() == null || request.motivo().isBlank()) {
+                throw new RegraNegocioException("Informe o motivo do cancelamento");
+            }
+            pedido.setMotivoCancelamento(request.motivo().trim());
+            pedido.setTaxaCancelamento(request.taxaCancelamento() != null
+                    ? request.taxaCancelamento().setScale(2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
         }
         pedido.setStatus(novoStatus);
         pedidoRepository.save(pedido);

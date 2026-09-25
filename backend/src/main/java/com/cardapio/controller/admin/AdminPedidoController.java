@@ -120,6 +120,6 @@ public class AdminPedidoController {
     @PutMapping("/{id}/status")
     public PedidoAdminResponse atualizarStatus(@PathVariable UUID tenant, @PathVariable Long id,
                                                @Valid @RequestBody AtualizarStatusPedidoRequest request) {
-        return pedidoService.atualizarStatus(tenant, id, request.status());
+        return pedidoService.atualizarStatus(tenant, id, request);
     }
 }

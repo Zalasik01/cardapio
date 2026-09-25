@@ -31,7 +31,9 @@ public record PedidoAdminResponse(
         List<StatusPedido> proximosStatus,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao,
-        long totalPedidosCliente
+        long totalPedidosCliente,
+        String motivoCancelamento,
+        BigDecimal taxaCancelamento
 ) {
 
     public record Item(String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes) {
@@ -47,6 +49,7 @@ public record PedidoAdminResponse(
                 p.getEnderecoNumero(), p.getEnderecoComplemento(), p.getEnderecoBairro(), p.getEnderecoCidade(),
                 p.getItens().stream().map(Item::of).toList(), p.getSubtotal(), p.getTaxaEntrega(), p.getDesconto(), p.getTotal(),
                 p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), proximosStatus,
-                p.getDataCriacao(), p.getDataAtualizacao(), totalPedidosCliente);
+                p.getDataCriacao(), p.getDataAtualizacao(), totalPedidosCliente,
+                p.getMotivoCancelamento(), p.getTaxaCancelamento());
     }
 }

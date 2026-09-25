@@ -6,7 +6,7 @@ import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
-import { confirmar } from '../../utils/confirmar'
+import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import { atualizarStatusPedido, obterQuadroPedidos } from '../../api/pedidosApi'
 import usePedidosAoVivo from '../../hooks/usePedidosAoVivo'
 import { Skeleton } from '../../components/Skeleton'
@@ -142,6 +142,7 @@ export default function PaginaPainelPedidos() {
   const [pedidos, setPedidos] = useState(null)
   const [atualizando, setAtualizando] = useState(null)
   const [arrastando, setArrastando] = useState(null)
+  const [cancelando, setCancelando] = useState(null) // pedido em cancelamento (diálogo aberto)
   const [novos, setNovos] = useState(() => new Set())
   const [somLigado, setSomLigado] = useState(lerSom)
   const [agora, setAgora] = useState(() => Date.now())
@@ -198,10 +199,10 @@ export default function PaginaPainelPedidos() {
     if (proximo && audio.current) audio.current.play().catch(() => {}) // serve de teste e libera o som no navegador
   }
 
-  async function mudarStatus(pedido, status) {
+  async function mudarStatus(pedido, status, extra) {
     setAtualizando(pedido.id)
     try {
-      const atualizado = await atualizarStatusPedido(tenant, pedido.id, status)
+      const atualizado = await atualizarStatusPedido(tenant, pedido.id, status, extra)
       setPedidos((lista) => lista.map((p) => (p.id === atualizado.id ? atualizado : p)))
       dispatchMsgSuccess(`Pedido ${pedido.id}: ${STATUS_PEDIDO[status].rotulo.toLowerCase()}`)
     } catch (e) {
@@ -213,11 +214,12 @@ export default function PaginaPainelPedidos() {
   }
 
   function cancelar(pedido) {
-    confirmar({
-      mensagem: `Cancelar o pedido ${pedido.id}? Essa ação não pode ser desfeita.`,
-      rotuloConfirmar: 'Cancelar pedido',
-      aoConfirmar: () => mudarStatus(pedido, 'CANCELADO'),
-    })
+    setCancelando(pedido) // abre o diálogo com o motivo e a taxa de cancelamento
+  }
+
+  async function confirmarCancelamento(dados) {
+    await mudarStatus(cancelando, 'CANCELADO', dados)
+    setCancelando(null)
   }
 
   function aoSoltar({ active, over }) {
@@ -258,6 +260,9 @@ export default function PaginaPainelPedidos() {
                 label={somLigado ? 'Som ligado' : 'Som desligado'} onClick={alternarSom} />
         </div>
       </div>
+
+      <DialogoCancelarPedido pedido={cancelando} enviando={atualizando !== null} aoFechar={() => setCancelando(null)}
+                             aoConfirmar={confirmarCancelamento} />
 
       {pedidos === null ? <PainelSkeleton /> : (
         <DndContext sensors={sensores} onDragStart={({ active }) => setArrastando(active.data.current.pedido)}

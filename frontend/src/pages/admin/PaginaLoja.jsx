@@ -29,7 +29,7 @@ const ANCORAS = [
  * a loja aparece como aberta ou fechada no cabeçalho e quando aceita pedidos).
  */
 export default function PaginaLoja() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const tenant = loja.tenant
 
@@ -62,9 +62,11 @@ export default function PaginaLoja() {
     e.preventDefault()
     setSalvando(true)
     try {
-      await atualizarLoja(tenant, form)
-      await salvarFuncionamento(tenant, funcionamento)
-      avisarFuncionamentoAlterado() // o selo do cabeçalho consulta de novo
+      if (pode('MINHA_LOJA_ALTERAR')) await atualizarLoja(tenant, form)
+      if (pode('MINHA_LOJA_HORARIO')) {
+        await salvarFuncionamento(tenant, funcionamento)
+        avisarFuncionamentoAlterado() // o selo do cabeçalho consulta de novo
+      }
       dispatchMsgSuccess('Dados atualizados com sucesso')
     } catch (e2) {
       dispatchMsgError(e2.mensagem)
@@ -152,7 +154,9 @@ export default function PaginaLoja() {
           <div className="crud__acoes">
             <span className="crud__espaco" />
             <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate('/admin/dashboard')} />
-            <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando || !!erro} />
+            {pode('MINHA_LOJA_ALTERAR', 'MINHA_LOJA_HORARIO') && (
+              <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando || !!erro} />
+            )}
           </div>
         )}
       >

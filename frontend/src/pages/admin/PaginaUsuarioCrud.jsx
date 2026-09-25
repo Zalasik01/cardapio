@@ -13,11 +13,13 @@ import {
   obterUsuario, removerFotoUsuario,
 } from '../../api/usuariosApi'
 import { buscarFuncionarios } from '../../api/funcionariosApi'
+import { obterPermissoesUsuario, salvarPermissoesUsuario } from '../../api/permissoesApi'
+import PermissoesUsuario from '../../components/crud/PermissoesUsuario'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import CrudBlocos from '../../components/crud/CrudBlocos'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos } from '../../components/crud/Campo'
-import { FormularioSkeleton } from '../../components/Skeleton'
+import { GradeSkeleton } from '../../components/Skeleton'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import DialogoLinkAcesso from '../../components/DialogoLinkAcesso'
 import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
@@ -31,11 +33,12 @@ const TAMANHO_MAXIMO_FOTO = 2 * 1024 * 1024
 export default function PaginaUsuarioCrud() {
   const { id } = useParams()
   const editando = id !== undefined
-  const { loja } = useAuth()
+  const { loja, pode, podeConcederPermissoes } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
   const [form, setForm] = useState({ nome: '', email: '', ativo: true, administrador: false, exigeTrocarSenha: false })
+  const [permissoesUsuario, setPermissoesUsuario] = useState([]) // codigos das permissoes por tela
   const [funcionario, setFuncionario] = useState(null) // objeto { id, nome, cpf } ou o texto digitado
   const [sugestoes, setSugestoes] = useState([])
   const [carregando, setCarregando] = useState(editando)
@@ -67,6 +70,9 @@ export default function PaginaUsuarioCrud() {
         })
         setFuncionario(usuario.funcionarioId ? { id: usuario.funcionarioId, nome: usuario.funcionarioNome } : null)
         setTinhaFoto(usuario.temFoto)
+        obterPermissoesUsuario(loja.tenant, id)
+          .then((dados) => setPermissoesUsuario(dados.codigos))
+          .catch((e) => dispatchMsgError(e.mensagem))
         if (usuario.temFoto) {
           const blob = await obterFotoUsuario(loja.tenant, id)
           setPreviaFoto(URL.createObjectURL(blob))
@@ -112,6 +118,13 @@ export default function PaginaUsuarioCrud() {
     setRemoverFoto(tinhaFoto)
   }
 
+  /** Só o administrador da loja concede permissões; administrador da loja não usa a lista (tem tudo). */
+  async function sincronizarPermissoes(usuarioId) {
+    if (podeConcederPermissoes && !form.administrador) {
+      await salvarPermissoesUsuario(loja.tenant, usuarioId, permissoesUsuario)
+    }
+  }
+
   async function sincronizarFoto(usuarioId) {
     if (arquivoFoto) {
       await enviarFotoUsuario(loja.tenant, usuarioId, arquivoFoto)
@@ -135,6 +148,7 @@ export default function PaginaUsuarioCrud() {
     try {
       if (editando) {
         await atualizarUsuario(loja.tenant, id, dados)
+        await sincronizarPermissoes(id)
         await sincronizarFoto(id)
         setArquivoFoto(null)
         setTinhaFoto(!!previaFoto)
@@ -143,6 +157,11 @@ export default function PaginaUsuarioCrud() {
       } else {
         const resposta = await criarUsuario(loja.tenant, dados)
         dispatchMsgSuccess('Usuário cadastrado com sucesso')
+        try {
+          await sincronizarPermissoes(resposta.usuario.id)
+        } catch (erroPermissoes) {
+          dispatchMsgWarn(`Usuário criado, mas as permissões não foram salvas: ${erroPermissoes.mensagem}`)
+        }
         try {
           await sincronizarFoto(resposta.usuario.id)
         } catch (erroFoto) {
@@ -272,11 +291,8 @@ export default function PaginaUsuarioCrud() {
   )
 
   const permissoes = (
-    <div className="crud__aviso">
-      <i className="fa-solid fa-circle-info" aria-hidden="true" /> As permissões do usuário (acesso, leitura e escrita por
-      tela) serão configuradas aqui em uma próxima etapa. Enquanto isso, usuários marcados como <strong>Administrador</strong>{' '}
-      têm acesso a tudo na loja.
-    </div>
+    <PermissoesUsuario valor={permissoesUsuario} aoAlterar={setPermissoesUsuario}
+                       administrador={form.administrador} desabilitado={!podeConcederPermissoes} />
   )
 
   return (
@@ -286,10 +302,16 @@ export default function PaginaUsuarioCrud() {
         subtitulo={editando ? 'Editar usuário' : 'Cadastro de usuário'}
         aoVoltar={() => navigate(ROTA_LISTA)}
         carregando={carregando}
-        esqueleto={<FormularioSkeleton campos={4} />}
         blocos={[
-          { id: 'basicos', titulo: 'Dados básicos', conteudo: dadosBasicos },
-          { id: 'permissoes', titulo: 'Permissões do usuário', conteudo: permissoes },
+          {
+            id: 'basicos', titulo: 'Dados básicos', conteudo: dadosBasicos,
+            // mesma disposição dos campos reais: ativo, nome e e-mail, funcionário e configurações, foto
+            esqueleto: <GradeSkeleton campos={[12, 6, 6, 6, 6, { tamanho: 12, altura: '8rem' }]} />,
+          },
+          {
+            id: 'permissoes', titulo: 'Permissões do usuário', conteudo: permissoes,
+            esqueleto: <GradeSkeleton campos={[{ tamanho: 12, altura: '14rem' }]} />,
+          },
         ]}
         rodape={(
           <RodapeCrud
@@ -297,6 +319,7 @@ export default function PaginaUsuarioCrud() {
             carregando={carregando}
             salvando={salvando}
             aoExcluir={handleExcluir}
+            podeExcluir={pode('USUARIOS_EXCLUIR')} podeSalvar={pode(editando ? 'USUARIOS_ALTERAR' : 'USUARIOS_INCLUIR')}
             aoFechar={() => navigate(ROTA_LISTA)}
             maisOpcoes={itensMaisOpcoes}
           />

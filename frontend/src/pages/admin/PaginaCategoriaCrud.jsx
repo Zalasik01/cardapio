@@ -18,7 +18,7 @@ const ROTA_LISTA = '/admin/categorias'
 export default function PaginaCategoriaCrud() {
   const { id } = useParams()
   const editando = id !== undefined
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
@@ -99,7 +99,7 @@ export default function PaginaCategoriaCrud() {
         aoVoltar={() => navigate(ROTA_LISTA)}
         rodape={(
           <RodapeCrud editando={editando} carregando={carregando} salvando={salvando}
-                      aoExcluir={handleExcluir} aoFechar={() => navigate(ROTA_LISTA)} />
+                      aoExcluir={handleExcluir} podeExcluir={pode('CATEGORIAS_EXCLUIR')} podeSalvar={pode(editando ? 'CATEGORIAS_ALTERAR' : 'CATEGORIAS_INCLUIR')} aoFechar={() => navigate(ROTA_LISTA)} />
         )}
       >
         {carregando ? <CrudSkeleton blocos={[[8, 4]]} /> : conteudo}

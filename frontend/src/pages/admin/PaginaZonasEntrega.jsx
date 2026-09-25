@@ -15,7 +15,7 @@ const COLUNAS = [
 
 /** Entrega > Zonas de entrega: a taxa e o tempo estimado de cada bairro atendido. */
 export default function PaginaZonasEntrega() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de inativar/excluir
 
@@ -64,15 +64,15 @@ export default function PaginaZonasEntrega() {
       colunas={COLUNAS}
       chaveLinha={(zona) => zona.id}
       buscar={({ busca, filtros, page, size }) => buscarZonas(loja.tenant, { busca, ...filtros, page, size })}
-      aoNovo={() => navigate('/admin/zonas-entrega/novo')}
+      aoNovo={pode('ZONAS_ENTREGA_INCLUIR') ? () => navigate('/admin/zonas-entrega/novo') : undefined}
       aoAbrir={(zona) => navigate(`/admin/zonas-entrega/${zona.id}`)}
       rotuloNovo="Nova zona"
       chaveAtualizacao={versao}
       acoesExtras={(zona) => [
-        zona.ativo
+        ...(pode('ZONAS_ENTREGA_INATIVAR') ? [zona.ativo
           ? { label: 'Inativar', icon: 'pi pi-ban', command: () => alterarAtivo(zona, false) }
-          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(zona, true) },
-        { label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(zona) },
+          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(zona, true) }] : []),
+        ...(pode('ZONAS_ENTREGA_EXCLUIR') ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(zona) }] : []),
       ]}
     />
   )

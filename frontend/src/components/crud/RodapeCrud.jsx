@@ -6,15 +6,17 @@ import { Menu } from 'primereact/menu'
  * Barra de ações fixa na base dos cadastros: Excluir (só na edição), "Mais opções" (opcional),
  * Fechar e Salvar. Vai no `rodape` do CrudPagina/CrudBlocos.
  *
- * Props: editando, carregando, salvando, aoExcluir, aoFechar e maisOpcoes (itens do menu do PrimeReact;
+ * Props: editando, carregando, salvando, aoExcluir, aoFechar, podeExcluir e podeSalvar (permissões do usuário) e maisOpcoes (itens do menu do PrimeReact;
  * o botão só aparece na edição e quando há itens).
  */
-export default function RodapeCrud({ editando, carregando, salvando, aoExcluir, aoFechar, maisOpcoes }) {
+export default function RodapeCrud({
+  editando, carregando, salvando, aoExcluir, aoFechar, maisOpcoes, podeExcluir = true, podeSalvar = true,
+}) {
   const menu = useRef(null)
 
   return (
     <div className="crud__acoes">
-      {editando && (
+      {editando && podeExcluir && (
         <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined
                 disabled={carregando} onClick={aoExcluir} />
       )}
@@ -27,7 +29,9 @@ export default function RodapeCrud({ editando, carregando, salvando, aoExcluir, 
         </>
       )}
       <Button type="button" label="Fechar" severity="secondary" outlined onClick={aoFechar} />
-      <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
+      {podeSalvar && (
+        <Button type="submit" label={salvando ? 'Salvando...' : 'Salvar alterações'} disabled={salvando || carregando} />
+      )}
     </div>
   )
 }

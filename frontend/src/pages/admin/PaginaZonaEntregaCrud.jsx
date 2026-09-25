@@ -19,7 +19,7 @@ const moeda = { mode: 'currency', currency: 'BRL', locale: 'pt-BR' }
 export default function PaginaZonaEntregaCrud() {
   const { id } = useParams()
   const editando = id !== undefined
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
@@ -105,7 +105,7 @@ export default function PaginaZonaEntregaCrud() {
         aoVoltar={() => navigate(ROTA_LISTA)}
         rodape={(
           <RodapeCrud editando={editando} carregando={carregando} salvando={salvando}
-                      aoExcluir={handleExcluir} aoFechar={() => navigate(ROTA_LISTA)} />
+                      aoExcluir={handleExcluir} podeExcluir={pode('ZONAS_ENTREGA_EXCLUIR')} podeSalvar={pode(editando ? 'ZONAS_ENTREGA_ALTERAR' : 'ZONAS_ENTREGA_INCLUIR')} aoFechar={() => navigate(ROTA_LISTA)} />
         )}
       >
         {carregando ? <CrudSkeleton blocos={[[6, 3, 3]]} /> : conteudo}

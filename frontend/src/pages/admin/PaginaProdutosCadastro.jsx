@@ -38,9 +38,10 @@ const COLUNAS_INGREDIENTE = [
  * (muda o tipo consultado, as colunas e a rota do cadastro).
  */
 export default function PaginaProdutosCadastro({ tipo }) {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const config = TIPOS_PRODUTO[tipo]
+  const modulo = tipo === 'FINAL' ? 'PRODUTOS_FINAIS' : 'INGREDIENTES'
   const [categorias, setCategorias] = useState([])
   const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de inativar/excluir
 
@@ -107,15 +108,15 @@ export default function PaginaProdutosCadastro({ tipo }) {
       chaveLinha={(produto) => produto.id}
       buscar={({ busca, filtros: valores, page, size }) =>
         buscarProdutosCadastro(loja.tenant, { tipo, busca, ...valores, page, size })}
-      aoNovo={() => navigate(`${config.rota}/novo`)}
+      aoNovo={pode(`${modulo}_INCLUIR`) ? () => navigate(`${config.rota}/novo`) : undefined}
       aoAbrir={(produto) => navigate(`${config.rota}/${produto.id}`)}
       rotuloNovo={config.novo}
       chaveAtualizacao={versao}
       acoesExtras={(produto) => [
-        produto.ativo
+        ...(pode(`${modulo}_INATIVAR`) ? [produto.ativo
           ? { label: 'Inativar', icon: 'pi pi-ban', command: () => alterarAtivo(produto, false) }
-          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(produto, true) },
-        { label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(produto) },
+          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(produto, true) }] : []),
+        ...(pode(`${modulo}_EXCLUIR`) ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(produto) }] : []),
       ]}
     />
   )

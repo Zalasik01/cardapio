@@ -30,7 +30,7 @@ function Dado({ rotulo, children }) {
 /** Detalhe do pedido (/admin/pedidos/:id): cliente, itens e as ações que levam o pedido ao próximo status. */
 export default function PaginaPedidoCrud() {
   const { id } = useParams()
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
@@ -118,13 +118,13 @@ export default function PaginaPedidoCrud() {
       aoVoltar={() => navigate(ROTA_LISTA)}
       rodape={(
         <div className="crud__acoes">
-          {pedido?.proximosStatus.includes('CANCELADO') && (
+          {pedido?.proximosStatus.includes('CANCELADO') && pode('PEDIDOS_CANCELAR') && (
             <Button type="button" label={ACAO_STATUS.CANCELADO.rotulo} icon={ACAO_STATUS.CANCELADO.icone}
                     severity="danger" outlined disabled={atualizando} onClick={() => pedirStatus('CANCELADO')} />
           )}
           <span className="crud__espaco" />
           <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
-          {(pedido?.proximosStatus ?? []).filter((proximo) => proximo !== 'CANCELADO').map((proximo) => (
+          {(pode('PEDIDOS_ALTERAR_STATUS') ? (pedido?.proximosStatus ?? []) : []).filter((proximo) => proximo !== 'CANCELADO').map((proximo) => (
             <Button key={proximo} type="button" label={ACAO_STATUS[proximo].rotulo} icon={ACAO_STATUS[proximo].icone}
                     disabled={atualizando} onClick={() => pedirStatus(proximo)} />
           ))}

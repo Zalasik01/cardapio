@@ -14,7 +14,7 @@ const COLUNAS = [
 
 /** Cardápio > Produtos > Categorias: as categorias em que os produtos finais aparecem no cardápio. */
 export default function PaginaCategorias() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de inativar/excluir
 
@@ -63,15 +63,15 @@ export default function PaginaCategorias() {
       colunas={COLUNAS}
       chaveLinha={(categoria) => categoria.id}
       buscar={({ busca, filtros, page, size }) => buscarCategorias(loja.tenant, { busca, ...filtros, page, size })}
-      aoNovo={() => navigate('/admin/categorias/novo')}
+      aoNovo={pode('CATEGORIAS_INCLUIR') ? () => navigate('/admin/categorias/novo') : undefined}
       aoAbrir={(categoria) => navigate(`/admin/categorias/${categoria.id}`)}
       rotuloNovo="Nova categoria"
       chaveAtualizacao={versao}
       acoesExtras={(categoria) => [
-        categoria.ativo
+        ...(pode('CATEGORIAS_INATIVAR') ? [categoria.ativo
           ? { label: 'Inativar', icon: 'pi pi-ban', command: () => alterarAtivo(categoria, false) }
-          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(categoria, true) },
-        { label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(categoria) },
+          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(categoria, true) }] : []),
+        ...(pode('CATEGORIAS_EXCLUIR') ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(categoria) }] : []),
       ]}
     />
   )

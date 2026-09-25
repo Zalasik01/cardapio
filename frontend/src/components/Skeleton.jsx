@@ -23,6 +23,27 @@ export function FormularioSkeleton({ campos = 4 }) {
 }
 
 /**
+ * Esqueleto só da grade de campos (sem moldura de cartão), para o conteúdo das abas dos cadastros.
+ * campos: lista de itens; número = largura (colunas de 12) de um campo comum; { tamanho, altura } = campo maior
+ * (ex.: o quadro da foto).
+ */
+export function GradeSkeleton({ campos }) {
+  return (
+    <div className="grade-campos crud-skeleton__grade" aria-busy="true" aria-label="Carregando campos">
+      {campos.map((campo, i) => {
+        const { tamanho, altura } = typeof campo === 'number' ? { tamanho: campo, altura: '2.4rem' } : campo
+        return (
+          <div key={i} className={`campo campo--${tamanho} skeleton-campo`}>
+            <Skeleton largura="35%" altura="0.8rem" />
+            <Skeleton altura={altura} raio="6px" />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
  * Esqueleto dos cadastros em blocos: um cartão por bloco (mesma moldura das seções reais), com o título
  * e a grade de campos. blocos: lista de blocos; cada bloco é a lista de larguras (colunas de 12) dos campos.
  */

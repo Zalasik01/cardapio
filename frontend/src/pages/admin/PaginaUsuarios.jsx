@@ -41,7 +41,7 @@ const COLUNAS = [
 ]
 
 export default function PaginaUsuarios() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const [usuarioEmail, setUsuarioEmail] = useState(null)
   const [usuarioSenha, setUsuarioSenha] = useState(null)
@@ -78,16 +78,16 @@ export default function PaginaUsuarios() {
       filtros={FILTROS}
       chaveLinha={(usuario) => usuario.id}
       buscar={({ busca, filtros, page, size }) => buscarUsuarios(loja.tenant, { busca, ...filtros, page, size })}
-      aoNovo={() => navigate('/admin/usuarios/novo')}
+      aoNovo={pode('USUARIOS_INCLUIR') ? () => navigate('/admin/usuarios/novo') : undefined}
       aoAbrir={(usuario) => navigate(`/admin/usuarios/${usuario.id}`)}
       chaveAtualizacao={versao}
       acoesExtras={(usuario) => [
-        { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setUsuarioEmail(usuario) },
-        usuario.ativo
+        ...(pode('USUARIOS_ALTERAR_EMAIL') ? [{ label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setUsuarioEmail(usuario) }] : []),
+        ...(pode('USUARIOS_INATIVAR') ? [usuario.ativo
           ? { label: 'Inativar usuário', icon: 'pi pi-ban', command: () => alterarAtivo(usuario, false) }
-          : { label: 'Ativar usuário', icon: 'pi pi-check-circle', command: () => alterarAtivo(usuario, true) },
+          : { label: 'Ativar usuário', icon: 'pi pi-check-circle', command: () => alterarAtivo(usuario, true) }] : []),
         // quem ainda nao definiu a senha usa o link de acesso (dentro do cadastro)
-        ...(usuario.status !== 'PENDENTE'
+        ...(usuario.status !== 'PENDENTE' && pode('USUARIOS_REDEFINIR_SENHA')
           ? [{ label: 'Redefinir senha', icon: 'pi pi-key', command: () => setUsuarioSenha(usuario) }]
           : []),
       ]}

@@ -97,7 +97,8 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
   const { id } = useParams()
   const editando = id !== undefined
   const config = TIPOS_PRODUTO[tipo]
-  const { loja } = useAuth()
+  const modulo = tipo === 'FINAL' ? 'PRODUTOS_FINAIS' : 'INGREDIENTES'
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
@@ -294,6 +295,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
             carregando={carregando}
             salvando={salvando}
             aoExcluir={handleExcluir}
+            podeExcluir={pode(`${modulo}_EXCLUIR`)} podeSalvar={pode(editando ? `${modulo}_ALTERAR` : `${modulo}_INCLUIR`)}
             aoFechar={() => navigate(config.rota)}
           />
         )}

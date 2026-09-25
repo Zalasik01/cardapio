@@ -103,7 +103,7 @@ function paraRequisicao(form) {
 export default function PaginaFuncionarioCrud() {
   const { id } = useParams()
   const editando = id !== undefined
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
@@ -300,6 +300,7 @@ export default function PaginaFuncionarioCrud() {
             carregando={carregando}
             salvando={salvando}
             aoExcluir={handleExcluir}
+            podeExcluir={pode('FUNCIONARIOS_EXCLUIR')} podeSalvar={pode(editando ? 'FUNCIONARIOS_ALTERAR' : 'FUNCIONARIOS_INCLUIR')}
             aoFechar={() => navigate(ROTA_LISTA)}
           />
         )}

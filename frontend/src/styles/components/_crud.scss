@@ -351,3 +351,107 @@
 .pedido__total {
   font-size: 1.05rem;
 }
+
+// Árvore de permissões do usuário
+.permissoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.permissoes__barra {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.permissoes__filtro {
+  flex: 1 1 16rem;
+  max-width: 24rem;
+
+  .p-inputtext {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+}
+
+.permissoes__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--cor-primaria);
+  cursor: pointer;
+  outline: none;
+}
+
+.permissoes__arvore {
+  font-size: 0.85rem;
+
+  .p-treetable-tbody > tr > td,
+  .p-treetable-thead > tr > th {
+    padding: 0.3rem 0.6rem;
+  }
+
+  .p-treetable-thead > tr > th {
+    font-size: 0.78rem;
+  }
+}
+
+.permissoes__nome--categoria {
+  font-weight: 700;
+}
+
+.permissoes__nome--pagina {
+  font-weight: 600;
+}
+
+.permissoes__coluna-acoes {
+  text-align: right;
+}
+
+.permissoes__botoes {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.permissoes__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--cor-borda);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--cor-texto-suave);
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  &--ativo.permissoes__botao--nenhum {
+    background: #fdecea;
+    border-color: #e57373;
+    color: #c62828;
+  }
+
+  &--ativo.permissoes__botao--leitura {
+    background: #e3f2fd;
+    border-color: #64b5f6;
+    color: #1565c0;
+  }
+
+  &--ativo.permissoes__botao--escrita {
+    background: #e8f5e9;
+    border-color: #81c784;
+    color: #2e7d32;
+  }
+}

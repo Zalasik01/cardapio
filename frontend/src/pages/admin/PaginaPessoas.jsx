@@ -46,7 +46,7 @@ const COLUNAS = [
 ]
 
 export default function PaginaPessoas() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
 
   return (
@@ -58,7 +58,7 @@ export default function PaginaPessoas() {
       filtros={FILTROS}
       chaveLinha={(pessoa) => pessoa.id}
       buscar={({ busca, filtros, page, size }) => buscarPessoas(loja.tenant, { busca, ...filtros, page, size })}
-      aoNovo={() => navigate('/admin/pessoas/novo')}
+      aoNovo={pode('CLIENTES_FORNECEDORES_INCLUIR') ? () => navigate('/admin/pessoas/novo') : undefined}
       aoAbrir={(pessoa) => navigate(`/admin/pessoas/${pessoa.id}`)}
     />
   )

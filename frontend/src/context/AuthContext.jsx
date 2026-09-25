@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { obterMinhasPermissoes } from '../api/permissoesApi'
 import { login as loginApi, selecionarLoja as selecionarLojaApi } from '../api/authApi'
 import { lerSessao, limparSessao, salvarSessao, salvarUsuarioLogado } from '../utils/sessao'
 
@@ -12,6 +13,27 @@ export function AuthProvider({ children }) {
   const [carregando, setCarregando] = useState(false)
   const [versaoFoto, setVersaoFoto] = useState(0) // muda quando a foto do usuario troca (o cabecalho recarrega)
   const [erro, setErro] = useState(null)
+  const [permissoes, setPermissoes] = useState(null) // { total, codigos } de quem esta logado na loja; nulo enquanto carrega
+
+  // as permissoes vem do servidor (por loja): recarregam ao entrar ou trocar de loja
+  const tenant = sessao.loja?.tenant
+  useEffect(() => {
+    setPermissoes(null)
+    if (!tenant) return undefined
+    let descartada = false
+    obterMinhasPermissoes()
+      .then((dados) => !descartada && setPermissoes({ total: dados.total, codigos: new Set(dados.codigos) }))
+      .catch(() => !descartada && setPermissoes({ total: false, codigos: new Set() }))
+    return () => {
+      descartada = true
+    }
+  }, [tenant])
+
+  /** Tem ao menos uma das permissoes? Enquanto carrega libera (o backend confere de qualquer forma). */
+  const pode = useCallback((...codigos) => {
+    if (!permissoes || permissoes.total) return true
+    return codigos.some((codigo) => permissoes.codigos.has(codigo))
+  }, [permissoes])
 
   const aplicarResposta = useCallback((resposta) => {
     salvarSessao(resposta)
@@ -60,6 +82,9 @@ export function AuthProvider({ children }) {
         aplicarSessao: aplicarResposta,
         atualizarUsuarioLogado,
         versaoFoto,
+        pode,
+        permissoesCarregadas: permissoes !== null,
+        podeConcederPermissoes: !permissoes || permissoes.total,
         sair,
         carregando,
         erro,

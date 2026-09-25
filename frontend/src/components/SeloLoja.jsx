@@ -16,7 +16,7 @@ const ATUALIZA_A_CADA_MS = 60000
  * automático ou ir ao cadastro do horário.
  */
 export default function SeloLoja() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const [situacao, setSituacao] = useState(null)
   const menu = useRef(null)
@@ -47,22 +47,27 @@ export default function SeloLoja() {
 
   if (!situacao) return null
   const aberta = situacao.aberta
+  // abrir/fechar exige a permissão de horário; ver o cadastro exige a leitura de Minha loja
+  const podeMudar = pode('MINHA_LOJA_HORARIO')
+  const podeVerHorario = pode('MINHA_LOJA_LEITURA')
   const itens = [
-    aberta
-      ? { label: 'Fechar agora', icon: 'pi pi-lock', command: () => mudarModo('FECHADA') }
-      : { label: 'Abrir agora', icon: 'pi pi-lock-open', command: () => mudarModo('ABERTA') },
-    ...(situacao.modo !== 'AUTOMATICO'
-      ? [{ label: 'Voltar ao horário automático', icon: 'pi pi-clock', command: () => mudarModo('AUTOMATICO') }]
-      : []),
-    { separator: true },
-    { label: 'Horário de funcionamento', icon: 'pi pi-calendar', command: () => navigate('/admin/loja') },
+    ...(podeMudar ? [
+      aberta
+        ? { label: 'Fechar agora', icon: 'pi pi-lock', command: () => mudarModo('FECHADA') }
+        : { label: 'Abrir agora', icon: 'pi pi-lock-open', command: () => mudarModo('ABERTA') },
+      ...(situacao.modo !== 'AUTOMATICO'
+        ? [{ label: 'Voltar ao horário automático', icon: 'pi pi-clock', command: () => mudarModo('AUTOMATICO') }]
+        : []),
+    ] : []),
+    ...(podeMudar && podeVerHorario ? [{ separator: true }] : []),
+    ...(podeVerHorario ? [{ label: 'Horário de funcionamento', icon: 'pi pi-calendar', command: () => navigate('/admin/loja') }] : []),
   ]
 
   return (
     <>
       <button ref={alvo} type="button" className="selo-loja" aria-haspopup="menu"
               aria-label={`${aberta ? 'Loja aberta' : 'Loja fechada'}. ${descreverSituacao(situacao)}`}
-              onClick={(e) => menu.current.toggle(e)}>
+              onClick={(e) => itens.length > 0 && menu.current.toggle(e)}>
         <Tag
           className="badge-loja"
           severity={aberta ? 'success' : 'danger'}

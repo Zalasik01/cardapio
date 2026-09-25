@@ -118,7 +118,7 @@ function paraRequisicao(form) {
 export default function PaginaPessoaCrud() {
   const { id } = useParams()
   const editando = id !== undefined
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
@@ -391,6 +391,7 @@ export default function PaginaPessoaCrud() {
             carregando={carregando}
             salvando={salvando}
             aoExcluir={handleExcluir}
+            podeExcluir={pode('CLIENTES_FORNECEDORES_EXCLUIR')} podeSalvar={pode(editando ? 'CLIENTES_FORNECEDORES_ALTERAR' : 'CLIENTES_FORNECEDORES_INCLUIR')}
             aoFechar={() => navigate(ROTA_LISTA)}
           />
         )}

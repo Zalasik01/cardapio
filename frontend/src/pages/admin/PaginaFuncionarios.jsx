@@ -25,7 +25,7 @@ const COLUNAS = [
 ]
 
 export default function PaginaFuncionarios() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
   const navigate = useNavigate()
 
   return (
@@ -37,7 +37,7 @@ export default function PaginaFuncionarios() {
       filtros={FILTROS}
       chaveLinha={(funcionario) => funcionario.id}
       buscar={({ busca, filtros, page, size }) => buscarFuncionarios(loja.tenant, { busca, ...filtros, page, size })}
-      aoNovo={() => navigate('/admin/funcionarios/novo')}
+      aoNovo={pode('FUNCIONARIOS_INCLUIR') ? () => navigate('/admin/funcionarios/novo') : undefined}
       aoAbrir={(funcionario) => navigate(`/admin/funcionarios/${funcionario.id}`)}
     />
   )

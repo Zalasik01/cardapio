@@ -45,9 +45,11 @@ export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancora
       {/* cabecalho, ganchos e cada secao sao blocos brancos separados por 10px */}
       <div className="crud__pagina">
         <header className="crud__cabecalho">
-          <button type="button" className="botao-icone crud__voltar" aria-label="Voltar" onClick={aoVoltar}>
-            <i className="fa-solid fa-arrow-left" aria-hidden="true" />
-          </button>
+          {aoVoltar && (
+            <button type="button" className="botao-icone crud__voltar" aria-label="Voltar" onClick={aoVoltar}>
+              <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+            </button>
+          )}
           <div>
             <h1>{titulo}</h1>
             {subtitulo && <p className="crud__subtitulo">{subtitulo}</p>}

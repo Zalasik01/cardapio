@@ -107,6 +107,18 @@
   font-weight: 700;
 }
 
+// o selo é um botão (abre o menu abrir/fechar agora) sem a aparência padrão de botão
+.selo-loja {
+  background: transparent;
+  padding: 0;
+  min-height: 0;
+  border-radius: 6px;
+}
+
+.selo-loja:hover {
+  background: transparent;
+}
+
 .p-password {
   display: block;
   width: 100%;

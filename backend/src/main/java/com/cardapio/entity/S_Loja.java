@@ -45,6 +45,17 @@ public class S_Loja extends SystemAbstract {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    /** AUTOMATICO segue o horário de funcionamento; ABERTA/FECHADA forçam o estado. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private ModoFuncionamento modoFuncionamento = ModoFuncionamento.AUTOMATICO;
+
+    /** Fuso em que os horários de funcionamento valem (padrão: Brasília). */
+    @Column(nullable = false, length = 50)
+    @Builder.Default
+    private String fusoHorario = "America/Sao_Paulo";
+
     /** CNPJ da empresa, so digitos (opcional). */
     @Column(length = 18)
     private String cnpj;

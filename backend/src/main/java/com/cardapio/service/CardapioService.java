@@ -10,6 +10,7 @@ import com.cardapio.entity.S_Loja;
 import com.cardapio.entity.T_Categoria;
 import com.cardapio.entity.T_Produto;
 import com.cardapio.exception.RecursoNaoEncontradoException;
+import com.cardapio.exception.RegraNegocioException;
 import com.cardapio.repository.T_CategoriaRepository;
 import com.cardapio.repository.T_ProdutoRepository;
 import lombok.RequiredArgsConstructor;

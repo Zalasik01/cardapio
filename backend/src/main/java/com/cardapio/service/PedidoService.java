@@ -26,11 +26,15 @@ public class PedidoService {
     private final T_ProdutoRepository produtoRepository;
     private final LojaService lojaService;
     private final FreteService freteService;
+    private final FuncionamentoService funcionamentoService;
 
     @Transactional
     public T_Pedido criar(PedidoRequest request) {
         S_Loja loja = lojaService.buscarPorTenant(request.tenant());
         UUID tenant = loja.getGuid();
+        if (!funcionamentoService.estaAberta(loja)) {
+            throw new RegraNegocioException("A loja está fechada no momento. Confira o horário de funcionamento.");
+        }
 
         T_Pedido pedido = T_Pedido.builder()
                 .tenant(tenant)

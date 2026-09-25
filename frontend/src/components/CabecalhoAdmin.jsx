@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BreadCrumb } from 'primereact/breadcrumb'
 import { Menu } from 'primereact/menu'
-import { Tag } from 'primereact/tag'
 import { useAuth } from '../context/AuthContext'
 import { obterMinhaFoto } from '../api/perfilApi'
 import DialogoPerfil from './DialogoPerfil'
+import SeloLoja from './SeloLoja'
 
 /** Caminho da tela (BreadCrumb do PrimeReact): Geral > Pessoas > Usuarios. O ultimo item e a tela atual. */
 function Migalhas({ migalhas }) {
@@ -31,8 +31,6 @@ function Migalhas({ migalhas }) {
 export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAberto }) {
   const { usuarioLogado, loja, versaoFoto } = useAuth()
   const [perfilAberto, setPerfilAberto] = useState(false)
-  // TODO: o estado real (aberta/fechada) sera definido quando a regra de horario da loja existir
-  const lojaAberta = true
   const menu = useRef(null)
   const [foto, setFoto] = useState(null)
 
@@ -93,12 +91,7 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
       <Migalhas migalhas={migalhas} />
 
       <div className="cabecalho-admin__direita">
-        <Tag
-          className="badge-loja"
-          severity={lojaAberta ? 'success' : 'danger'}
-          icon={lojaAberta ? 'pi pi-lock-open' : 'pi pi-lock'}
-          value={lojaAberta ? 'Loja aberta' : 'Loja fechada'}
-        />
+        <SeloLoja />
 
       <button type="button" className="botao-icone" aria-label="Testar notificação"
               title="Testar notificação (temporário)" onClick={testarNotificacao}>

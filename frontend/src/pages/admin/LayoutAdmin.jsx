@@ -4,6 +4,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
+import PaginaAcessoNegado from './PaginaAcessoNegado'
+import { permissaoDaRota } from '../../utils/permissoesRotas'
 import CabecalhoAdmin from '../../components/CabecalhoAdmin'
 import DialogoTrocaSenhaObrigatoria from '../../components/DialogoTrocaSenhaObrigatoria'
 import { definirMenuRecolhido } from '../../store/preferenciasSlice'
@@ -91,10 +93,12 @@ function ItemMenu({ pagina, abertas, aoAlternar, pathname }) {
 }
 
 export default function LayoutAdmin() {
-  const { usuarioLogado, sair } = useAuth()
+  const { usuarioLogado, sair, pode } = useAuth()
   const trocaObrigatoria = !!usuarioLogado?.exigeTrocarSenha
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const permissaoDaTela = permissaoDaRota(pathname)
+  const acessoNegado = !!permissaoDaTela && !pode(permissaoDaTela) // sem leitura da tela: mostra o acesso negado
 
   const [menu, setMenu] = useState([])
   const [carregandoMenu, setCarregandoMenu] = useState(true)
@@ -236,7 +240,7 @@ export default function LayoutAdmin() {
           aoSair={handleSair}
         />
         <main className="conteudo-admin">
-          {!trocaObrigatoria && <Outlet context={{ definirMigalha: setMigalhaExtra }} />}
+          {!trocaObrigatoria && (acessoNegado ? <PaginaAcessoNegado /> : <Outlet context={{ definirMigalha: setMigalhaExtra }} />)}
         </main>
       </div>
 

@@ -373,6 +373,7 @@
   .p-inputtext {
     width: 100%;
     font-size: 0.85rem;
+    padding-left: 2.2rem;
   }
 }
 
@@ -398,6 +399,12 @@
   .p-treetable-thead > tr > th {
     font-size: 0.78rem;
   }
+}
+
+.permissoes__arvore .p-treetable-toggler {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.3rem;
 }
 
 .permissoes__nome--categoria {
@@ -454,4 +461,41 @@
     border-color: #81c784;
     color: #2e7d32;
   }
+}
+
+// Tela de acesso negado
+.acesso-negado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 28rem;
+  margin: 4rem auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--cor-superficie);
+  border-radius: 3px;
+
+  h1 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  p {
+    margin: 0 0 0.6rem;
+    color: var(--cor-texto-suave);
+    font-size: 0.9rem;
+  }
+}
+
+.acesso-negado__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: #fdecea;
+  color: #c62828;
+  font-size: 1.4rem;
 }

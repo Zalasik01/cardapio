@@ -8,8 +8,9 @@ import { TabMenu } from 'primereact/tabmenu'
  * ancoras: [{ id, titulo }] — cada id e o id de um bloco (SecaoCrud). Clicar rola ate o bloco e,
  * enquanto a tela rola, o gancho do bloco visivel fica destacado. Passe undefined enquanto os
  * blocos ainda nao existem (carregando).
+ * somenteLeitura: o usuario so pode visualizar; todos os campos e botoes do conteudo ficam desabilitados.
  */
-export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancoras, children }) {
+export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancoras, somenteLeitura = false, children }) {
   const [ativa, setAtiva] = useState(ancoras?.[0]?.id)
   const raiz = useRef(null)
   const chaveAncoras = ancoras?.map((ancora) => ancora.id).join('|')
@@ -66,7 +67,15 @@ export default function CrudPagina({ titulo, subtitulo, aoVoltar, rodape, ancora
           </nav>
         )}
 
-        <div className="crud__corpo">{children}</div>
+        {somenteLeitura && (
+          <div className="crud__aviso">
+            <i className="fa-solid fa-lock" aria-hidden="true" /> Você tem permissão somente para visualizar este cadastro.
+          </div>
+        )}
+
+        {somenteLeitura
+          ? <fieldset className="crud__corpo crud__somente-leitura" disabled>{children}</fieldset>
+          : <div className="crud__corpo">{children}</div>}
       </div>
 
       {rodape && <footer className="crud__rodape">{rodape}</footer>}

@@ -502,3 +502,21 @@
   color: #c62828;
   font-size: 1.4rem;
 }
+
+// Cadastro só para visualizar: o fieldset desabilitado trava os campos; os componentes que não são <input> também
+fieldset.crud__somente-leitura {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  .p-component:not(.p-tabview) {
+    pointer-events: none;
+  }
+
+  // as abas do cadastro continuam navegáveis
+  .p-tabview-nav-container,
+  .p-tabview-nav-container * {
+    pointer-events: auto;
+  }
+}

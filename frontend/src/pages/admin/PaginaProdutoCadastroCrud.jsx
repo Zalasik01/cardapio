@@ -285,6 +285,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
   return (
     <form onSubmit={handleSubmit}>
       <CrudPagina
+        somenteLeitura={!pode(editando ? `${modulo}_ALTERAR` : `${modulo}_INCLUIR`)}
         titulo={editando ? (carregando ? 'Produto' : form.nome) : config.novo}
         subtitulo={editando ? `Editar ${config.singular}` : `Cadastro de ${config.singular}`}
         aoVoltar={() => navigate(config.rota)}

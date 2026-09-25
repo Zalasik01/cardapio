@@ -290,6 +290,7 @@ export default function PaginaFuncionarioCrud() {
   return (
     <form onSubmit={handleSubmit}>
       <CrudPagina
+        somenteLeitura={!pode(editando ? 'FUNCIONARIOS_ALTERAR' : 'FUNCIONARIOS_INCLUIR')}
         titulo={editando ? (carregando ? 'Funcionário' : form.nome) : 'Novo funcionário'}
         subtitulo={editando ? 'Editar funcionário' : 'Cadastro de funcionário'}
         aoVoltar={() => navigate(ROTA_LISTA)}

@@ -94,6 +94,7 @@ export default function PaginaCategoriaCrud() {
   return (
     <form onSubmit={handleSubmit}>
       <CrudPagina
+        somenteLeitura={!pode(editando ? 'CATEGORIAS_ALTERAR' : 'CATEGORIAS_INCLUIR')}
         titulo={editando ? (carregando ? 'Categoria' : form.nome) : 'Nova categoria'}
         subtitulo={editando ? 'Editar categoria' : 'Cadastro de categoria'}
         aoVoltar={() => navigate(ROTA_LISTA)}

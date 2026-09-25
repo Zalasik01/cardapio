@@ -100,6 +100,7 @@ export default function PaginaZonaEntregaCrud() {
   return (
     <form onSubmit={handleSubmit}>
       <CrudPagina
+        somenteLeitura={!pode(editando ? 'ZONAS_ENTREGA_ALTERAR' : 'ZONAS_ENTREGA_INCLUIR')}
         titulo={editando ? (carregando ? 'Zona de entrega' : form.bairro) : 'Nova zona de entrega'}
         subtitulo={editando ? 'Editar zona de entrega' : 'Cadastro de zona de entrega'}
         aoVoltar={() => navigate(ROTA_LISTA)}

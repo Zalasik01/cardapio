@@ -214,13 +214,15 @@ export default function PaginaUsuarioCrud() {
   // "Mais opcoes" do cadastro (so na edicao)
   const pendente = form.status === 'PENDENTE' // ainda nao definiu a senha: usa o link de acesso
   const itensMaisOpcoes = [
-    { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setAlterandoEmail(true) },
+    ...(pode('USUARIOS_ALTERAR_EMAIL')
+      ? [{ label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setAlterandoEmail(true) }]
+      : []),
     ...(podeConcederPermissoes && !form.administrador
       ? [{ label: 'Copiar permissões de outro usuário', icon: 'pi pi-copy', command: () => setCopiandoPermissoes(true) }]
       : []),
-    pendente
-      ? { label: 'Gerar novo link de acesso', icon: 'pi pi-link', command: handleNovoLink }
-      : { label: 'Redefinir senha', icon: 'pi pi-key', command: () => setRedefinindoSenha(true) },
+    ...(pendente
+      ? (pode('USUARIOS_INCLUIR') ? [{ label: 'Gerar novo link de acesso', icon: 'pi pi-link', command: handleNovoLink }] : [])
+      : (pode('USUARIOS_REDEFINIR_SENHA') ? [{ label: 'Redefinir senha', icon: 'pi pi-key', command: () => setRedefinindoSenha(true) }] : [])),
   ]
 
   const dadosBasicos = (
@@ -304,6 +306,7 @@ export default function PaginaUsuarioCrud() {
   return (
     <form onSubmit={handleSubmit}>
       <CrudBlocos
+        somenteLeitura={!pode(editando ? 'USUARIOS_ALTERAR' : 'USUARIOS_INCLUIR')}
         titulo={editando ? (carregando ? 'Usuário' : form.nome) : 'Novo usuário'}
         subtitulo={editando ? 'Editar usuário' : 'Cadastro de usuário'}
         aoVoltar={() => navigate(ROTA_LISTA)}

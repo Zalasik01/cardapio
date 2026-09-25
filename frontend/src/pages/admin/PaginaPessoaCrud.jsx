@@ -381,6 +381,7 @@ export default function PaginaPessoaCrud() {
   return (
     <form onSubmit={handleSubmit}>
       <CrudPagina
+        somenteLeitura={!pode(editando ? 'CLIENTES_FORNECEDORES_ALTERAR' : 'CLIENTES_FORNECEDORES_INCLUIR')}
         titulo={editando ? (carregando ? 'Cadastro' : nomeExibido) : 'Novo cliente/fornecedor'}
         subtitulo={editando ? 'Editar cliente/fornecedor' : 'Cadastro de cliente/fornecedor'}
         aoVoltar={() => navigate(ROTA_LISTA)}

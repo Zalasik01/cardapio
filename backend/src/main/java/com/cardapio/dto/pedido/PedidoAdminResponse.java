@@ -23,6 +23,7 @@ public record PedidoAdminResponse(
         List<Item> itens,
         BigDecimal subtotal,
         BigDecimal taxaEntrega,
+        BigDecimal desconto,
         BigDecimal total,
         String formaPagamento,
         String observacoes,
@@ -42,7 +43,7 @@ public record PedidoAdminResponse(
         return new PedidoAdminResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoRua(),
                 p.getEnderecoNumero(), p.getEnderecoComplemento(), p.getEnderecoBairro(), p.getEnderecoCidade(),
-                p.getItens().stream().map(Item::of).toList(), p.getSubtotal(), p.getTaxaEntrega(), p.getTotal(),
+                p.getItens().stream().map(Item::of).toList(), p.getSubtotal(), p.getTaxaEntrega(), p.getDesconto(), p.getTotal(),
                 p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), proximosStatus,
                 p.getDataCriacao(), p.getDataAtualizacao());
     }

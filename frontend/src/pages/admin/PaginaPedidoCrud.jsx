@@ -6,7 +6,7 @@ import { DataTable } from 'primereact/datatable'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
-import { atualizarStatusPedido, obterPedido } from '../../api/pedidosApi'
+import { atualizarStatusPedido, excluirPedido, obterPedido } from '../../api/pedidosApi'
 import CrudPagina from '../../components/crud/CrudPagina'
 import { SecaoCrud } from '../../components/crud/Campo'
 import { CrudSkeleton } from '../../components/Skeleton'
@@ -60,6 +60,22 @@ export default function PaginaPedidoCrud() {
     }
   }
 
+  function excluir() {
+    confirmar({
+      mensagem: `Excluir o pedido ${id}? Ele deixa de aparecer nas listas e no painel.`,
+      rotuloConfirmar: 'Excluir',
+      aoConfirmar: async () => {
+        try {
+          await excluirPedido(loja.tenant, id)
+          dispatchMsgSuccess('Pedido excluído com sucesso')
+          navigate(ROTA_LISTA)
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
+  }
+
   function pedirStatus(status) {
     if (status !== 'CANCELADO') {
       mudarStatus(status)
@@ -105,6 +121,7 @@ export default function PaginaPedidoCrud() {
         <div className="pedido__totais">
           <span>Subtotal: <strong>{formatarMoeda(pedido.subtotal)}</strong></span>
           <span>Taxa de entrega: <strong>{formatarMoeda(pedido.taxaEntrega)}</strong></span>
+          {Number(pedido.desconto) > 0 && <span>Desconto: <strong>- {formatarMoeda(pedido.desconto)}</strong></span>}
           <span className="pedido__total">Total: <strong>{formatarMoeda(pedido.total)}</strong></span>
         </div>
       </SecaoCrud>
@@ -121,6 +138,9 @@ export default function PaginaPedidoCrud() {
           {pedido?.proximosStatus.includes('CANCELADO') && pode('PEDIDOS_CANCELAR') && (
             <Button type="button" label={ACAO_STATUS.CANCELADO.rotulo} icon={ACAO_STATUS.CANCELADO.icone}
                     severity="danger" outlined disabled={atualizando} onClick={() => pedirStatus('CANCELADO')} />
+          )}
+          {pode('PEDIDOS_EXCLUIR') && (
+            <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined disabled={!pedido} onClick={excluir} />
           )}
           <span className="crud__espaco" />
           <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />

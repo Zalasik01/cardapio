@@ -7,8 +7,8 @@ const MAXIMO_JANELAS = 5
 const chave = (tenant) => `pedidosEmAndamento:${tenant}`
 
 export const RASCUNHO_VAZIO = {
-  nomeCliente: '', telefoneCliente: '', tipoEntrega: 'RETIRADA', enderecoRua: '', enderecoNumero: '',
-  enderecoComplemento: '', enderecoBairro: '', enderecoCidade: '', formaPagamento: '', observacoes: '', itens: [],
+  nomeCliente: '', telefoneCliente: '', tipoEntrega: 'RETIRADA', cep: '', enderecoRua: '', enderecoNumero: '',
+  enderecoComplemento: '', enderecoBairro: '', enderecoCidade: '', formasPagamento: [], descontoTipo: 'PERCENTUAL', descontoValor: null, observacoes: '', itens: [],
 }
 
 function lerJanelas(tenant) {

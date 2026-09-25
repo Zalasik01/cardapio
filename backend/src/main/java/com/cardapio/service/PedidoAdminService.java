@@ -91,7 +91,7 @@ public class PedidoAdminService {
         PedidoRequest daLoja = new PedidoRequest(tenant, request.nomeCliente(), request.telefoneCliente(),
                 request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
                 request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
-                request.itens(), request.formaPagamento(), request.observacoes());
+                request.itens(), request.formaPagamento(), request.observacoes(), request.descontoTipo(), request.descontoValor());
         T_Pedido pedido = pedidoService.criar(daLoja, true);
         return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
     }
@@ -113,6 +113,15 @@ public class PedidoAdminService {
         pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
         return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
+    }
+
+    /** Exclusão lógica: o pedido some das listas, do painel e dos números do dashboard. */
+    @Transactional
+    public void excluir(UUID tenant, Long id) {
+        T_Pedido pedido = buscarPedido(tenant, id);
+        pedido.setDeletado(true);
+        pedidoRepository.save(pedido);
+        eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", id));
     }
 
     @Transactional(readOnly = true)
@@ -152,6 +161,7 @@ public class PedidoAdminService {
         return (root, query, cb) -> {
             List<Predicate> filtros = new ArrayList<>();
             filtros.add(cb.equal(root.get("tenant"), tenant));
+            filtros.add(cb.isFalse(root.get("deletado")));
             filtros.add(cb.greaterThanOrEqualTo(root.get("dataCriacao"), filtro.inicio().atStartOfDay()));
             filtros.add(cb.lessThan(root.get("dataCriacao"), filtro.fim().plusDays(1).atStartOfDay()));
             if (filtro.status() != null) {

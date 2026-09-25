@@ -1,5 +1,8 @@
 package com.cardapio.controller.admin;
 
+import com.cardapio.dto.pagamento.FormaPagamentoResponse;
+import com.cardapio.service.ClientePedidoService;
+import com.cardapio.service.FormaPagamentoService;
 import com.cardapio.dto.pedido.PedidoRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,8 @@ public class AdminPedidoController {
 
     private final PedidoAdminService pedidoService;
     private final PedidoEventos pedidoEventos;
+    private final FormaPagamentoService formaPagamentoService;
+    private final ClientePedidoService clientePedidoService;
 
     /** inicio e fim (yyyy-MM-dd, inclusive, no máximo 90 dias) são obrigatórios. */
     @PreAuthorize("@perm.tem('PEDIDOS_LEITURA')")
@@ -61,6 +66,27 @@ public class AdminPedidoController {
     @GetMapping("/produtos")
     public List<PedidoAdminService.ProdutoParaPedido> produtos(@PathVariable UUID tenant) {
         return pedidoService.produtosParaPedido(tenant);
+    }
+
+    @PreAuthorize("@perm.tem('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR')")
+    @GetMapping("/formas-pagamento")
+    public List<FormaPagamentoResponse> formasPagamento(@PathVariable UUID tenant) {
+        return formaPagamentoService.listarAtivas(tenant);
+    }
+
+    /** Clientes cadastrados que combinam com o texto (nome, apelido ou documento), para preencher o pedido. */
+    @PreAuthorize("@perm.tem('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR')")
+    @GetMapping("/clientes")
+    public List<ClientePedidoService.ClienteParaPedido> clientes(@PathVariable UUID tenant, @RequestParam String busca) {
+        return clientePedidoService.buscar(tenant, busca);
+    }
+
+    /** Exclusão lógica do pedido. */
+    @PreAuthorize("@perm.tem('PEDIDOS_EXCLUIR', 'PAINEL_PEDIDOS_EXCLUIR')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long id) {
+        pedidoService.excluir(tenant, id);
+        return ResponseEntity.noContent().build();
     }
 
     /** Cria um pedido lançado pela loja (balcão, telefone...). */

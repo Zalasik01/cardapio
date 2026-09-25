@@ -71,6 +71,15 @@ public class T_Pedido extends TenantAbstract {
     @Column(nullable = false)
     private BigDecimal total;
 
+    /** Desconto dado pela loja: tipo PERCENTUAL ou VALOR, o valor informado e o desconto já calculado em reais. */
+    private String descontoTipo;
+
+    private BigDecimal descontoValor;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private BigDecimal desconto = BigDecimal.ZERO;
+
     private String formaPagamento;
     private String observacoes;
 

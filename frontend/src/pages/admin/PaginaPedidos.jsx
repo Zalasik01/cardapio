@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useAuth } from '../../context/AuthContext'
-import { buscarPedidos } from '../../api/pedidosApi'
+import { buscarPedidos, excluirPedido } from '../../api/pedidosApi'
+import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
+import { confirmar } from '../../utils/confirmar'
 import TelaBusca from '../../components/crud/TelaBusca'
 import { formatarMoeda, formatarTelefone } from '../../utils/formatadores'
 import { OPCOES_STATUS, rotuloTipoEntrega, STATUS_PEDIDO, TIPOS_ENTREGA } from '../../utils/pedido'
@@ -45,6 +48,23 @@ const COLUNAS = [
 export default function PaginaPedidos() {
   const { loja, pode } = useAuth()
   const { abrirNovo } = useChatPedidos()
+  const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de excluir
+
+  function excluir(pedido) {
+    confirmar({
+      mensagem: `Excluir o pedido ${pedido.id}? Ele deixa de aparecer nas listas e no painel.`,
+      rotuloConfirmar: 'Excluir',
+      aoConfirmar: async () => {
+        try {
+          await excluirPedido(loja.tenant, pedido.id)
+          dispatchMsgSuccess('Pedido excluído com sucesso')
+          setVersao((atual) => atual + 1)
+        } catch (e) {
+          dispatchMsgError(e.mensagem)
+        }
+      },
+    })
+  }
   const navigate = useNavigate()
 
   return (
@@ -63,6 +83,10 @@ export default function PaginaPedidos() {
       }}
       aoNovo={pode('PEDIDOS_INCLUIR') ? () => abrirNovo() : undefined}
       rotuloNovo="Novo pedido"
+      chaveAtualizacao={versao}
+      acoesExtras={(pedido) => (pode('PEDIDOS_EXCLUIR')
+        ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(pedido) }]
+        : [])}
       aoAbrir={(pedido) => navigate(`/admin/pedidos/${pedido.id}`)}
     />
   )

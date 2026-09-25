@@ -106,13 +106,41 @@ public class PedidoService {
             taxaEntrega = frete.taxa();
         }
 
+        BigDecimal desconto = pelaLoja ? calcularDesconto(request, subtotal, pedido) : BigDecimal.ZERO;
+
         pedido.setSubtotal(subtotal);
         pedido.setTaxaEntrega(taxaEntrega);
-        pedido.setTotal(subtotal.add(taxaEntrega));
+        pedido.setDesconto(desconto);
+        pedido.setTotal(subtotal.subtract(desconto).add(taxaEntrega));
 
         T_Pedido salvo = pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "NOVO", salvo.getId()));
         return salvo;
+    }
+
+    /** Desconto da loja sobre os itens: percentual (0 a 100) ou valor fixo, nunca maior que o subtotal. */
+    private BigDecimal calcularDesconto(PedidoRequest request, BigDecimal subtotal, T_Pedido pedido) {
+        if (request.descontoTipo() == null || request.descontoValor() == null
+                || request.descontoValor().signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal desconto;
+        switch (request.descontoTipo()) {
+            case "PERCENTUAL" -> {
+                if (request.descontoValor().compareTo(BigDecimal.valueOf(100)) > 0) {
+                    throw new RegraNegocioException("O desconto percentual não pode passar de 100%");
+                }
+                desconto = subtotal.multiply(request.descontoValor()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            }
+            case "VALOR" -> desconto = request.descontoValor().setScale(2, RoundingMode.HALF_UP);
+            default -> throw new RegraNegocioException("Tipo de desconto inválido");
+        }
+        if (desconto.compareTo(subtotal) > 0) {
+            throw new RegraNegocioException("O desconto não pode ser maior que o valor dos itens");
+        }
+        pedido.setDescontoTipo(request.descontoTipo());
+        pedido.setDescontoValor(request.descontoValor());
+        return desconto;
     }
 
     @Transactional(readOnly = true)

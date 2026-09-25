@@ -23,6 +23,8 @@ public record PedidoRequest(
         Double longitude,
         @NotEmpty @Valid List<ItemPedidoRequest> itens,
         String formaPagamento,
-        String observacoes
+        String observacoes,
+        String descontoTipo,
+        java.math.BigDecimal descontoValor
 ) {
 }

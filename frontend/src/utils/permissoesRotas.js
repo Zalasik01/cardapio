@@ -10,6 +10,7 @@ const LEITURA_POR_ROTA = {
   ingredientes: 'INGREDIENTES_LEITURA',
   categorias: 'CATEGORIAS_LEITURA',
   'zonas-entrega': 'ZONAS_ENTREGA_LEITURA',
+  'formas-pagamento': 'FORMAS_PAGAMENTO_LEITURA',
   loja: 'MINHA_LOJA_LEITURA',
 }
 

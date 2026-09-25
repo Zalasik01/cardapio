@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from 'primereact/button'
+import { AutoComplete } from 'primereact/autocomplete'
 import { Dropdown } from 'primereact/dropdown'
+import { InputNumber } from 'primereact/inputnumber'
+import { MultiSelect } from 'primereact/multiselect'
+import { InputMask } from 'primereact/inputmask'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { SelectButton } from 'primereact/selectbutton'
@@ -8,7 +12,10 @@ import { Tooltip } from 'primereact/tooltip'
 import { useAuth } from '../../context/AuthContext'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { calcularFrete } from '../../api/cardapioApi'
-import { criarPedido, obterProdutosParaPedido } from '../../api/pedidosApi'
+import { buscarEnderecoPorCep } from '../../api/cepApi'
+import {
+  buscarClientesParaPedido, criarPedido, obterFormasPagamentoParaPedido, obterProdutosParaPedido,
+} from '../../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { formatarMoeda } from '../../utils/formatadores'
 import { TIPOS_ENTREGA } from '../../utils/pedido'
@@ -19,17 +26,26 @@ const PERMISSOES_CRIAR = ['PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR']
 const tituloDe = (rascunho, indice) => (rascunho.nomeCliente.trim() ? rascunho.nomeCliente.trim() : `Novo pedido ${indice + 1}`)
 
 /** Uma janela de pedido em andamento (formulário compacto, estilo bate-papo). */
-function JanelaPedido({ janela, indice, produtos }) {
+function JanelaPedido({ janela, indice, produtos, formasPagamento }) {
   const { loja } = useAuth()
   const { fechar, alternar, atualizar } = useChatPedidos()
   const { rascunho } = janela
   const [frete, setFrete] = useState(null) // { entregavel, taxa, mensagem } do bairro informado
   const [enviando, setEnviando] = useState(false)
+  const [statusCep, setStatusCep] = useState(null) // texto de apoio da busca do CEP
+  const [sugestoesClientes, setSugestoesClientes] = useState([])
   const definir = (campo) => (valor) => atualizar(janela.id, { [campo]: valor })
   const entrega = rascunho.tipoEntrega === 'ENTREGA'
 
   const subtotal = rascunho.itens.reduce((soma, item) => soma + item.preco * item.quantidade, 0)
   const taxa = entrega && frete?.entregavel ? Number(frete.taxa) : 0
+  const tipoDesconto = rascunho.descontoTipo ?? 'PERCENTUAL' // rascunhos antigos não têm o campo
+  const descontoValor = Number(rascunho.descontoValor) || 0
+  const desconto = Math.min(subtotal, tipoDesconto === 'PERCENTUAL' ? (subtotal * descontoValor) / 100 : descontoValor)
+  const formasSelecionadas = rascunho.formasPagamento ?? []
+  // só aparecem as formas que valem para o tipo do pedido e para o valor dele
+  const formasDisponiveis = formasPagamento.filter((f) => (entrega ? f.aceitaEntrega : f.aceitaRetirada)
+    && (f.valorMinimo === null || subtotal >= Number(f.valorMinimo)))
 
   // a taxa depende do bairro: consulta quando o bairro muda (com uma pausa enquanto digita)
   useEffect(() => {
@@ -44,6 +60,51 @@ function JanelaPedido({ janela, indice, produtos }) {
     }, 500)
     return () => clearTimeout(espera)
   }, [entrega, rascunho.enderecoBairro, loja.tenant])
+
+  /** Sugere clientes cadastrados enquanto o nome é digitado; quem não é cadastrado continua podendo ser digitado. */
+  function sugerirClientes(evento) {
+    const texto = evento.query.trim()
+    if (texto.length < 2) {
+      setSugestoesClientes([])
+      return
+    }
+    buscarClientesParaPedido(loja.tenant, texto).then(setSugestoesClientes).catch(() => setSugestoesClientes([]))
+  }
+
+  /** Cliente escolhido da lista: traz nome, telefone e endereço do cadastro. */
+  function escolherCliente(cliente) {
+    atualizar(janela.id, {
+      nomeCliente: cliente.nome,
+      telefoneCliente: cliente.telefone || rascunho.telefoneCliente,
+      cep: cliente.cep || '',
+      enderecoRua: cliente.logradouro || '',
+      enderecoNumero: cliente.numero || '',
+      enderecoComplemento: cliente.complemento || '',
+      enderecoBairro: cliente.bairro || '',
+      enderecoCidade: cliente.cidade || '',
+    })
+  }
+
+  /** Com o CEP completo, busca o endereço (ViaCEP) e preenche rua, bairro, cidade e complemento. */
+  async function preencherPorCep(cep) {
+    setStatusCep('Buscando endereço...')
+    try {
+      const encontrado = await buscarEnderecoPorCep(cep)
+      if (!encontrado) {
+        setStatusCep('CEP não encontrado. Preencha o endereço manualmente.')
+        return
+      }
+      atualizar(janela.id, {
+        enderecoRua: encontrado.logradouro || rascunho.enderecoRua,
+        enderecoBairro: encontrado.bairro || rascunho.enderecoBairro,
+        enderecoCidade: encontrado.cidade || rascunho.enderecoCidade,
+        enderecoComplemento: encontrado.complemento || rascunho.enderecoComplemento,
+      })
+      setStatusCep(null)
+    } catch {
+      setStatusCep('Não foi possível consultar o CEP agora. Preencha o endereço manualmente.')
+    }
+  }
 
   function adicionarProduto(guid) {
     const produto = produtos.find((p) => p.guid === guid)
@@ -84,7 +145,9 @@ function JanelaPedido({ janela, indice, produtos }) {
         enderecoComplemento: entrega ? rascunho.enderecoComplemento.trim() : null,
         enderecoBairro: entrega ? rascunho.enderecoBairro.trim() : null,
         enderecoCidade: entrega ? rascunho.enderecoCidade.trim() : null,
-        formaPagamento: rascunho.formaPagamento.trim() || null,
+        formaPagamento: formasSelecionadas.length ? formasSelecionadas.join(', ') : null,
+        descontoTipo: desconto > 0 ? tipoDesconto : null,
+        descontoValor: desconto > 0 ? descontoValor : null,
         observacoes: rascunho.observacoes.trim() || null,
         itens: rascunho.itens.map((i) => ({ produtoGuid: i.guid, quantidade: i.quantidade })),
       })
@@ -102,7 +165,8 @@ function JanelaPedido({ janela, indice, produtos }) {
       <header className="dock-janela__topo">
         <button type="button" className="dock-janela__titulo" onClick={() => alternar(janela.id)}
                 aria-expanded={!janela.minimizada}>
-          <i className="fa-solid fa-receipt" aria-hidden="true" /> {tituloDe(rascunho, indice)}
+          <i className="fa-solid fa-receipt" aria-hidden="true" />
+          <span className="dock-janela__nome">{tituloDe(rascunho, indice)}</span>
           {rascunho.itens.length > 0 && <span className="dock-janela__contagem">{rascunho.itens.length}</span>}
         </button>
         <button type="button" className="dock-janela__botao" aria-label={janela.minimizada ? 'Expandir' : 'Minimizar'}
@@ -117,14 +181,23 @@ function JanelaPedido({ janela, indice, produtos }) {
       {!janela.minimizada && (
         <>
           <div className="dock-janela__corpo">
-            <InputText placeholder="Nome do cliente *" value={rascunho.nomeCliente} maxLength={255}
-                       onChange={(e) => definir('nomeCliente')(e.target.value)} />
+            <AutoComplete value={rascunho.nomeCliente} suggestions={sugestoesClientes} completeMethod={sugerirClientes}
+                          field="nome" delay={300} maxLength={255} placeholder="Nome do cliente *"
+                          itemTemplate={(c) => (
+                            <span>{c.nome}{c.telefone && <small className="dock-janela__preco"> · {c.telefone}</small>}</span>
+                          )}
+                          onChange={(e) => typeof e.value === 'string' && definir('nomeCliente')(e.value)}
+                          onSelect={(e) => escolherCliente(e.value)} />
             <InputText placeholder="Telefone *" value={rascunho.telefoneCliente} maxLength={20} inputMode="tel"
                        onChange={(e) => definir('telefoneCliente')(e.target.value)} />
             <SelectButton value={rascunho.tipoEntrega} options={TIPOS_ENTREGA} optionLabel="rotulo" optionValue="valor"
                           allowEmpty={false} onChange={(e) => definir('tipoEntrega')(e.value)} />
             {entrega && (
               <div className="dock-janela__grade">
+                <InputMask placeholder="CEP" mask="99999-999" autoClear={false} value={rascunho.cep ?? ''}
+                           onChange={(e) => definir('cep')(e.target.value ?? '')}
+                           onComplete={(e) => preencherPorCep(e.value)} />
+                {statusCep && <small className="dock-janela__frete dock-janela__frete--aviso">{statusCep}</small>}
                 <InputText className="dock-janela__larga" placeholder="Rua *" value={rascunho.enderecoRua}
                            onChange={(e) => definir('enderecoRua')(e.target.value)} />
                 <InputText placeholder="Nº" value={rascunho.enderecoNumero}
@@ -167,14 +240,28 @@ function JanelaPedido({ janela, indice, produtos }) {
               </ul>
             )}
 
-            <InputText placeholder="Forma de pagamento" value={rascunho.formaPagamento} maxLength={100}
-                       onChange={(e) => definir('formaPagamento')(e.target.value)} />
+            <div className="dock-janela__desconto">
+              <span className="dock-janela__rotulo">Desconto</span>
+              <SelectButton value={tipoDesconto} options={[{ valor: 'PERCENTUAL', rotulo: '%' }, { valor: 'VALOR', rotulo: 'R$' }]}
+                            optionLabel="rotulo" optionValue="valor" allowEmpty={false}
+                            onChange={(e) => definir('descontoTipo')(e.value)} />
+              {tipoDesconto === 'PERCENTUAL'
+                ? <InputNumber value={rascunho.descontoValor} min={0} max={100} suffix="%" maxFractionDigits={2}
+                               placeholder="0%" onValueChange={(e) => definir('descontoValor')(e.value)} />
+                : <InputNumber value={rascunho.descontoValor} min={0} mode="currency" currency="BRL" locale="pt-BR"
+                               placeholder="R$ 0,00" onValueChange={(e) => definir('descontoValor')(e.value)} />}
+            </div>
+            <MultiSelect value={formasSelecionadas} options={formasDisponiveis} optionLabel="nome" optionValue="nome"
+                         placeholder="Formas de pagamento" display="chip" maxSelectedLabels={3}
+                         emptyMessage="Nenhuma forma de pagamento cadastrada"
+                         onChange={(e) => definir('formasPagamento')(e.value)} />
             <InputTextarea placeholder="Observações" rows={2} autoResize value={rascunho.observacoes}
                            onChange={(e) => definir('observacoes')(e.target.value)} />
           </div>
           <footer className="dock-janela__rodape">
             <span className="dock-janela__total">
-              Total <strong>{formatarMoeda(subtotal + taxa)}</strong>
+              {desconto > 0 && <small>Desconto - {formatarMoeda(desconto)}</small>}
+              Total <strong>{formatarMoeda(subtotal - desconto + taxa)}</strong>
             </span>
             <Button type="button" size="small" label={enviando ? 'Criando...' : 'Criar pedido'} icon="pi pi-check"
                     disabled={enviando} onClick={enviar} />
@@ -193,6 +280,7 @@ export default function DockPedidos() {
   const { loja, pode } = useAuth()
   const { janelas, abrirNovo, limiteAtingido } = useChatPedidos()
   const [produtos, setProdutos] = useState([])
+  const [formasPagamento, setFormasPagamento] = useState([])
   const permitido = pode(...PERMISSOES_CRIAR)
   const temJanelas = janelas.length > 0
 
@@ -200,6 +288,7 @@ export default function DockPedidos() {
   useEffect(() => {
     if (!permitido || !temJanelas) return
     obterProdutosParaPedido(loja.tenant).then(setProdutos).catch((e) => dispatchMsgError(e.mensagem))
+    obterFormasPagamentoParaPedido(loja.tenant).then(setFormasPagamento).catch(() => setFormasPagamento([]))
   }, [permitido, temJanelas, loja.tenant])
 
   const janelasVisiveis = useMemo(() => janelas, [janelas])
@@ -208,7 +297,7 @@ export default function DockPedidos() {
   return (
     <div className="dock-pedidos">
       <Tooltip target=".dock-pedidos__novo" />
-      {janelasVisiveis.map((janela, i) => <JanelaPedido key={janela.id} janela={janela} indice={i} produtos={produtos} />)}
+      {janelasVisiveis.map((janela, i) => <JanelaPedido key={janela.id} janela={janela} indice={i} produtos={produtos} formasPagamento={formasPagamento} />)}
       <button type="button" className="dock-pedidos__novo" onClick={() => abrirNovo()} disabled={limiteAtingido}
               aria-label="Novo pedido" data-pr-position="left"
               data-pr-tooltip={limiteAtingido ? 'Feche um pedido para abrir outro' : 'Novo pedido'}>

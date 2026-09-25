@@ -25,6 +25,16 @@ export const obterProdutosParaPedido = (tenant) => http.get(`${base(tenant)}/pro
 /** Cria um pedido lançado pela loja (mesmo formato do pedido do cardápio, sem o tenant). */
 export const criarPedido = (tenant, dados) => http.post(base(tenant), { ...dados, tenant }).then((res) => res.data)
 
+/** Formas de pagamento ativas da loja (para o lançamento de pedidos). */
+export const obterFormasPagamentoParaPedido = (tenant) => http.get(`${base(tenant)}/formas-pagamento`).then((res) => res.data)
+
+/** Clientes cadastrados que combinam com o texto, com telefone e endereço. */
+export const buscarClientesParaPedido = (tenant, busca) =>
+  http.get(`${base(tenant)}/clientes`, { params: { busca } }).then((res) => res.data)
+
+/** Exclusão lógica do pedido. */
+export const excluirPedido = (tenant, id) => http.delete(`${base(tenant)}/${id}`)
+
 export const atualizarStatusPedido = (tenant, id, status) =>
   http.put(`${base(tenant)}/${id}/status`, { status }).then((res) => res.data)
 

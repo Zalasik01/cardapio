@@ -18,6 +18,8 @@ import PaginaPedidoCrud from './pages/admin/PaginaPedidoCrud'
 import PaginaZonaEntregaCrud from './pages/admin/PaginaZonaEntregaCrud'
 import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
 import { ChatPedidosProvider } from './context/ChatPedidosContext'
+import PaginaFormaPagamentoCrud from './pages/admin/PaginaFormaPagamentoCrud'
+import PaginaFormasPagamento from './pages/admin/PaginaFormasPagamento'
 import PaginaPainelPedidos from './pages/admin/PaginaPainelPedidos'
 import PaginaPedidos from './pages/admin/PaginaPedidos'
 import PaginaLoja from './pages/admin/PaginaLoja'
@@ -85,6 +87,9 @@ export default function App() {
             <Route path="categorias" element={<PaginaCategorias />} />
             <Route path="categorias/novo" element={<PaginaCategoriaCrud key="novo" />} />
             <Route path="categorias/:id" element={<PaginaCategoriaCrud key="editar" />} />
+            <Route path="formas-pagamento" element={<PaginaFormasPagamento />} />
+            <Route path="formas-pagamento/novo" element={<PaginaFormaPagamentoCrud key="novo" />} />
+            <Route path="formas-pagamento/:id" element={<PaginaFormaPagamentoCrud key="editar" />} />
             <Route path="zonas-entrega" element={<PaginaZonasEntrega />} />
             <Route path="zonas-entrega/novo" element={<PaginaZonaEntregaCrud key="novo" />} />
             <Route path="zonas-entrega/:id" element={<PaginaZonaEntregaCrud key="editar" />} />

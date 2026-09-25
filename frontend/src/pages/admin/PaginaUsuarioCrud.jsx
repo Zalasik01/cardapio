@@ -20,6 +20,7 @@ import CrudBlocos from '../../components/crud/CrudBlocos'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos } from '../../components/crud/Campo'
 import { GradeSkeleton } from '../../components/Skeleton'
+import DialogoCopiarPermissoes from '../../components/DialogoCopiarPermissoes'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import DialogoLinkAcesso from '../../components/DialogoLinkAcesso'
 import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
@@ -53,6 +54,7 @@ export default function PaginaUsuarioCrud() {
   const seletorFoto = useRef(null)
   const [alterandoEmail, setAlterandoEmail] = useState(false)
   const [redefinindoSenha, setRedefinindoSenha] = useState(false)
+  const [copiandoPermissoes, setCopiandoPermissoes] = useState(false)
 
   useEffect(() => {
     definirMigalha(editando ? 'Editando usuário' : 'Novo usuário')
@@ -213,6 +215,9 @@ export default function PaginaUsuarioCrud() {
   const pendente = form.status === 'PENDENTE' // ainda nao definiu a senha: usa o link de acesso
   const itensMaisOpcoes = [
     { label: 'Alterar e-mail', icon: 'pi pi-envelope', command: () => setAlterandoEmail(true) },
+    ...(podeConcederPermissoes && !form.administrador
+      ? [{ label: 'Copiar permissões de outro usuário', icon: 'pi pi-copy', command: () => setCopiandoPermissoes(true) }]
+      : []),
     pendente
       ? { label: 'Gerar novo link de acesso', icon: 'pi pi-link', command: handleNovoLink }
       : { label: 'Redefinir senha', icon: 'pi pi-key', command: () => setRedefinindoSenha(true) },
@@ -325,6 +330,10 @@ export default function PaginaUsuarioCrud() {
           />
         )}
       />
+
+      <DialogoCopiarPermissoes aberto={copiandoPermissoes} destinoInicial={{ id: Number(id) }}
+                               aoFechar={() => setCopiandoPermissoes(false)}
+                               aoCopiado={(resultado) => setPermissoesUsuario(resultado.codigos)} />
 
       <DialogoAlterarEmail
         usuario={alterandoEmail ? { id: Number(id), nome: form.nome, email: form.email } : null}

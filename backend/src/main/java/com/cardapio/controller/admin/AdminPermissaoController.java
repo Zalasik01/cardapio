@@ -1,6 +1,7 @@
 package com.cardapio.controller.admin;
 
 import com.cardapio.dto.permissao.PermissaoDtos.CategoriaPermissoes;
+import com.cardapio.dto.permissao.PermissaoDtos.CopiarPermissoesRequest;
 import com.cardapio.dto.permissao.PermissaoDtos.MinhasPermissoes;
 import com.cardapio.dto.permissao.PermissaoDtos.PermissoesDoUsuario;
 import com.cardapio.dto.permissao.PermissaoDtos.SalvarPermissoesRequest;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,6 +41,13 @@ public class AdminPermissaoController {
     @GetMapping("/api/admin/lojas/{tenant}/usuarios/{usuarioId}/permissoes")
     public PermissoesDoUsuario obter(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
         return permissaoService.obterDoUsuario(tenant, usuarioId);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_SISTEMA', 'ROLE_ADMINISTRADOR_LOJA')")
+    @PostMapping("/api/admin/lojas/{tenant}/usuarios/{usuarioId}/permissoes/copiar")
+    public PermissoesDoUsuario copiar(@PathVariable UUID tenant, @PathVariable Long usuarioId,
+                                      @RequestBody CopiarPermissoesRequest request) {
+        return permissaoService.copiar(tenant, request.origemId(), usuarioId);
     }
 
     /** Só o administrador da loja (ou o usuário do sistema) concede permissões: evita que alguém se promova. */

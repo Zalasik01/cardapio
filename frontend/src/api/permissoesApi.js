@@ -12,3 +12,7 @@ export const obterPermissoesUsuario = (tenant, usuarioId) =>
 
 export const salvarPermissoesUsuario = (tenant, usuarioId, codigos) =>
   http.put(`/admin/lojas/${tenant}/usuarios/${usuarioId}/permissoes`, { codigos }).then((res) => res.data)
+
+/** Copia as permissões do usuário de origem para o de destino (substitui as do destino). */
+export const copiarPermissoesUsuario = (tenant, destinoId, origemId) =>
+  http.post(`/admin/lojas/${tenant}/usuarios/${destinoId}/permissoes/copiar`, { origemId }).then((res) => res.data)

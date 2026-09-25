@@ -29,6 +29,9 @@ public final class PermissaoDtos {
     public record MinhasPermissoes(boolean total, Set<String> codigos) {
     }
 
+    public record CopiarPermissoesRequest(Long origemId) {
+    }
+
     public record SalvarPermissoesRequest(Set<String> codigos) {
     }
 }

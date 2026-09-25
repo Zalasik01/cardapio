@@ -10,6 +10,7 @@ import com.cardapio.entity.T_PerfilUsuario;
 import com.cardapio.entity.T_PermissaoUsuario;
 import com.cardapio.entity.TipoPermissao;
 import com.cardapio.exception.RecursoNaoEncontradoException;
+import com.cardapio.exception.RegraNegocioException;
 import com.cardapio.repository.S_PermissaoRepository;
 import com.cardapio.repository.T_PerfilUsuarioRepository;
 import com.cardapio.repository.T_PermissaoUsuarioRepository;
@@ -91,6 +92,28 @@ public class PermissaoService {
                 .toList();
         permissaoUsuarioRepository.saveAll(novas);
         return new PermissoesDoUsuario(false, normalizados);
+    }
+
+    /**
+     * Copia as permissões de um usuário da loja para outro, substituindo as do destino. Se a origem é
+     * administrador (tem tudo, sem lista), o destino recebe todas as permissões do catálogo.
+     */
+    @Transactional
+    public PermissoesDoUsuario copiar(UUID tenant, Long origemId, Long destinoId) {
+        if (origemId == null) {
+            throw new RegraNegocioException("Selecione o usuário de origem");
+        }
+        if (origemId.equals(destinoId)) {
+            throw new RegraNegocioException("Origem e destino devem ser usuários diferentes");
+        }
+        T_PerfilUsuario origem = buscarVinculo(tenant, origemId);
+        if (buscarVinculo(tenant, destinoId).isAdministrador()) {
+            throw new RegraNegocioException("O destino é administrador da loja e já tem acesso a tudo");
+        }
+        Set<String> codigos = origem.isAdministrador()
+                ? permissaoRepository.listarCatalogo().stream().map(S_Permissao::getCodigo).collect(java.util.stream.Collectors.toSet())
+                : new HashSet<>(permissaoUsuarioRepository.codigosDoUsuario(origemId, tenant));
+        return salvar(tenant, destinoId, codigos);
     }
 
     /** Descarta códigos desconhecidos, expande ESCRITA para todas as ações da tela e liga a leitura de quem tem algo. */

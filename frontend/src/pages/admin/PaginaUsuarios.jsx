@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { alterarAtivoUsuario, buscarUsuarios } from '../../api/usuariosApi'
 import TelaBusca from '../../components/crud/TelaBusca'
+import DialogoCopiarPermissoes from '../../components/DialogoCopiarPermissoes'
 import DialogoAlterarEmail from '../../components/DialogoAlterarEmail'
 import DialogoRedefinirSenha from '../../components/DialogoRedefinirSenha'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
@@ -41,9 +42,10 @@ const COLUNAS = [
 ]
 
 export default function PaginaUsuarios() {
-  const { loja, pode } = useAuth()
+  const { loja, pode, podeConcederPermissoes } = useAuth()
   const navigate = useNavigate()
   const [usuarioEmail, setUsuarioEmail] = useState(null)
+  const [usuarioCopiar, setUsuarioCopiar] = useState(null) // destino da cópia de permissões
   const [usuarioSenha, setUsuarioSenha] = useState(null)
   const [versao, setVersao] = useState(0)
 
@@ -86,12 +88,16 @@ export default function PaginaUsuarios() {
         ...(pode('USUARIOS_INATIVAR') ? [usuario.ativo
           ? { label: 'Inativar usuário', icon: 'pi pi-ban', command: () => alterarAtivo(usuario, false) }
           : { label: 'Ativar usuário', icon: 'pi pi-check-circle', command: () => alterarAtivo(usuario, true) }] : []),
+        ...(podeConcederPermissoes && !usuario.administrador
+          ? [{ label: 'Copiar permissões', icon: 'pi pi-copy', command: () => setUsuarioCopiar(usuario) }]
+          : []),
         // quem ainda nao definiu a senha usa o link de acesso (dentro do cadastro)
         ...(usuario.status !== 'PENDENTE' && pode('USUARIOS_REDEFINIR_SENHA')
           ? [{ label: 'Redefinir senha', icon: 'pi pi-key', command: () => setUsuarioSenha(usuario) }]
           : []),
       ]}
     />
+    <DialogoCopiarPermissoes aberto={!!usuarioCopiar} destinoInicial={usuarioCopiar} aoFechar={() => setUsuarioCopiar(null)} />
     <DialogoAlterarEmail
       usuario={usuarioEmail}
       aoFechar={() => setUsuarioEmail(null)}

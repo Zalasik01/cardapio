@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** Pedido completo para o painel. proximosStatus são os únicos status para os quais ele pode ir agora. */
+/** Pedido completo para o painel. proximasSituacoes são as únicas situações para as quais ele pode ir agora (dadas pelo fluxo da loja). */
 public record PedidoAdminResponse(
         Long id,
         String nomeCliente,
@@ -28,7 +28,8 @@ public record PedidoAdminResponse(
         String formaPagamento,
         String observacoes,
         StatusPedido status,
-        List<StatusPedido> proximosStatus,
+        FluxoDtos.SituacaoInfo situacao,
+        List<FluxoDtos.ProximaSituacao> proximasSituacoes,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao,
         long totalPedidosCliente,
@@ -55,13 +56,14 @@ public record PedidoAdminResponse(
     }
 
     /** totalPedidosCliente: quantos pedidos (não cancelados) esse telefone já fez na loja, contando este. */
-    public static PedidoAdminResponse of(T_Pedido p, List<StatusPedido> proximosStatus, long totalPedidosCliente,
+    public static PedidoAdminResponse of(T_Pedido p, FluxoDtos.SituacaoInfo situacao,
+                                         List<FluxoDtos.ProximaSituacao> proximas, long totalPedidosCliente,
                                          List<Alteracao> alteracoes) {
         return new PedidoAdminResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoRua(),
                 p.getEnderecoNumero(), p.getEnderecoComplemento(), p.getEnderecoBairro(), p.getEnderecoCidade(),
                 p.getItens().stream().map(Item::of).toList(), p.getSubtotal(), p.getTaxaEntrega(), p.getDesconto(), p.getTotal(),
-                p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), proximosStatus,
+                p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), situacao, proximas,
                 p.getDataCriacao(), p.getDataAtualizacao(), totalPedidosCliente,
                 p.getMotivoCancelamento(), p.getTaxaCancelamento(), p.getDescontoTipo(), p.getDescontoValor(),
                 p.isEditado(), p.getDataEdicao(), alteracoes);

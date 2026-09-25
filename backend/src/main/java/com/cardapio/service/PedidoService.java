@@ -30,6 +30,7 @@ public class PedidoService {
     private final FuncionamentoService funcionamentoService;
     private final ApplicationEventPublisher eventos;
     private final NotificacaoService notificacaoService;
+    private final FluxoPedidoService fluxoService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -120,6 +121,10 @@ public class PedidoService {
         pedido.setDesconto(desconto);
         pedido.setTotal(subtotal.subtract(desconto).add(taxaEntrega));
 
+        // todo pedido novo entra na situação inicial do fluxo da loja
+        var inicial = fluxoService.carregar(tenant).inicial();
+        pedido.setIdSituacao(inicial.getId());
+        pedido.setStatus(inicial.getCategoria());
         T_Pedido salvo = pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "NOVO", salvo.getId()));
         if (!pelaLoja) {

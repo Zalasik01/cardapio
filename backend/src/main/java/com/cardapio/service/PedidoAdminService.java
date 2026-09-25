@@ -45,14 +45,15 @@ public class PedidoAdminService {
     private final PedidoService pedidoService;
     private final NotificacaoService notificacaoService;
     private final PedidoEdicaoService edicaoService;
+    private final FluxoPedidoService fluxoService;
     private final com.cardapio.repository.T_PedidoAlteracaoRepository alteracaoRepository;
     private final T_ProdutoRepository produtoRepository;
 
     /** Filtros da busca: o período (início e fim, no máximo 90 dias) é obrigatório; os demais são opcionais. */
-    public record Filtro(String busca, StatusPedido status, TipoEntrega tipoEntrega, LocalDate inicio, LocalDate fim) {
+    public record Filtro(String busca, Long situacaoId, TipoEntrega tipoEntrega, LocalDate inicio, LocalDate fim) {
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PaginaResponse<PedidoAdminResumoResponse> buscar(UUID tenant, Filtro filtro, int pagina, int tamanho) {
         PeriodoFiltro.validar(filtro.inicio(), filtro.fim());
         int tamanhoLimitado = Math.min(Math.max(tamanho, 1), TAMANHO_MAXIMO_PAGINA);
@@ -65,12 +66,14 @@ public class PedidoAdminService {
         if (!ids.isEmpty()) {
             pedidoRepository.somarItensPorPedido(ids).forEach(linha -> itens.put((Long) linha[0], ((Number) linha[1]).longValue()));
         }
-        return PaginaResponse.of(resultado, p -> PedidoAdminResumoResponse.of(p, itens.getOrDefault(p.getId(), 0L)));
+        var fluxo = fluxoService.carregar(tenant);
+        return PaginaResponse.of(resultado, p -> PedidoAdminResumoResponse.of(p, itens.getOrDefault(p.getId(), 0L), fluxo.info(p)));
     }
 
     /** Quadro do painel: pedidos em andamento e os encerrados hoje, já com itens e próximos passos. */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PedidoAdminResponse> quadro(UUID tenant) {
+        var fluxo = fluxoService.carregar(tenant);
         List<T_Pedido> pedidos = pedidoRepository.buscarParaQuadro(tenant, EM_ANDAMENTO, LocalDate.now().atStartOfDay());
         // histórico dos clientes e alterações em consultas únicas (nada de uma consulta por pedido)
         Map<String, Long> historico = new HashMap<>();
@@ -86,7 +89,7 @@ public class PedidoAdminService {
                     .computeIfAbsent(a.getIdPedido(), chave -> new ArrayList<>()).add(PedidoAdminResponse.Alteracao.of(a)));
         }
         return pedidos.stream()
-                .map(p -> PedidoAdminResponse.of(p, proximosStatus(p), historico.getOrDefault(p.getTelefoneCliente(), 1L),
+                .map(p -> PedidoAdminResponse.of(p, fluxo.info(p), fluxo.proximas(p), historico.getOrDefault(p.getTelefoneCliente(), 1L),
                         alteracoes.getOrDefault(p.getId(), List.of())))
                 .toList();
     }
@@ -116,7 +119,7 @@ public class PedidoAdminService {
         return resposta(pedido);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PedidoAdminResponse obter(UUID tenant, Long id) {
         T_Pedido pedido = buscarPedido(tenant, id);
         return resposta(pedido);
@@ -125,11 +128,11 @@ public class PedidoAdminService {
     /** Move o pedido para o próximo status (ou cancela). Só as transições de proximosStatus são aceitas. */
     @Transactional
     public PedidoAdminResponse atualizarStatus(UUID tenant, Long id, AtualizarStatusPedidoRequest request) {
-        StatusPedido novoStatus = request.status();
         T_Pedido pedido = buscarPedido(tenant, id);
-        if (!proximosStatus(pedido).contains(novoStatus)) {
-            throw new RegraNegocioException("Este pedido não pode ir de " + pedido.getStatus() + " para " + novoStatus);
-        }
+        var fluxo = fluxoService.carregar(tenant);
+        var destino = fluxo.proximas(pedido).stream().filter(p -> p.id().equals(request.situacaoId())).findFirst()
+                .orElseThrow(() -> new RegraNegocioException("Este pedido não pode ir para essa situação a partir de onde está"));
+        StatusPedido novoStatus = destino.categoria();
         if (novoStatus == StatusPedido.CANCELADO) {
             // o motivo é opcional
             pedido.setMotivoCancelamento(request.motivo() == null || request.motivo().isBlank() ? null : request.motivo().trim());
@@ -137,6 +140,7 @@ public class PedidoAdminService {
                     ? request.taxaCancelamento().setScale(2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
         }
         pedido.setStatus(novoStatus);
+        pedido.setIdSituacao(destino.id());
         pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
         return resposta(pedido);
@@ -185,27 +189,12 @@ public class PedidoAdminService {
                 pedidoRepository.contarPorStatus(tenant, EM_ANDAMENTO));
     }
 
-    /**
-     * Fluxo: pendente, confirmado, em preparo, saiu para entrega (só entrega), entregue. Em qualquer ponto antes
-     * do fim dá para cancelar. Entregue e cancelado são finais.
-     */
-    private List<StatusPedido> proximosStatus(T_Pedido pedido) {
-        return switch (pedido.getStatus()) {
-            case PENDENTE -> List.of(StatusPedido.CONFIRMADO, StatusPedido.CANCELADO);
-            case CONFIRMADO -> List.of(StatusPedido.EM_PREPARO, StatusPedido.CANCELADO);
-            case EM_PREPARO -> List.of(
-                    pedido.getTipoEntrega() == TipoEntrega.ENTREGA ? StatusPedido.SAIU_PARA_ENTREGA : StatusPedido.ENTREGUE,
-                    StatusPedido.CANCELADO);
-            case SAIU_PARA_ENTREGA -> List.of(StatusPedido.ENTREGUE, StatusPedido.CANCELADO);
-            case ENTREGUE, CANCELADO -> List.of();
-        };
-    }
-
     private PedidoAdminResponse resposta(T_Pedido pedido) {
         long total = pedidoRepository.contarPedidosDoTelefone(pedido.getTenant(), pedido.getTelefoneCliente());
         List<PedidoAdminResponse.Alteracao> alteracoes = alteracaoRepository.findByIdPedidoOrderByIdDesc(pedido.getId()).stream()
                 .map(PedidoAdminResponse.Alteracao::of).toList();
-        return PedidoAdminResponse.of(pedido, proximosStatus(pedido), total, alteracoes);
+        var fluxo = fluxoService.carregar(pedido.getTenant());
+        return PedidoAdminResponse.of(pedido, fluxo.info(pedido), fluxo.proximas(pedido), total, alteracoes);
     }
 
     private T_Pedido buscarPedido(UUID tenant, Long id) {
@@ -220,8 +209,8 @@ public class PedidoAdminService {
             filtros.add(cb.isFalse(root.get("deletado")));
             filtros.add(cb.greaterThanOrEqualTo(root.get("dataCriacao"), filtro.inicio().atStartOfDay()));
             filtros.add(cb.lessThan(root.get("dataCriacao"), filtro.fim().plusDays(1).atStartOfDay()));
-            if (filtro.status() != null) {
-                filtros.add(cb.equal(root.get("status"), filtro.status()));
+            if (filtro.situacaoId() != null) {
+                filtros.add(cb.equal(root.get("idSituacao"), filtro.situacaoId()));
             }
             if (filtro.tipoEntrega() != null) {
                 filtros.add(cb.equal(root.get("tipoEntrega"), filtro.tipoEntrega()));

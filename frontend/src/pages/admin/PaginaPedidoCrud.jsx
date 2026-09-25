@@ -17,7 +17,8 @@ import CrudPagina from '../../components/crud/CrudPagina'
 import { SecaoCrud } from '../../components/crud/Campo'
 import { CrudSkeleton } from '../../components/Skeleton'
 import { formatarMoeda, formatarTelefone } from '../../utils/formatadores'
-import { ACAO_STATUS, rotuloTipoEntrega, STATUS_PEDIDO } from '../../utils/pedido'
+import SeloSituacao from '../../components/pedido/SeloSituacao'
+import { ICONE_CATEGORIA, rotuloTipoEntrega } from '../../utils/pedido'
 
 const ROTA_LISTA = '/admin/pedidos'
 
@@ -57,11 +58,12 @@ export default function PaginaPedidoCrud() {
       .catch((e) => dispatchMsgError(e.mensagem))
   }, [id, loja.tenant])
 
-  async function mudarStatus(status, extra) {
+  async function mudarStatus(situacaoId, extra) {
     setAtualizando(true)
     try {
-      setPedido(await atualizarStatusPedido(loja.tenant, id, status, extra))
-      dispatchMsgSuccess(`Pedido ${id} - ${pedido.nomeCliente}: ${STATUS_PEDIDO[status].rotulo.toLowerCase()}`)
+      const atualizado = await atualizarStatusPedido(loja.tenant, id, situacaoId, extra)
+      setPedido(atualizado)
+      dispatchMsgSuccess(`Pedido ${id} - ${atualizado.nomeCliente}: ${atualizado.situacao.nome.toLowerCase()}`)
     } catch (e) {
       dispatchMsgError(e.mensagem)
     } finally {
@@ -85,15 +87,10 @@ export default function PaginaPedidoCrud() {
     })
   }
 
-  function pedirStatus(status) {
-    if (status !== 'CANCELADO') {
-      mudarStatus(status)
-      return
-    }
-    setCancelando(true) // pede o motivo e a taxa de cancelamento
-  }
-
-  const status = pedido && STATUS_PEDIDO[pedido.status]
+  // avançar vai direto; cancelar pede o motivo e a taxa de cancelamento
+  const avancos = (pedido?.proximasSituacoes ?? []).filter((p) => p.categoria !== 'CANCELADO')
+  const cancelamento = pedido?.proximasSituacoes.find((p) => p.categoria === 'CANCELADO')
+  const pedidoAberto = !!pedido && pedido.proximasSituacoes.length > 0
   const endereco = pedido && [
     [pedido.enderecoRua, pedido.enderecoNumero].filter(Boolean).join(', '),
     pedido.enderecoComplemento, pedido.enderecoBairro, pedido.enderecoCidade,
@@ -104,7 +101,7 @@ export default function PaginaPedidoCrud() {
       <SecaoCrud id="secao-pedido" titulo="Pedido">
         <div className="pedido__dados">
           <Dado rotulo="Situação">
-            <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
+            <SeloSituacao nome={pedido.situacao?.nome} cor={pedido.situacao?.cor} />
             {pedido.editado && <span className="selo selo--info selo--editado">Editado</span>}
           </Dado>
           <Dado rotulo="Criado em">{formatarDataHora(pedido.dataCriacao)}</Dado>
@@ -119,8 +116,8 @@ export default function PaginaPedidoCrud() {
             </Dado>
           )}
           <Dado rotulo="Observações">{pedido.observacoes}</Dado>
-          {pedido.status === 'CANCELADO' && <Dado rotulo="Motivo do cancelamento">{pedido.motivoCancelamento || 'Não informado'}</Dado>}
-          {pedido.status === 'CANCELADO' && (
+          {pedido.situacao?.categoria === 'CANCELADO' && <Dado rotulo="Motivo do cancelamento">{pedido.motivoCancelamento || 'Não informado'}</Dado>}
+          {pedido.situacao?.categoria === 'CANCELADO' && (
             <Dado rotulo="Taxa de cancelamento">
               {Number(pedido.taxaCancelamento) > 0 ? formatarMoeda(pedido.taxaCancelamento) : 'Sem taxa'}
             </Dado>
@@ -169,15 +166,15 @@ export default function PaginaPedidoCrud() {
       aoVoltar={() => navigate(ROTA_LISTA)}
       rodape={(
         <div className="crud__acoes">
-          {pedido?.proximosStatus.includes('CANCELADO') && pode('PEDIDOS_CANCELAR') && (
-            <Button type="button" label={ACAO_STATUS.CANCELADO.rotulo} icon={ACAO_STATUS.CANCELADO.icone}
-                    severity="danger" outlined disabled={atualizando} onClick={() => pedirStatus('CANCELADO')} />
+          {cancelamento && pode('PEDIDOS_CANCELAR') && (
+            <Button type="button" label="Cancelar pedido" icon="pi pi-times"
+                    severity="danger" outlined disabled={atualizando} onClick={() => setCancelando(true)} />
           )}
           {pode('PEDIDOS_EXCLUIR') && (
             <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined disabled={!pedido} onClick={excluir} />
           )}
           <span className="crud__espaco" />
-          {pode('PEDIDOS_ALTERAR') && pedido && pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO' && (
+          {pode('PEDIDOS_ALTERAR') && pedidoAberto && (
             <Button type="button" label="Editar" icon="pi pi-pencil" severity="secondary" outlined
                     onClick={() => abrirEdicao(pedido, rascunhoDoPedido(pedido))} />
           )}
@@ -186,16 +183,16 @@ export default function PaginaPedidoCrud() {
           <Button type="button" label="Entrega" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}
                   onClick={() => imprimir(pedido, 'ENTREGA')} />
           <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
-          {(pode('PEDIDOS_ALTERAR_STATUS') ? (pedido?.proximosStatus ?? []) : []).filter((proximo) => proximo !== 'CANCELADO').map((proximo) => (
-            <Button key={proximo} type="button" label={ACAO_STATUS[proximo].rotulo} icon={ACAO_STATUS[proximo].icone}
-                    disabled={atualizando} onClick={() => pedirStatus(proximo)} />
+          {pode('PEDIDOS_ALTERAR_STATUS') && avancos.map((destino) => (
+            <Button key={destino.id} type="button" label={destino.rotulo} icon={ICONE_CATEGORIA[destino.categoria]}
+                    disabled={atualizando} onClick={() => mudarStatus(destino.id)} />
           ))}
         </div>
       )}
     >
       <Tooltip target=".botao-rota" />
       <DialogoCancelarPedido pedido={cancelando ? { id } : null} enviando={atualizando} aoFechar={() => setCancelando(false)}
-                             aoConfirmar={async (dados) => { await mudarStatus('CANCELADO', dados); setCancelando(false) }} />
+                             aoConfirmar={async (dados) => { await mudarStatus(cancelamento.id, dados); setCancelando(false) }} />
       {pedido ? conteudo : <CrudSkeleton blocos={[[4, 4, 4, 4, 4, 4, 12], [12, 12, 12]]} />}
     </CrudPagina>
   )

@@ -87,6 +87,9 @@ public class T_Pedido extends TenantAbstract {
     @Builder.Default
     private BigDecimal taxaCancelamento = BigDecimal.ZERO;
 
+    /** Situação atual no fluxo da loja (a categoria dela é o "status"). */
+    private Long idSituacao;
+
     /** Marca de pedido editado depois de criado (o que mudou fica em T_PedidoAlteracao). */
     @Column(nullable = false)
     @Builder.Default

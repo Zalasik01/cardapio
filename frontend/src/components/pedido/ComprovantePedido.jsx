@@ -1,5 +1,5 @@
 import { formatarMoeda, formatarTelefone } from '../../utils/formatadores'
-import { rotuloTipoEntrega, STATUS_PEDIDO } from '../../utils/pedido'
+import { rotuloTipoEntrega } from '../../utils/pedido'
 
 const formatarDataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 
@@ -31,7 +31,6 @@ export default function ComprovantePedido({ pedido, via, loja }) {
     loja?.enderecoBairro, [loja?.enderecoCidade, loja?.enderecoEstado].filter(Boolean).join('/'),
   ].filter(Boolean).join(' - ')
   const totalItens = pedido.itens.reduce((soma, item) => soma + item.quantidade, 0)
-  const status = STATUS_PEDIDO[pedido.status]
 
   return (
     <article className="comprovante">
@@ -53,7 +52,7 @@ export default function ComprovantePedido({ pedido, via, loja }) {
       <div className="comprovante__destaque">{rotuloTipoEntrega(pedido.tipoEntrega).toUpperCase()}</div>
       <section className="comprovante__bloco">
         <Linha rotulo="Feito em">{formatarDataHora(pedido.dataCriacao)}</Linha>
-        {status && <Linha rotulo="Situação">{status.rotulo}</Linha>}
+        {pedido.situacao && <Linha rotulo="Situação">{pedido.situacao.nome}</Linha>}
       </section>
 
       <section className="comprovante__bloco">

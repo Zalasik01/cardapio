@@ -20,6 +20,7 @@ import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
 import { ChatPedidosProvider } from './context/ChatPedidosContext'
 import { ImpressaoPedidoProvider } from './context/ImpressaoPedidoContext'
 import { NotificacoesProvider } from './context/NotificacoesContext'
+import PaginaFluxoPedidos from './pages/admin/PaginaFluxoPedidos'
 import PaginaFormaPagamentoCrud from './pages/admin/PaginaFormaPagamentoCrud'
 import PaginaFormasPagamento from './pages/admin/PaginaFormasPagamento'
 import PaginaPainelPedidos from './pages/admin/PaginaPainelPedidos'
@@ -83,6 +84,7 @@ export default function App() {
             <Route path="ingredientes" element={<PaginaProdutosCadastro tipo="INGREDIENTE" />} />
             <Route path="ingredientes/novo" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-novo" />} />
             <Route path="ingredientes/:id" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-editar" />} />
+            <Route path="fluxo-pedidos" element={<PaginaFluxoPedidos />} />
             <Route path="painel-pedidos" element={<PaginaPainelPedidos />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
             <Route path="pedidos/:id" element={<PaginaPedidoCrud />} />

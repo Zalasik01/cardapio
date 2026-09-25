@@ -18,12 +18,17 @@ public record PedidoAdminResumoResponse(
         BigDecimal total,
         StatusPedido status,
         LocalDateTime dataCriacao,
-        boolean editado
+        boolean editado,
+        Long situacaoId,
+        String situacaoNome,
+        String situacaoCor
 ) {
 
-    public static PedidoAdminResumoResponse of(T_Pedido p, long quantidadeItens) {
+    public static PedidoAdminResumoResponse of(T_Pedido p, long quantidadeItens, FluxoDtos.SituacaoInfo situacao) {
         return new PedidoAdminResumoResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoBairro(),
-                quantidadeItens, p.getTotal(), p.getStatus(), p.getDataCriacao(), p.isEditado());
+                quantidadeItens, p.getTotal(), p.getStatus(), p.getDataCriacao(), p.isEditado(),
+                situacao != null ? situacao.id() : null, situacao != null ? situacao.nome() : null,
+                situacao != null ? situacao.cor() : null);
     }
 }

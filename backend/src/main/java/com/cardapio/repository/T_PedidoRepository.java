@@ -44,6 +44,21 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
             + "group by p.telefoneCliente")
     List<Object[]> contarPedidosPorTelefone(@Param("tenant") UUID tenant, @Param("telefones") Collection<String> telefones);
 
+    /** Pedidos em andamento por situação: linhas [idSituacao, quantidade]. */
+    @Query("select p.idSituacao, count(p) from T_Pedido p where p.tenant = :tenant and p.deletado = false "
+            + "and p.status in :abertos and p.idSituacao is not null group by p.idSituacao")
+    List<Object[]> contarAbertosPorSituacao(@Param("tenant") UUID tenant, @Param("abertos") Collection<StatusPedido> abertos);
+
+    /** A situação mudou de categoria: os pedidos nela acompanham. */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update T_Pedido p set p.status = :categoria where p.idSituacao = :situacao")
+    void sincronizarCategoria(@Param("situacao") Long situacao, @Param("categoria") StatusPedido categoria);
+
+    /** Liga todos os pedidos da loja que estão numa categoria à situação dada (criação/restauração do fluxo padrão). */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update T_Pedido p set p.idSituacao = :situacao where p.tenant = :tenant and p.status = :categoria")
+    void reatribuirPorCategoria(@Param("tenant") UUID tenant, @Param("categoria") StatusPedido categoria, @Param("situacao") Long situacao);
+
     /** Soma das quantidades dos itens de cada pedido: linhas [pedidoId, quantidade]. */
     @Query("select i.pedido.id, sum(i.quantidade) from I_ItemPedido i where i.pedido.id in :ids group by i.pedido.id")
     List<Object[]> somarItensPorPedido(@Param("ids") Collection<Long> ids);

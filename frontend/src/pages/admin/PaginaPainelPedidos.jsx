@@ -14,10 +14,11 @@ import BotaoRota from '../../components/pedido/BotaoRota'
 import { useNotificacoes } from '../../context/NotificacoesContext'
 import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
-import { ACAO_STATUS, rotuloTipoEntrega, STATUS_PEDIDO } from '../../utils/pedido'
+import useFluxoPedidos from '../../hooks/useFluxoPedidos'
+import { ICONE_CATEGORIA, rotuloTipoEntrega } from '../../utils/pedido'
 
 // cancelado não ganha coluna (o pedido sai do quadro): cancela-se pelo X do cartão
-const COLUNAS = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE']
+const COLUNAS_ESQUELETO = [0, 1, 2, 3, 4]
 const ITENS_NO_CARTAO = 3
 
 /** "há 5 min" a partir da data de criação. */
@@ -30,7 +31,8 @@ function tempoDecorrido(iso, agora) {
 
 /** Aparência do cartão de um pedido (também usada na cópia que acompanha o mouse durante o arraste). */
 function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, aoImprimir, aoEditar, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
-  const proximo = pedido.proximosStatus.find((s) => s !== 'CANCELADO')
+  const avancos = pedido.proximasSituacoes.filter((s) => s.categoria !== 'CANCELADO')
+  const podeSerCancelado = pedido.proximasSituacoes.some((s) => s.categoria === 'CANCELADO')
   const restantes = pedido.itens.length - ITENS_NO_CARTAO
 
   return (
@@ -63,7 +65,7 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
         <strong>{formatarMoeda(pedido.total)}</strong>
         <span onPointerDown={(e) => e.stopPropagation()} className="painel-cartao__acoes">
           <BotaoRota pedido={pedido} />
-          {aoEditar && pedido.status !== 'ENTREGUE' && (
+          {aoEditar && pedido.proximasSituacoes.length > 0 && (
             <Button type="button" icon="pi pi-pencil" severity="secondary" text rounded aria-label="Editar pedido"
                     data-pr-tooltip="Editar pedido" onClick={() => aoEditar(pedido)} />
           )}
@@ -71,14 +73,14 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
             <Button type="button" icon="pi pi-print" severity="secondary" text rounded aria-label="Imprimir para a cozinha"
                     data-pr-tooltip="Imprimir para a cozinha" onClick={() => aoImprimir(pedido, 'COZINHA')} />
           )}
-          {pedido.proximosStatus.includes('CANCELADO') && podeCancelar && (
+          {podeSerCancelado && podeCancelar && (
             <Button type="button" icon="pi pi-times" severity="danger" text rounded aria-label="Cancelar pedido"
                     disabled={atualizando} onClick={() => aoCancelar(pedido)} />
           )}
-          {proximo && podeAlterar && (
-            <Button type="button" size="small" label={ACAO_STATUS[proximo].rotulo} icon={ACAO_STATUS[proximo].icone}
-                    disabled={atualizando} onClick={() => aoAvancar(pedido, proximo)} />
-          )}
+          {podeAlterar && avancos.map((destino) => (
+            <Button key={destino.id} type="button" size="small" label={destino.rotulo} icon={ICONE_CATEGORIA[destino.categoria]}
+                    disabled={atualizando} onClick={() => aoAvancar(pedido, destino.id)} />
+          ))}
         </span>
       </footer>
     </article>
@@ -89,21 +91,20 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
 function CartaoPedido(props) {
   const { pedido, podeAlterar } = props
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: pedido.id, data: { pedido }, disabled: !podeAlterar || pedido.proximosStatus.length === 0,
+    id: pedido.id, data: { pedido }, disabled: !podeAlterar || pedido.proximasSituacoes.length === 0,
   })
   return <CartaoBase {...props} refNo={setNodeRef} ligacoes={{ ...attributes, ...listeners }} arrastando={isDragging} />
 }
 
 /** Coluna de uma situação: recebe os cartões arrastados para ela. */
-function Coluna({ status, pedidos, alvoValido, children }) {
-  const { setNodeRef, isOver } = useDroppable({ id: status })
-  const info = STATUS_PEDIDO[status]
+function Coluna({ situacao, pedidos, alvoValido, children }) {
+  const { setNodeRef, isOver } = useDroppable({ id: situacao.id })
   return (
-    <section ref={setNodeRef}
-             className={`painel-coluna painel-coluna--${info.tom}${alvoValido ? ' painel-coluna--alvo' : ''}${isOver && alvoValido ? ' painel-coluna--sobre' : ''}`}
-             aria-label={info.rotulo}>
+    <section ref={setNodeRef} style={{ '--cor-coluna': situacao.cor }}
+             className={`painel-coluna${alvoValido ? ' painel-coluna--alvo' : ''}${isOver && alvoValido ? ' painel-coluna--sobre' : ''}`}
+             aria-label={situacao.nome}>
       <h2 className="painel-coluna__titulo">
-        {info.rotulo} <span className="painel-coluna__total">{pedidos.length}</span>
+        {situacao.nome} <span className="painel-coluna__total">{pedidos.length}</span>
       </h2>
       <div className="painel-coluna__cartoes">
         {children}
@@ -116,8 +117,8 @@ function Coluna({ status, pedidos, alvoValido, children }) {
 function PainelSkeleton() {
   return (
     <div className="painel-quadro" aria-busy="true" aria-label="Carregando pedidos">
-      {COLUNAS.map((status, i) => (
-        <div key={status} className="painel-coluna">
+      {COLUNAS_ESQUELETO.map((i) => (
+        <div key={i} className="painel-coluna">
           <Skeleton largura="60%" altura="1rem" />
           {Array.from({ length: i % 2 === 0 ? 2 : 1 }, (_, j) => (
             <div key={j} className="painel-cartao painel-cartao--esqueleto">
@@ -145,6 +146,7 @@ export default function PaginaPainelPedidos() {
   const { imprimir } = useImpressaoPedido()
   const tenant = loja.tenant
   const [pedidos, setPedidos] = useState(null)
+  const fluxo = useFluxoPedidos()
   const [atualizando, setAtualizando] = useState(null)
   const [arrastando, setArrastando] = useState(null)
   const [cancelando, setCancelando] = useState(null) // pedido em cancelamento (diálogo aberto)
@@ -182,12 +184,12 @@ export default function PaginaPainelPedidos() {
     }
   }), [assinarEventos, carregar])
 
-  async function mudarStatus(pedido, status, extra) {
+  async function mudarStatus(pedido, situacaoId, extra) {
     setAtualizando(pedido.id)
     try {
-      const atualizado = await atualizarStatusPedido(tenant, pedido.id, status, extra)
+      const atualizado = await atualizarStatusPedido(tenant, pedido.id, situacaoId, extra)
       setPedidos((lista) => lista.map((p) => (p.id === atualizado.id ? atualizado : p)))
-      dispatchMsgSuccess(`Pedido ${pedido.id} - ${pedido.nomeCliente}: ${STATUS_PEDIDO[status].rotulo.toLowerCase()}`)
+      dispatchMsgSuccess(`Pedido ${pedido.id} - ${pedido.nomeCliente}: ${atualizado.situacao.nome.toLowerCase()}`)
     } catch (e) {
       dispatchMsgError(e.mensagem)
       carregar()
@@ -201,26 +203,39 @@ export default function PaginaPainelPedidos() {
   }
 
   async function confirmarCancelamento(dados) {
-    await mudarStatus(cancelando, 'CANCELADO', dados)
+    const cancelamento = cancelando.proximasSituacoes.find((s) => s.categoria === 'CANCELADO')
+    await mudarStatus(cancelando, cancelamento.id, dados)
     setCancelando(null)
   }
 
   function aoSoltar({ active, over }) {
     setArrastando(null)
     const pedido = active.data.current?.pedido
-    if (!pedido || !over || over.id === pedido.status) return
-    if (!pedido.proximosStatus.includes(over.id)) {
-      dispatchMsgWarn(`O pedido ${pedido.id} não pode ir de "${STATUS_PEDIDO[pedido.status].rotulo}" para "${STATUS_PEDIDO[over.id].rotulo}".`)
+    if (!pedido || !over || over.id === pedido.situacao?.id) return
+    const destino = pedido.proximasSituacoes.find((p) => p.id === over.id)
+    if (!destino) {
+      const coluna = colunas.find((c) => c.id === over.id)
+      dispatchMsgWarn(`O pedido ${pedido.id} não pode ir de "${pedido.situacao?.nome}" para "${coluna?.nome}".`)
       return
     }
-    mudarStatus(pedido, over.id)
+    if (destino.categoria === 'CANCELADO') {
+      setCancelando(pedido)
+      return
+    }
+    mudarStatus(pedido, destino.id)
   }
 
-  const porStatus = useMemo(() => {
-    const grupos = Object.fromEntries(COLUNAS.map((s) => [s, []]))
-    ;(pedidos ?? []).forEach((p) => grupos[p.status]?.push(p))
+  // colunas = situações do fluxo da loja (menos o cancelamento); uma situação inativa só aparece se ainda tiver pedido
+  const colunas = useMemo(() => {
+    const emUso = new Set((pedidos ?? []).map((p) => p.situacao?.id))
+    return (fluxo?.situacoes ?? []).filter((s) => s.categoria !== 'CANCELADO' && (s.ativa || emUso.has(s.id)))
+  }, [fluxo, pedidos])
+
+  const porSituacao = useMemo(() => {
+    const grupos = Object.fromEntries(colunas.map((c) => [c.id, []]))
+    ;(pedidos ?? []).forEach((p) => grupos[p.situacao?.id]?.push(p))
     return grupos
-  }, [pedidos])
+  }, [colunas, pedidos])
 
   const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, aoImprimir: imprimir, aoEditar: pode('PAINEL_PEDIDOS_ALTERAR') ? (p) => abrirEdicao(p, rascunhoDoPedido(p)) : undefined, podeAlterar, podeCancelar }
 
@@ -248,14 +263,14 @@ export default function PaginaPainelPedidos() {
       <DialogoCancelarPedido pedido={cancelando} enviando={atualizando !== null} aoFechar={() => setCancelando(null)}
                              aoConfirmar={confirmarCancelamento} />
 
-      {pedidos === null ? <PainelSkeleton /> : (
+      {pedidos === null || fluxo === null ? <PainelSkeleton /> : (
         <DndContext sensors={sensores} onDragStart={({ active }) => setArrastando(active.data.current.pedido)}
                     onDragEnd={aoSoltar} onDragCancel={() => setArrastando(null)}>
           <div className="painel-quadro">
-            {COLUNAS.map((status) => (
-              <Coluna key={status} status={status} pedidos={porStatus[status]}
-                      alvoValido={!!arrastando && arrastando.proximosStatus.includes(status)}>
-                {porStatus[status].map((pedido) => (
+            {colunas.map((situacao) => (
+              <Coluna key={situacao.id} situacao={situacao} pedidos={porSituacao[situacao.id]}
+                      alvoValido={!!arrastando && arrastando.proximasSituacoes.some((p) => p.id === situacao.id)}>
+                {porSituacao[situacao.id].map((pedido) => (
                   <CartaoPedido key={pedido.id} pedido={pedido} novo={novos.has(pedido.id)} {...propsCartao} />
                 ))}
               </Coluna>

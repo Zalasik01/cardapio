@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
@@ -9,14 +9,15 @@ import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import TelaBusca from '../../components/crud/TelaBusca'
 import { formatarMoeda, formatarTelefone } from '../../utils/formatadores'
-import { OPCOES_STATUS, rotuloTipoEntrega, STATUS_PEDIDO, TIPOS_ENTREGA } from '../../utils/pedido'
+import SeloSituacao from '../../components/pedido/SeloSituacao'
+import useFluxoPedidos from '../../hooks/useFluxoPedidos'
+import { rotuloTipoEntrega, TIPOS_ENTREGA } from '../../utils/pedido'
 import { periodoParaIso, resolverPeriodo } from '../../utils/periodo'
 
 const PERIODO_PADRAO = { preset: 'ultimos-7' }
 
 const FILTROS = [
   { nome: 'periodo', rotulo: 'Período do pedido', tipo: 'periodo', padrao: PERIODO_PADRAO },
-  { nome: 'status', rotulo: 'Situação', tipo: 'selecao', opcoes: OPCOES_STATUS },
   { nome: 'tipoEntrega', rotulo: 'Tipo', tipo: 'selecao', opcoes: TIPOS_ENTREGA },
 ]
 
@@ -40,10 +41,9 @@ const COLUNAS = [
     chave: 'status',
     cabecalho: 'Situação',
     render: (pedido) => {
-      const status = STATUS_PEDIDO[pedido.status]
       return (
         <>
-          <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
+          <SeloSituacao nome={pedido.situacaoNome} cor={pedido.situacaoCor} />
           {pedido.editado && <span className="selo selo--info selo--editado">Editado</span>}
         </>
       )
@@ -56,6 +56,13 @@ export default function PaginaPedidos() {
   const { loja, pode } = useAuth()
   const { abrirNovo, abrirEdicao } = useChatPedidos()
   const { imprimir } = useImpressaoPedido()
+  const fluxo = useFluxoPedidos()
+  // o filtro de situação usa as situações do fluxo da loja
+  const filtros = useMemo(() => [
+    ...FILTROS.slice(0, 1),
+    { nome: 'situacaoId', rotulo: 'Situação', tipo: 'selecao', opcoes: (fluxo?.situacoes ?? []).map((s) => ({ valor: s.id, rotulo: s.nome })) },
+    ...FILTROS.slice(1),
+  ], [fluxo])
   const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de excluir
 
   async function editar(pedido) {
@@ -90,7 +97,7 @@ export default function PaginaPedidos() {
       chaveFiltros="pedidos"
       placeholder="Buscar por cliente, telefone ou número do pedido"
       colunas={COLUNAS}
-      filtros={FILTROS}
+      filtros={filtros}
       comInativos={false}
       chaveLinha={(pedido) => pedido.id}
       buscar={({ busca, filtros, page, size }) => {

@@ -42,8 +42,9 @@ export const simularPedidoCliente = (tenant) => http.post(`${base(tenant)}/simul
 /** Edita o pedido (mesmo formato do lançamento, sem o tenant). Devolve o pedido com o histórico de alterações. */
 export const editarPedido = (tenant, id, dados) => http.put(`${base(tenant)}/${id}`, dados).then((res) => res.data)
 
-export const atualizarStatusPedido = (tenant, id, status, extra = {}) =>
-  http.put(`${base(tenant)}/${id}/status`, { status, ...extra }).then((res) => res.data)
+/** Move o pedido para uma situação do fluxo. extra: no cancelamento, { motivo, taxaCancelamento }. */
+export const atualizarStatusPedido = (tenant, id, situacaoId, extra = {}) =>
+  http.put(`${base(tenant)}/${id}/status`, { situacaoId, ...extra }).then((res) => res.data)
 
 // vários cartões do dashboard pedem o mesmo período ao mesmo tempo: a mesma consulta é reaproveitada por alguns segundos
 const cache = new Map()

@@ -26,3 +26,23 @@ export const ACAO_STATUS = {
   ENTREGUE: { rotulo: 'Marcar como entregue', icone: 'pi pi-check-circle' },
   CANCELADO: { rotulo: 'Cancelar pedido', icone: 'pi pi-times' },
 }
+
+/** Ícone do botão de avanço conforme a categoria da situação de destino. */
+export const ICONE_CATEGORIA = {
+  PENDENTE: 'pi pi-inbox',
+  CONFIRMADO: 'pi pi-check',
+  EM_PREPARO: 'pi pi-clock',
+  SAIU_PARA_ENTREGA: 'pi pi-send',
+  ENTREGUE: 'pi pi-check-circle',
+  CANCELADO: 'pi pi-times',
+}
+
+/** Nome amigável de cada categoria (o que a situação significa para o sistema). */
+export const CATEGORIAS_SITUACAO = [
+  { valor: 'PENDENTE', rotulo: 'Novo (aguardando)' },
+  { valor: 'CONFIRMADO', rotulo: 'Confirmado' },
+  { valor: 'EM_PREPARO', rotulo: 'Em preparo' },
+  { valor: 'SAIU_PARA_ENTREGA', rotulo: 'Em entrega' },
+  { valor: 'ENTREGUE', rotulo: 'Concluído' },
+  { valor: 'CANCELADO', rotulo: 'Cancelado' },
+]

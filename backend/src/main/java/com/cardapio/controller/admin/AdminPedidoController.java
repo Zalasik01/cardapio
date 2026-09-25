@@ -44,13 +44,13 @@ public class AdminPedidoController {
     public PaginaResponse<PedidoAdminResumoResponse> buscar(
             @PathVariable UUID tenant,
             @RequestParam(required = false) String busca,
-            @RequestParam(required = false) StatusPedido status,
+            @RequestParam(required = false) Long situacaoId,
             @RequestParam(required = false) TipoEntrega tipoEntrega,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return pedidoService.buscar(tenant, new PedidoAdminService.Filtro(busca, status, tipoEntrega, inicio, fim), page, size);
+        return pedidoService.buscar(tenant, new PedidoAdminService.Filtro(busca, situacaoId, tipoEntrega, inicio, fim), page, size);
     }
 
     /** Números do dashboard: pedidos do período, entregues, faturamento e quantos estão em andamento. */

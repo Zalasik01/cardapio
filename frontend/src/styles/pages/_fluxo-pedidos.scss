@@ -1,0 +1,116 @@
+// Editor do fluxo de pedidos (Loja > Fluxo de pedidos)
+.fluxo__previa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fluxo__coluna {
+  padding: 0.5rem 0.9rem;
+  border-top: 3px solid #bdbdbd;
+  border-radius: 3px;
+  background: #ebebeb;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.fluxo__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &--fixa { margin-top: 0.5rem; }
+}
+
+.fluxo__linha {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 3px;
+  background: var(--cor-superficie);
+
+  &--inativa { opacity: 0.6; }
+}
+
+.fluxo__cabeca {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.fluxo__alca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cor-texto-suave);
+  cursor: grab;
+  outline: none;
+  touch-action: none;
+
+  &--fixa { cursor: default; }
+}
+
+.fluxo__nome { flex: 1 1 12rem; min-width: 10rem; }
+.fluxo__categoria { flex: 0 0 12rem; }
+.fluxo__categoria-fixa { flex: 0 0 12rem; color: var(--cor-texto-suave); font-size: 0.85rem; }
+
+.fluxo__acoes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.fluxo__ativa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 0.4rem;
+}
+
+.fluxo__aviso {
+  display: block;
+  margin: 0.3rem 0 0 2.2rem;
+  color: #92400e;
+}
+
+.fluxo__destinos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0.2rem 2.2rem;
+  padding: 0.6rem;
+  border-radius: 3px;
+  background: #f7f7f7;
+  font-size: 0.85rem;
+}
+
+.fluxo__destino {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+
+  .campo-checkbox { flex: 0 0 12rem; }
+  .p-inputtext { flex: 1 1 10rem; min-width: 8rem; }
+}
+
+.fluxo__ponto {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+.fluxo__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}

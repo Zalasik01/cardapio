@@ -191,3 +191,11 @@
 
 .painel-cartao__rodape { row-gap: 0.3rem; }
 .painel-cartao__acoes { margin-left: auto; }
+
+// selo com a cor da situação escolhida pela loja
+.selo--situacao {
+  background: color-mix(in srgb, var(--cor-selo) 18%, white);
+  color: color-mix(in srgb, var(--cor-selo) 65%, black);
+}
+
+.painel-coluna { border-top-color: var(--cor-coluna, #bdbdbd); }

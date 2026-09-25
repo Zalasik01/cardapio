@@ -49,6 +49,11 @@ public class PedidoEventos {
         enviar(evento.tenant(), SseEmitter.event().name("pedido").data(evento));
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void aoCriarNotificacao(NotificacaoService.NotificacaoCriada evento) {
+        enviar(evento.tenant(), SseEmitter.event().name("notificacao").data(evento.notificacao()));
+    }
+
     /** Mantém a conexão viva (proxies fecham conexões paradas). */
     @Scheduled(fixedRate = 20_000)
     public void batimento() {

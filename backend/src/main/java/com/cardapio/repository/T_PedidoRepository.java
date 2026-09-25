@@ -35,6 +35,9 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
             + "and p.telefoneCliente = :telefone and p.status <> com.cardapio.entity.StatusPedido.CANCELADO")
     long contarPedidosDoTelefone(@Param("tenant") UUID tenant, @Param("telefone") String telefone);
 
+    /** Pedidos com a situação dada, criados antes do limite (lembretes de pedido parado). */
+    List<T_Pedido> findByStatusAndDeletadoFalseAndDataCriacaoBefore(StatusPedido status, LocalDateTime limite);
+
     /** Soma das quantidades dos itens de cada pedido: linhas [pedidoId, quantidade]. */
     @Query("select i.pedido.id, sum(i.quantidade) from I_ItemPedido i where i.pedido.id in :ids group by i.pedido.id")
     List<Object[]> somarItensPorPedido(@Param("ids") Collection<Long> ids);

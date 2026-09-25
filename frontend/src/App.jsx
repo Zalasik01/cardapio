@@ -19,6 +19,7 @@ import PaginaZonaEntregaCrud from './pages/admin/PaginaZonaEntregaCrud'
 import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
 import { ChatPedidosProvider } from './context/ChatPedidosContext'
 import { ImpressaoPedidoProvider } from './context/ImpressaoPedidoContext'
+import { NotificacoesProvider } from './context/NotificacoesContext'
 import PaginaFormaPagamentoCrud from './pages/admin/PaginaFormaPagamentoCrud'
 import PaginaFormasPagamento from './pages/admin/PaginaFormasPagamento'
 import PaginaPainelPedidos from './pages/admin/PaginaPainelPedidos'
@@ -53,7 +54,7 @@ export default function App() {
             path="/admin"
             element={
               <RotaProtegida>
-                <ChatPedidosProvider><ImpressaoPedidoProvider><LayoutAdmin /></ImpressaoPedidoProvider></ChatPedidosProvider>
+                <NotificacoesProvider><ChatPedidosProvider><ImpressaoPedidoProvider><LayoutAdmin /></ImpressaoPedidoProvider></ChatPedidosProvider></NotificacoesProvider>
               </RotaProtegida>
             }
           >

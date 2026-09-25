@@ -1,0 +1,102 @@
+// Sino de notificações do cabeçalho
+.sino {
+  position: relative;
+}
+
+.sino__contagem {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  text-align: center;
+}
+
+.p-overlaypanel.sino__painel .p-overlaypanel-content {
+  width: 22rem;
+  max-width: 92vw;
+  padding: 0;
+}
+
+.sino__topo,
+.sino__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+}
+
+.sino__topo { border-bottom: 1px solid var(--cor-borda); }
+.sino__rodape { border-top: 1px solid var(--cor-borda); }
+
+.sino__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--cor-primaria);
+  cursor: pointer;
+  outline: none;
+
+  &:disabled { color: var(--cor-texto-suave); cursor: default; }
+}
+
+.sino__vazio {
+  margin: 0;
+  padding: 1.2rem;
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.sino__lista {
+  max-height: 22rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.sino__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 0;
+  border-bottom: 1px solid var(--cor-borda);
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--cor-texto);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+
+  &:hover { background: #f4f4f4; }
+  &--nova { background: #eff6ff; }
+
+  > i { margin-top: 0.15rem; color: var(--cor-primaria); }
+}
+
+.sino__texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  small { color: var(--cor-texto-suave); }
+}
+
+.sino__tempo { color: var(--cor-texto-suave); white-space: nowrap; }

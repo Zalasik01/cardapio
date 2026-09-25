@@ -29,6 +29,7 @@ public class PedidoService {
     private final FreteService freteService;
     private final FuncionamentoService funcionamentoService;
     private final ApplicationEventPublisher eventos;
+    private final NotificacaoService notificacaoService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -121,6 +122,9 @@ public class PedidoService {
 
         T_Pedido salvo = pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "NOVO", salvo.getId()));
+        if (!pelaLoja) {
+            notificacaoService.pedidoNovo(salvo);
+        }
         return salvo;
     }
 

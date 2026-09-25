@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { obterMinhaFoto } from '../api/perfilApi'
 import DialogoPerfil from './DialogoPerfil'
 import SeloLoja from './SeloLoja'
+import SinoNotificacoes from './SinoNotificacoes'
 
 /** Caminho da tela (BreadCrumb do PrimeReact): Geral > Pessoas > Usuarios. O ultimo item e a tela atual. */
 function Migalhas({ migalhas }) {
@@ -61,26 +62,6 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
     { label: 'Sair', icon: 'pi pi-sign-out', command: aoSair },
   ]
 
-  // TODO temporario: botao de teste de notificacoes (Notification API). Remover quando o fluxo definitivo existir.
-  async function testarNotificacao() {
-    if (!('Notification' in window)) {
-      alert('Este navegador não suporta notificações.')
-      return
-    }
-    let permissao = Notification.permission
-    if (permissao === 'default') {
-      permissao = await Notification.requestPermission()
-    }
-    if (permissao !== 'granted') {
-      alert('Permissão de notificação negada.')
-      return
-    }
-    new Notification('Cardápio Digital', {
-      body: 'Notificação de teste 🔔',
-      icon: '/favicon.svg',
-    })
-  }
-
   return (
     <header className="cabecalho-admin">
       <button type="button" className="botao-icone cabecalho-admin__menu" aria-label="Abrir menu"
@@ -93,10 +74,7 @@ export default function CabecalhoAdmin({ migalhas, aoAbrirMenu, aoSair, menuAber
       <div className="cabecalho-admin__direita">
         <SeloLoja />
 
-      <button type="button" className="botao-icone" aria-label="Testar notificação"
-              title="Testar notificação (temporário)" onClick={testarNotificacao}>
-        <i className="pi pi-bell" aria-hidden="true" />
-      </button>
+      <SinoNotificacoes />
 
       <button type="button" className="cartao-usuario" aria-haspopup="menu" aria-label="Menu do usuário"
               onClick={(e) => menu.current.toggle(e)}>

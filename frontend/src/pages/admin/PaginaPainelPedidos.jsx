@@ -10,23 +10,14 @@ import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../sto
 import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import { atualizarStatusPedido, obterQuadroPedidos } from '../../api/pedidosApi'
 import BotaoRota from '../../components/pedido/BotaoRota'
-import usePedidosAoVivo from '../../hooks/usePedidosAoVivo'
+import { useNotificacoes } from '../../context/NotificacoesContext'
 import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
 import { ACAO_STATUS, rotuloTipoEntrega, STATUS_PEDIDO } from '../../utils/pedido'
 
 // cancelado não ganha coluna (o pedido sai do quadro): cancela-se pelo X do cartão
 const COLUNAS = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE']
-const CHAVE_SOM = 'painelPedidosSom'
 const ITENS_NO_CARTAO = 3
-
-const lerSom = () => {
-  try {
-    return localStorage.getItem(CHAVE_SOM) !== 'desligado'
-  } catch {
-    return true
-  }
-}
 
 /** "há 5 min" a partir da data de criação. */
 function tempoDecorrido(iso, agora) {
@@ -147,11 +138,8 @@ export default function PaginaPainelPedidos() {
   const [arrastando, setArrastando] = useState(null)
   const [cancelando, setCancelando] = useState(null) // pedido em cancelamento (diálogo aberto)
   const [novos, setNovos] = useState(() => new Set())
-  const [somLigado, setSomLigado] = useState(lerSom)
+  const { somLigado, alternarSom, assinarEventos } = useNotificacoes()
   const [agora, setAgora] = useState(() => Date.now())
-  const audio = useRef(null)
-  const somRef = useRef(somLigado)
-  somRef.current = somLigado
 
   const sensores = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const podeAlterar = pode('PAINEL_PEDIDOS_ALTERAR_STATUS')
@@ -166,22 +154,14 @@ export default function PaginaPainelPedidos() {
   }, [carregar])
 
   useEffect(() => {
-    audio.current = new Audio('/sons/novo-pedido.wav')
     const relogio = setInterval(() => setAgora(Date.now()), 30000)
     return () => clearInterval(relogio)
   }, [])
 
-  function tocarSom() {
-    if (!somRef.current || !audio.current) return
-    audio.current.currentTime = 0
-    // o navegador só libera som depois de uma interação na página: sem ela, o aviso visual basta
-    audio.current.play().catch(() => {})
-  }
-
-  usePedidosAoVivo(tenant, (evento) => {
+  // eventos em tempo real (vêm da conexão única do sino): recarrega o quadro e destaca o pedido novo
+  useEffect(() => assinarEventos((evento) => {
     carregar()
     if (evento.tipo === 'NOVO') {
-      tocarSom()
       setNovos((atual) => new Set(atual).add(evento.pedidoId))
       setTimeout(() => setNovos((atual) => {
         const restante = new Set(atual)
@@ -189,18 +169,7 @@ export default function PaginaPainelPedidos() {
         return restante
       }), 15000)
     }
-  }, carregar)
-
-  function alternarSom() {
-    const proximo = !somLigado
-    setSomLigado(proximo)
-    try {
-      localStorage.setItem(CHAVE_SOM, proximo ? 'ligado' : 'desligado')
-    } catch {
-      // sem armazenamento: vale só nesta sessão
-    }
-    if (proximo && audio.current) audio.current.play().catch(() => {}) // serve de teste e libera o som no navegador
-  }
+  }), [assinarEventos, carregar])
 
   async function mudarStatus(pedido, status, extra) {
     setAtualizando(pedido.id)

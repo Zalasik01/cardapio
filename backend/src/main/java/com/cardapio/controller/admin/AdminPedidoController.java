@@ -104,7 +104,7 @@ public class AdminPedidoController {
     }
 
     /** Fluxo de eventos (SSE): o painel recebe um aviso quando chega pedido novo ou um pedido muda de situação. */
-    @PreAuthorize("@perm.tem('PAINEL_PEDIDOS_LEITURA')")
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'PAINEL_PEDIDOS_LEITURA')")
     @GetMapping(value = "/eventos", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter eventos(@PathVariable UUID tenant) {
         return pedidoEventos.inscrever(tenant);

@@ -1,5 +1,6 @@
 package com.cardapio.controller.admin;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pedido.AtualizarStatusPedidoRequest;
 import com.cardapio.dto.pedido.PedidoAdminResponse;
@@ -25,6 +26,7 @@ public class AdminPedidoController {
     private final PedidoAdminService pedidoService;
 
     /** inicio e fim (yyyy-MM-dd, inclusive, no máximo 90 dias) são obrigatórios. */
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA')")
     @GetMapping
     public PaginaResponse<PedidoAdminResumoResponse> buscar(
             @PathVariable UUID tenant,
@@ -39,6 +41,7 @@ public class AdminPedidoController {
     }
 
     /** Números do dashboard: pedidos do período, entregues, faturamento e quantos estão em andamento. */
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'DASHBOARD_LEITURA')")
     @GetMapping("/resumo")
     public PedidoPeriodoResumoResponse resumo(@PathVariable UUID tenant,
                                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
@@ -46,11 +49,13 @@ public class AdminPedidoController {
         return pedidoService.resumo(tenant, inicio, fim);
     }
 
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA')")
     @GetMapping("/{id}")
     public PedidoAdminResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
         return pedidoService.obter(tenant, id);
     }
 
+    @PreAuthorize("@perm.tem('PEDIDOS_ALTERAR_STATUS', 'PEDIDOS_CANCELAR')")
     @PutMapping("/{id}/status")
     public PedidoAdminResponse atualizarStatus(@PathVariable UUID tenant, @PathVariable Long id,
                                                @Valid @RequestBody AtualizarStatusPedidoRequest request) {

@@ -1,5 +1,6 @@
 package com.cardapio.controller.admin;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.usuario.AlterarAtivoRequest;
 import com.cardapio.dto.usuario.AlterarEmailRequest;
@@ -34,6 +35,7 @@ public class AdminUsuarioController {
     private final UsuarioLojaService usuarioLojaService;
     private final UsuarioFotoService usuarioFotoService;
 
+    @PreAuthorize("@perm.tem('USUARIOS_LEITURA')")
     @GetMapping
     public PaginaResponse<UsuarioLojaResponse> buscar(@PathVariable UUID tenant,
                                                       @RequestParam(required = false) String busca,
@@ -46,23 +48,27 @@ public class AdminUsuarioController {
         return usuarioLojaService.buscar(tenant, new FiltroUsuario(busca, nome, email, mostrarInativos, status), page, size);
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_LEITURA')")
     @GetMapping("/{usuarioId}")
     public UsuarioLojaResponse obter(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
         return usuarioLojaService.obter(tenant, usuarioId);
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_INCLUIR')")
     @PostMapping
     public ResponseEntity<UsuarioConviteResponse> criar(@PathVariable UUID tenant,
                                                         @Valid @RequestBody UsuarioLojaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioLojaService.criar(tenant, request));
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_ALTERAR')")
     @PutMapping("/{usuarioId}")
     public UsuarioLojaResponse atualizar(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                          @Valid @RequestBody UsuarioLojaRequest request) {
         return usuarioLojaService.atualizar(tenant, usuarioId, request);
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_EXCLUIR')")
     @DeleteMapping("/{usuarioId}")
     public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                         @AuthenticationPrincipal AppUserDetails logado) {
@@ -70,6 +76,7 @@ public class AdminUsuarioController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_INATIVAR')")
     @PutMapping("/{usuarioId}/ativo")
     public UsuarioLojaResponse alterarAtivo(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                             @RequestBody AlterarAtivoRequest request,
@@ -77,12 +84,14 @@ public class AdminUsuarioController {
         return usuarioLojaService.alterarAtivo(tenant, usuarioId, request.ativo(), logado.getUsuarioId());
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_ALTERAR_EMAIL')")
     @PutMapping("/{usuarioId}/email")
     public UsuarioLojaResponse alterarEmail(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                             @Valid @RequestBody AlterarEmailRequest request) {
         return usuarioLojaService.alterarEmail(tenant, usuarioId, request.email());
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_REDEFINIR_SENHA')")
     @PutMapping("/{usuarioId}/senha")
     public UsuarioLojaResponse redefinirSenha(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                               @Valid @RequestBody RedefinirSenhaRequest request,
@@ -90,11 +99,13 @@ public class AdminUsuarioController {
         return usuarioLojaService.redefinirSenha(tenant, usuarioId, request.senhaTemporaria(), logado.getUsuarioId());
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_INCLUIR')")
     @PostMapping("/{usuarioId}/novo-link")
     public UsuarioConviteResponse gerarNovoLink(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
         return usuarioLojaService.gerarNovoLink(tenant, usuarioId);
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_LEITURA')")
     @GetMapping("/{usuarioId}/foto")
     public ResponseEntity<byte[]> obterFoto(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
         var foto = usuarioFotoService.obter(tenant, usuarioId);
@@ -104,6 +115,7 @@ public class AdminUsuarioController {
                 .body(foto.conteudo());
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_ALTERAR')")
     @PutMapping(path = "/{usuarioId}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> salvarFoto(@PathVariable UUID tenant, @PathVariable Long usuarioId,
                                            @RequestParam("arquivo") MultipartFile arquivo) {
@@ -111,6 +123,7 @@ public class AdminUsuarioController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("@perm.tem('USUARIOS_ALTERAR')")
     @DeleteMapping("/{usuarioId}/foto")
     public ResponseEntity<Void> removerFoto(@PathVariable UUID tenant, @PathVariable Long usuarioId) {
         usuarioFotoService.remover(tenant, usuarioId);

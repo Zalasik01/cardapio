@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/lojas/{tenant}", "/api/admin/lojas/{tenant}/**")
                         .access(this::acessoAoTenantDaSessao)
                         .requestMatchers("/api/admin/gestao/**").hasAuthority(AppUserDetails.PAPEL_ADMINISTRADOR)
-                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN_LOJA")
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_SISTEMA", "ROLE_ADMIN_LOJA")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
@@ -80,7 +80,7 @@ public class SecurityConfig {
             return new AuthorizationDecision(false);
         }
         boolean papelAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN") || a.getAuthority().equals("ROLE_ADMIN_LOJA"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_SISTEMA") || a.getAuthority().equals("ROLE_ADMIN_LOJA"));
         String tenantDaUrl = contexto.getVariables().get("tenant");
         boolean mesmaLoja = usuario.getTenant() != null && usuario.getTenant().toString().equals(tenantDaUrl);
         return new AuthorizationDecision(papelAdmin && mesmaLoja);

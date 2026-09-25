@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Tabela de sistema: perfis de acesso disponiveis na plataforma.
- * O campo codigo e usado como authority do Spring Security (ex.: ROLE_SUPER_ADMIN).
+ * O campo codigo e usado como authority do Spring Security (ex.: ROLE_SISTEMA).
  */
 @Entity
 @Table(name = "s_perfil")

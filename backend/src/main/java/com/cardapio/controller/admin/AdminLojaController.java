@@ -20,7 +20,7 @@ public class AdminLojaController {
     private final LojaService lojaService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SISTEMA')")
     public ResponseEntity<LojaResponse> criar(@Valid @RequestBody LojaRequest request) {
         var loja = lojaService.criar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(LojaResponse.of(loja));
@@ -31,13 +31,14 @@ public class AdminLojaController {
         return LojaResponse.of(lojaService.buscarPorTenant(tenant));
     }
 
+    @PreAuthorize("@perm.tem('MINHA_LOJA_ALTERAR')")
     @PutMapping("/{tenant}")
     public LojaResponse atualizar(@PathVariable UUID tenant, @Valid @RequestBody LojaRequest request) {
         return LojaResponse.of(lojaService.atualizar(tenant, request));
     }
 
     @DeleteMapping("/{tenant}")
-    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SISTEMA')")
     public ResponseEntity<Void> inativar(@PathVariable UUID tenant) {
         lojaService.inativar(tenant);
         return ResponseEntity.noContent().build();

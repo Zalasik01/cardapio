@@ -1,5 +1,6 @@
 package com.cardapio.controller.admin;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pessoa.FiltroPessoa;
 import com.cardapio.dto.pessoa.PessoaExistenteResponse;
@@ -24,6 +25,7 @@ public class AdminPessoaController {
 
     private final PessoaService pessoaService;
 
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_LEITURA')")
     @GetMapping
     public PaginaResponse<PessoaResumoResponse> buscar(@PathVariable UUID tenant,
                                                        @RequestParam(required = false) String busca,
@@ -38,6 +40,7 @@ public class AdminPessoaController {
     }
 
     /** 200 com a pessoa que ja usa o CPF na loja (funcionario, cliente ou fornecedor) ou 204 se nao existe. */
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_INCLUIR', 'CLIENTES_FORNECEDORES_ALTERAR', 'FUNCIONARIOS_INCLUIR', 'USUARIOS_INCLUIR')")
     @GetMapping("/por-cpf/{cpf}")
     public ResponseEntity<PessoaExistenteResponse> consultarPorCpf(@PathVariable UUID tenant, @PathVariable String cpf) {
         return pessoaService.consultarPorCpf(tenant, cpf)
@@ -45,22 +48,26 @@ public class AdminPessoaController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_LEITURA')")
     @GetMapping("/{id}")
     public PessoaResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
         return pessoaService.obter(tenant, id);
     }
 
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_INCLUIR')")
     @PostMapping
     public ResponseEntity<PessoaResponse> criar(@PathVariable UUID tenant, @Valid @RequestBody PessoaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(pessoaService.criar(tenant, request));
     }
 
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_ALTERAR')")
     @PutMapping("/{id}")
     public PessoaResponse atualizar(@PathVariable UUID tenant, @PathVariable Long id,
                                     @Valid @RequestBody PessoaRequest request) {
         return pessoaService.atualizar(tenant, id, request);
     }
 
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_EXCLUIR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long id) {
         pessoaService.excluir(tenant, id);

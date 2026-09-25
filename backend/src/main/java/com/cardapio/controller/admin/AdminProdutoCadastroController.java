@@ -1,5 +1,6 @@
 package com.cardapio.controller.admin;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.produto.FiltroProdutoCadastro;
 import com.cardapio.dto.produto.ProdutoCadastroRequest;
@@ -29,6 +30,7 @@ public class AdminProdutoCadastroController {
 
     private final ProdutoCadastroService produtoService;
 
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_LEITURA', 'INGREDIENTES_LEITURA')")
     @GetMapping
     public PaginaResponse<ProdutoCadastroResumoResponse> buscar(@PathVariable UUID tenant,
                                                                 @RequestParam TipoProduto tipo,
@@ -44,6 +46,7 @@ public class AdminProdutoCadastroController {
     }
 
     /** Sugestão de código para um produto novo (incremental por loja); o usuário pode alterá-lo. */
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_INCLUIR', 'INGREDIENTES_INCLUIR')")
     @GetMapping("/proximo-codigo")
     public CodigoResponse proximoCodigo(@PathVariable UUID tenant) {
         return new CodigoResponse(produtoService.proximoCodigo(tenant));
@@ -53,6 +56,7 @@ public class AdminProdutoCadastroController {
     }
 
     /** O código está livre? Usado enquanto o usuário digita. produtoId é o produto em edição, se houver. */
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_INCLUIR', 'INGREDIENTES_INCLUIR')")
     @GetMapping("/codigo-disponivel")
     public DisponibilidadeResponse codigoDisponivel(@PathVariable UUID tenant, @RequestParam String codigo,
                                                     @RequestParam(required = false) Long produtoId) {
@@ -60,22 +64,26 @@ public class AdminProdutoCadastroController {
     }
 
     /** Categorias do cardápio (id e nome) para o campo de seleção do produto final. */
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_LEITURA', 'INGREDIENTES_LEITURA')")
     @GetMapping("/categorias")
     public List<OpcaoCategoria> categorias(@PathVariable UUID tenant) {
         return produtoService.categorias(tenant);
     }
 
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_LEITURA', 'INGREDIENTES_LEITURA')")
     @GetMapping("/{id}")
     public ProdutoCadastroResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
         return produtoService.obter(tenant, id);
     }
 
+    @PreAuthorize("@perm.tem(#request.tipo().name() == 'FINAL' ? 'PRODUTOS_FINAIS_INCLUIR' : 'INGREDIENTES_INCLUIR')")
     @PostMapping
     public ResponseEntity<ProdutoCadastroResponse> criar(@PathVariable UUID tenant,
                                                          @Valid @RequestBody ProdutoCadastroRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.criar(tenant, request));
     }
 
+    @PreAuthorize("@perm.tem(#request.tipo().name() == 'FINAL' ? 'PRODUTOS_FINAIS_ALTERAR' : 'INGREDIENTES_ALTERAR')")
     @PutMapping("/{id}")
     public ProdutoCadastroResponse atualizar(@PathVariable UUID tenant, @PathVariable Long id,
                                              @Valid @RequestBody ProdutoCadastroRequest request) {
@@ -83,6 +91,7 @@ public class AdminProdutoCadastroController {
     }
 
     /** Ativa ou inativa o produto sem mexer nos demais dados. */
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_INATIVAR', 'INGREDIENTES_INATIVAR')")
     @PutMapping("/{id}/ativo")
     public ResponseEntity<Void> alterarAtivo(@PathVariable UUID tenant, @PathVariable Long id,
                                              @RequestBody AlterarAtivoRequest request) {
@@ -90,6 +99,7 @@ public class AdminProdutoCadastroController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_EXCLUIR', 'INGREDIENTES_EXCLUIR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long id) {
         produtoService.excluir(tenant, id);

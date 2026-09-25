@@ -16,6 +16,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import com.cardapio.entity.T_PerfilUsuario;
+import com.cardapio.repository.T_PerfilUsuarioRepository;
+import com.cardapio.repository.T_PermissaoUsuarioRepository;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -27,6 +32,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AppUserDetailsService userDetailsService;
+    private final T_PerfilUsuarioRepository perfilUsuarioRepository;
+    private final T_PermissaoUsuarioRepository permissaoUsuarioRepository;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -74,7 +81,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String tenantClaim = claims.get("tenant", String.class);
         UUID tenant = tenantClaim != null ? UUID.fromString(tenantClaim) : null;
-        AppUserDetails contexto = new AppUserDetails(carregado.getUsuario(), tenant, claims.get("perfil", String.class));
+        String perfil = claims.get("perfil", String.class);
+        boolean administradorLoja = false;
+        Set<String> permissoes = Set.of();
+        if (tenant != null && !Permissoes.PAPEL_SISTEMA.equals(perfil)) {
+            Long usuarioId = carregado.getUsuario().getId();
+            administradorLoja = perfilUsuarioRepository.findByUsuarioIdAndTenantAndDeletadoFalse(usuarioId, tenant)
+                    .map(T_PerfilUsuario::isAdministrador).orElse(false);
+            if (!administradorLoja) {
+                permissoes = new HashSet<>(permissaoUsuarioRepository.codigosDoUsuario(usuarioId, tenant));
+            }
+        }
+        AppUserDetails contexto = new AppUserDetails(carregado.getUsuario(), tenant, perfil, administradorLoja, permissoes);
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 contexto, null, contexto.getAuthorities());

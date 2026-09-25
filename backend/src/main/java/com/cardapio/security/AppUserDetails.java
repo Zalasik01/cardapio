@@ -7,7 +7,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -23,11 +25,19 @@ public class AppUserDetails implements UserDetails {
     private final S_Usuario usuario;
     private final UUID tenant;
     private final String perfil;
+    private final boolean administradorLoja;
+    private final Set<String> permissoes;
 
     public AppUserDetails(S_Usuario usuario, UUID tenant, String perfil) {
+        this(usuario, tenant, perfil, false, Set.of());
+    }
+
+    public AppUserDetails(S_Usuario usuario, UUID tenant, String perfil, boolean administradorLoja, Set<String> permissoes) {
         this.usuario = usuario;
         this.tenant = tenant;
         this.perfil = perfil != null ? perfil : PAPEL_USUARIO;
+        this.administradorLoja = administradorLoja;
+        this.permissoes = permissoes;
     }
 
     public Long getUsuarioId() {
@@ -37,9 +47,16 @@ public class AppUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // o papel de administrador vem do cadastro do usuario a cada requisicao, nunca do token
-        return usuario.isUsuarioAdministrador()
-                ? List.of(new SimpleGrantedAuthority(perfil), new SimpleGrantedAuthority(PAPEL_ADMINISTRADOR))
-                : List.of(new SimpleGrantedAuthority(perfil));
+        List<GrantedAuthority> autoridades = new ArrayList<>();
+        autoridades.add(new SimpleGrantedAuthority(perfil));
+        if (usuario.isUsuarioAdministrador()) {
+            autoridades.add(new SimpleGrantedAuthority(PAPEL_ADMINISTRADOR));
+        }
+        if (administradorLoja) {
+            autoridades.add(new SimpleGrantedAuthority(Permissoes.PAPEL_ADMINISTRADOR_LOJA));
+        }
+        permissoes.forEach(codigo -> autoridades.add(new SimpleGrantedAuthority(Permissoes.PREFIXO + codigo)));
+        return autoridades;
     }
 
     @Override

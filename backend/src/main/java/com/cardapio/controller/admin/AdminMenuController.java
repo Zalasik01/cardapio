@@ -20,6 +20,6 @@ public class AdminMenuController {
 
     @GetMapping
     public List<CategoriaMenuResponse> listar(@AuthenticationPrincipal AppUserDetails usuario) {
-        return menuService.montarMenu(usuario.getUsuario().isUsuarioAdministrador());
+        return menuService.montarMenu(usuario);
     }
 }

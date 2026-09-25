@@ -32,7 +32,7 @@ import java.util.UUID;
  *
  * Regras de acesso as lojas:
  * - usuario de suporte SEM perfil vinculado e "usuario do sistema": enxerga
- *   todas as lojas ativas e atua nelas como ROLE_SUPER_ADMIN;
+ *   todas as lojas ativas e atua nelas como ROLE_SISTEMA;
  * - qualquer outro usuario so acessa as lojas em que tem um t_perfil_usuario,
  *   com o papel definido nesse perfil.
  * Se o usuario (que nao e do sistema) tem uma unica loja, ela ja e selecionada no login.
@@ -41,7 +41,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
 
-    public static final String PAPEL_SISTEMA = "ROLE_SUPER_ADMIN";
+    public static final String PAPEL_SISTEMA = "ROLE_SISTEMA";
 
     private final S_UsuarioRepository usuarioRepository;
     private final S_LojaRepository lojaRepository;

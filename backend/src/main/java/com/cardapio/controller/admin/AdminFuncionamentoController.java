@@ -1,5 +1,6 @@
 package com.cardapio.controller.admin;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.funcionamento.FuncionamentoRequest;
 import com.cardapio.dto.funcionamento.FuncionamentoResponse;
 import com.cardapio.entity.ModoFuncionamento;
@@ -23,6 +24,7 @@ public class AdminFuncionamentoController {
     }
 
     /** Modo, estado atual e a lista de horários (tela Minha loja). */
+    @PreAuthorize("@perm.tem('MINHA_LOJA_LEITURA')")
     @GetMapping
     public FuncionamentoResponse obter(@PathVariable UUID tenant) {
         return funcionamentoService.obter(tenant);
@@ -34,12 +36,14 @@ public class AdminFuncionamentoController {
         return funcionamentoService.situacao(tenant);
     }
 
+    @PreAuthorize("@perm.tem('MINHA_LOJA_HORARIO')")
     @PutMapping
     public FuncionamentoResponse salvar(@PathVariable UUID tenant, @Valid @RequestBody FuncionamentoRequest request) {
         return funcionamentoService.salvar(tenant, request);
     }
 
     /** Abrir/fechar agora ou voltar ao horário automático. */
+    @PreAuthorize("@perm.tem('MINHA_LOJA_HORARIO')")
     @PutMapping("/modo")
     public FuncionamentoResponse alterarModo(@PathVariable UUID tenant, @Valid @RequestBody ModoRequest request) {
         return funcionamentoService.alterarModo(tenant, request.modo());

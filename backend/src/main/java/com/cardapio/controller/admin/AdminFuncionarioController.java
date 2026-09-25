@@ -1,5 +1,6 @@
 package com.cardapio.controller.admin;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.funcionario.FiltroFuncionario;
 import com.cardapio.dto.funcionario.FuncionarioRequest;
@@ -22,6 +23,7 @@ public class AdminFuncionarioController {
 
     private final FuncionarioService funcionarioService;
 
+    @PreAuthorize("@perm.tem('FUNCIONARIOS_LEITURA')")
     @GetMapping
     public PaginaResponse<FuncionarioResumoResponse> buscar(@PathVariable UUID tenant,
                                                             @RequestParam(required = false) String busca,
@@ -33,23 +35,27 @@ public class AdminFuncionarioController {
         return funcionarioService.buscar(tenant, new FiltroFuncionario(busca, nome, cpf, mostrarInativos), page, size);
     }
 
+    @PreAuthorize("@perm.tem('FUNCIONARIOS_LEITURA')")
     @GetMapping("/{id}")
     public FuncionarioResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
         return funcionarioService.obter(tenant, id);
     }
 
+    @PreAuthorize("@perm.tem('FUNCIONARIOS_INCLUIR')")
     @PostMapping
     public ResponseEntity<FuncionarioResponse> criar(@PathVariable UUID tenant,
                                                      @Valid @RequestBody FuncionarioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(funcionarioService.criar(tenant, request));
     }
 
+    @PreAuthorize("@perm.tem('FUNCIONARIOS_ALTERAR')")
     @PutMapping("/{id}")
     public FuncionarioResponse atualizar(@PathVariable UUID tenant, @PathVariable Long id,
                                          @Valid @RequestBody FuncionarioRequest request) {
         return funcionarioService.atualizar(tenant, id, request);
     }
 
+    @PreAuthorize("@perm.tem('FUNCIONARIOS_EXCLUIR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable UUID tenant, @PathVariable Long id) {
         funcionarioService.excluir(tenant, id);

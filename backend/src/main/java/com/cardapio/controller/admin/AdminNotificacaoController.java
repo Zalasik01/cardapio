@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminNotificacaoController {
 
     private final NotificacaoService notificacaoService;
+
+    /** Limpa as notificações da loja (apaga do banco). */
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'PAINEL_PEDIDOS_LEITURA')")
+    @DeleteMapping
+    public ResponseEntity<Void> limpar(@PathVariable UUID tenant) {
+        notificacaoService.limpar(tenant);
+        return ResponseEntity.noContent().build();
+    }
 
     @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'PAINEL_PEDIDOS_LEITURA')")
     @GetMapping

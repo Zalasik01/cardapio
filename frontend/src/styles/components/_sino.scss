@@ -100,3 +100,6 @@
 }
 
 .sino__tempo { color: var(--cor-texto-suave); white-space: nowrap; }
+
+.sino__acoes { display: inline-flex; gap: 0.8rem; }
+.sino__link--perigo { color: #b91c1c; }

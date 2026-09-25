@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { listarNotificacoes } from '../api/notificacoesApi'
+import { limparNotificacoes, listarNotificacoes } from '../api/notificacoesApi'
 import { obterPreferencia, salvarPreferencia } from '../api/preferenciasApi'
 import usePedidosAoVivo from '../hooks/usePedidosAoVivo'
-import { dispatchMsgSuccess, dispatchMsgWarn } from '../store/dispatchMsg'
+import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../store/dispatchMsg'
 
 const NotificacoesContext = createContext(null)
 
@@ -117,6 +117,16 @@ export function NotificacoesProvider({ children }) {
     salvarPreferencia(chaveLidas, { ate: maior }).catch(() => {})
   }, [notificacoes, lidasAte, chaveLidas])
 
+  /** Apaga as notificações da loja, inclusive do banco. */
+  const limpar = useCallback(async () => {
+    try {
+      await limparNotificacoes(tenant)
+      setNotificacoes([])
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
+  }, [tenant])
+
   const alternarSom = useCallback(() => {
     const proximo = !somRef.current
     setSomLigado(proximo)
@@ -137,8 +147,8 @@ export function NotificacoesProvider({ children }) {
   const naoLidas = useMemo(() => notificacoes.filter((n) => n.id > lidasAte).length, [notificacoes, lidasAte])
 
   const valor = useMemo(() => ({
-    ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, somLigado, alternarSom, navegador, ativarNavegador, assinarEventos,
-  }), [ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, somLigado, alternarSom, navegador, ativarNavegador, assinarEventos])
+    ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, limpar, somLigado, alternarSom, navegador, ativarNavegador, assinarEventos,
+  }), [ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, limpar, somLigado, alternarSom, navegador, ativarNavegador, assinarEventos])
 
   return <NotificacoesContext.Provider value={valor}>{children}</NotificacoesContext.Provider>
 }

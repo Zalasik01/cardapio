@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNotificacoes } from '../context/NotificacoesContext'
 import { simularPedidoCliente } from '../api/pedidosApi'
 import { dispatchMsgError } from '../store/dispatchMsg'
+import { confirmar } from '../utils/confirmar'
 
 /** "há 5 min", "há 2 h" ou a data, a partir do horário da notificação. */
 function tempoDesde(iso) {
@@ -24,7 +25,7 @@ export default function SinoNotificacoes() {
   const { loja, pode } = useAuth()
   const painel = useRef(null)
   const {
-    ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, somLigado, alternarSom, navegador, ativarNavegador,
+    ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, limpar, somLigado, alternarSom, navegador, ativarNavegador,
   } = useNotificacoes()
 
   if (!ativo) return null
@@ -32,6 +33,14 @@ export default function SinoNotificacoes() {
   // TEMPORÁRIO (teste): cria um pedido como se fosse de um cliente e gera a notificação
   function simular() {
     simularPedidoCliente(loja.tenant).catch((e) => dispatchMsgError(e.mensagem))
+  }
+
+  function pedirLimpeza() {
+    confirmar({
+      mensagem: 'Limpar todas as notificações? Elas são apagadas para todos os usuários da loja e não podem ser recuperadas.',
+      rotuloConfirmar: 'Limpar',
+      aoConfirmar: limpar,
+    })
   }
 
   function abrir(notificacao) {
@@ -51,9 +60,14 @@ export default function SinoNotificacoes() {
       <OverlayPanel ref={painel} className="sino__painel" onHide={marcarTodasLidas}>
         <div className="sino__topo">
           <strong>Notificações</strong>
-          <button type="button" className="sino__link" disabled={naoLidas === 0} onClick={marcarTodasLidas}>
-            Marcar todas como lidas
-          </button>
+          <span className="sino__acoes">
+            <button type="button" className="sino__link" disabled={naoLidas === 0} onClick={marcarTodasLidas}>
+              Marcar como lidas
+            </button>
+            <button type="button" className="sino__link sino__link--perigo" disabled={notificacoes.length === 0} onClick={pedirLimpeza}>
+              Limpar
+            </button>
+          </span>
         </div>
 
         {notificacoes.length === 0 ? (

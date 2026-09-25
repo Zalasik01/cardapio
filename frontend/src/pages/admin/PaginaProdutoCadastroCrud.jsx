@@ -14,6 +14,8 @@ import {
   atualizarProdutoCadastro, criarProdutoCadastro, excluirProdutoCadastro, listarCategoriasCadastro,
   codigoProdutoDisponivel, obterProdutoCadastro, obterProximoCodigo,
 } from '../../api/produtosCadastroApi'
+import DropzoneImagem from '../../components/DropzoneImagem'
+import { enviarImagemLoja } from '../../api/adminApi'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import CrudPagina from '../../components/crud/CrudPagina'
@@ -237,8 +239,9 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
                   <label htmlFor="disponivel">Disponível no cardápio</label>
                 </span>
               </div>
-              <Campo id="imagem" rotulo="Imagem (URL)">
-                <InputText id="imagem" maxLength={255} value={form.imagemUrl} onChange={definirTexto('imagemUrl')} />
+              <Campo id="imagem" rotulo="Imagem">
+                <DropzoneImagem valor={form.imagemUrl} aoAlterar={definir('imagemUrl')}
+                                enviar={(arquivo) => enviarImagemLoja(loja.tenant, arquivo)} />
               </Campo>
               <Campo id="descricao" rotulo="Descrição (aparece no cardápio)">
                 <InputTextarea id="descricao" rows={3} maxLength={1000} autoResize value={form.descricao}

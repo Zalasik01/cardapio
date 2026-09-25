@@ -8,10 +8,11 @@ import { RadioButton } from 'primereact/radiobutton'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
-import { atualizarLoja, buscarLoja } from '../../api/adminApi'
+import { atualizarLoja, buscarLoja, enviarImagemLoja } from '../../api/adminApi'
 import { obterFuncionamento, salvarFuncionamento } from '../../api/funcionamentoApi'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import CrudPagina from '../../components/crud/CrudPagina'
+import DropzoneImagem from '../../components/DropzoneImagem'
 import Endereco from '../../components/crud/Endereco'
 import HorarioFuncionamento from '../../components/loja/HorarioFuncionamento'
 import { CrudSkeleton } from '../../components/Skeleton'
@@ -113,8 +114,9 @@ export default function PaginaLoja() {
             <InputTextarea id="descricao" rows={3} maxLength={255} autoResize value={form.descricao ?? ''}
                            onChange={definirTexto('descricao')} />
           </Campo>
-          <Campo id="logo" rotulo="Logo (URL)">
-            <InputText id="logo" maxLength={255} value={form.logoUrl ?? ''} onChange={definirTexto('logoUrl')} />
+          <Campo id="logo" rotulo="Logo">
+            <DropzoneImagem valor={form.logoUrl ?? ''} aoAlterar={definir('logoUrl')}
+                            enviar={(arquivo) => enviarImagemLoja(tenant, arquivo)} />
           </Campo>
         </GradeCampos>
       </SecaoCrud>

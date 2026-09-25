@@ -10,6 +10,8 @@ import {
   listarAnotacoes, obterLojaGestao,
 } from '../../api/gestaoLojasApi'
 import CrudPagina from '../../components/crud/CrudPagina'
+import DropzoneImagem from '../../components/DropzoneImagem'
+import { enviarImagemGestao } from '../../api/adminApi'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import Anotacoes from '../../components/crud/Anotacoes'
 import Contatos from '../../components/crud/Contatos'
@@ -251,8 +253,8 @@ export default function PaginaGestaoLojaCrud() {
           <Campo id="descricao" rotulo="Descrição">
             <InputText id="descricao" maxLength={255} value={form.descricao} onChange={definirTexto('descricao')} />
           </Campo>
-          <Campo id="logo" rotulo="Endereço da logo (URL)">
-            <InputText id="logo" maxLength={255} value={form.logoUrl} onChange={definirTexto('logoUrl')} />
+          <Campo id="logo" rotulo="Logo">
+            <DropzoneImagem valor={form.logoUrl} aoAlterar={definir('logoUrl')} enviar={enviarImagemGestao} />
           </Campo>
         </GradeCampos>
       </SecaoCrud>

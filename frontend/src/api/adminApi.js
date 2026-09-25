@@ -22,3 +22,15 @@ export function obterDadosLoja(tenant, { atualizado = false } = {}) {
   }
   return lojas.get(tenant)
 }
+
+const enviarArquivo = (url, arquivo) => {
+  const dados = new FormData()
+  dados.append('arquivo', arquivo)
+  return http.post(url, dados).then((res) => res.data.url)
+}
+
+/** Envia uma imagem da loja (logo, foto de produto) e devolve a URL guardada. */
+export const enviarImagemLoja = (tenant, arquivo) => enviarArquivo(`/admin/lojas/${tenant}/imagens`, arquivo)
+
+/** Gestão interna: envia a logo de qualquer loja. */
+export const enviarImagemGestao = (arquivo) => enviarArquivo('/admin/gestao/imagens', arquivo)

@@ -11,5 +11,14 @@ public interface T_NotificacaoRepository extends JpaRepository<T_Notificacao, Lo
 
     List<T_Notificacao> findByTenantAndDeletadoFalseOrderByIdDesc(UUID tenant, Pageable limite);
 
+    /** Apaga de verdade (nada de exclusão lógica: a tabela só guarda o histórico recente do sino). */
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from T_Notificacao n where n.tenant = :tenant")
+    int apagarDaLoja(@org.springframework.data.repository.query.Param("tenant") UUID tenant);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from T_Notificacao n where n.dataCriacao < :limite")
+    int apagarAnterioresA(@org.springframework.data.repository.query.Param("limite") java.time.LocalDateTime limite);
+
     boolean existsByIdPedidoAndTipo(Long idPedido, TipoNotificacao tipo);
 }

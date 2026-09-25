@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificacaoService {
 
     private static final int LIMITE_LISTA = 30;
+    private static final long RETENCAO_DIAS = 30;
     /** Depois disso sem confirmar, o pedido pendente gera um lembrete. */
     private static final Duration ESPERA_PARA_LEMBRETE = Duration.ofMinutes(5);
 
@@ -44,6 +45,19 @@ public class NotificacaoService {
     public List<NotificacaoResponse> listar(UUID tenant) {
         return repository.findByTenantAndDeletadoFalseOrderByIdDesc(tenant, PageRequest.of(0, LIMITE_LISTA)).stream()
                 .map(NotificacaoResponse::of).toList();
+    }
+
+    /** Limpa o sino da loja: as notificações são apagadas do banco. */
+    @Transactional
+    public int limpar(UUID tenant) {
+        return repository.apagarDaLoja(tenant);
+    }
+
+    /** Todo dia de madrugada: notificações com mais de 30 dias saem do banco (a tabela não cresce para sempre). */
+    @Scheduled(cron = "0 30 3 * * *")
+    @Transactional
+    public void apagarAntigas() {
+        repository.apagarAnterioresA(LocalDateTime.now().minusDays(RETENCAO_DIAS));
     }
 
     /** Pedido novo feito pelo cliente (pedidos lançados pela própria loja não avisam ninguém). */

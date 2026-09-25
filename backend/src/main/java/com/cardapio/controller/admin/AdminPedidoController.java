@@ -1,5 +1,9 @@
 package com.cardapio.controller.admin;
 
+import com.cardapio.service.PedidoEventos;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pedido.AtualizarStatusPedidoRequest;
@@ -24,6 +28,7 @@ import java.util.UUID;
 public class AdminPedidoController {
 
     private final PedidoAdminService pedidoService;
+    private final PedidoEventos pedidoEventos;
 
     /** inicio e fim (yyyy-MM-dd, inclusive, no máximo 90 dias) são obrigatórios. */
     @PreAuthorize("@perm.tem('PEDIDOS_LEITURA')")
@@ -49,13 +54,27 @@ public class AdminPedidoController {
         return pedidoService.resumo(tenant, inicio, fim);
     }
 
-    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA')")
+    /** Pedidos do painel (kanban): em andamento e encerrados hoje. */
+    @PreAuthorize("@perm.tem('PAINEL_PEDIDOS_LEITURA')")
+    @GetMapping("/quadro")
+    public List<PedidoAdminResponse> quadro(@PathVariable UUID tenant) {
+        return pedidoService.quadro(tenant);
+    }
+
+    /** Fluxo de eventos (SSE): o painel recebe um aviso quando chega pedido novo ou um pedido muda de situação. */
+    @PreAuthorize("@perm.tem('PAINEL_PEDIDOS_LEITURA')")
+    @GetMapping(value = "/eventos", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter eventos(@PathVariable UUID tenant) {
+        return pedidoEventos.inscrever(tenant);
+    }
+
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'PAINEL_PEDIDOS_LEITURA')")
     @GetMapping("/{id}")
     public PedidoAdminResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
         return pedidoService.obter(tenant, id);
     }
 
-    @PreAuthorize("@perm.tem('PEDIDOS_ALTERAR_STATUS', 'PEDIDOS_CANCELAR')")
+    @PreAuthorize("@perm.tem('PEDIDOS_ALTERAR_STATUS', 'PEDIDOS_CANCELAR', 'PAINEL_PEDIDOS_ALTERAR_STATUS', 'PAINEL_PEDIDOS_CANCELAR')")
     @PutMapping("/{id}/status")
     public PedidoAdminResponse atualizarStatus(@PathVariable UUID tenant, @PathVariable Long id,
                                                @Valid @RequestBody AtualizarStatusPedidoRequest request) {

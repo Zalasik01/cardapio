@@ -66,7 +66,9 @@ export default function DialogoCopiarPermissoes({ aberto, destinoInicial, aoFech
                     optionValue="id" optionLabel="rotulo" filter placeholder="Selecione o usuário de destino"
                     disabled={!!destinoInicial} onChange={(e) => setDestino(e.value)} />
         </div>
-        <small className="campo__ajuda">As permissões atuais do usuário de destino serão substituídas.</small>
+        <div className="campo campo--12">
+          <small className="campo__ajuda">As permissões atuais do usuário de destino serão substituídas.</small>
+        </div>
       </div>
     </Dialog>
   )

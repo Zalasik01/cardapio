@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Column } from 'primereact/column'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { Tooltip } from 'primereact/tooltip'
 import { TreeTable } from 'primereact/treetable'
@@ -70,9 +72,10 @@ function BotoesNivel({ nivel, niveisDisponiveis, desabilitado, aoEscolher }) {
  * Árvore de permissões do usuário: categoria do menu > telas > ações da tela. Nas categorias e telas os botões
  * definem o nível (sem acesso, leitura, escrita) de tudo que está abaixo; nas ações, ban/ok liga e desliga cada uma.
  *
- * Props: valor (array de códigos), aoAlterar(array), desabilitado (só visualizar), administrador (tem tudo).
+ * Props: valor (array de códigos), aoAlterar(array), desabilitado (só visualizar), administrador (tem tudo) e
+ * aoCopiar (mostra o botão "Copiar de outro usuário").
  */
-export default function PermissoesUsuario({ valor, aoAlterar, desabilitado = false, administrador = false }) {
+export default function PermissoesUsuario({ valor, aoAlterar, desabilitado = false, administrador = false, aoCopiar }) {
   const [catalogo, setCatalogo] = useState(null)
   const [expandidos, setExpandidos] = useState({})
   const [filtro, setFiltro] = useState('')
@@ -173,13 +176,18 @@ export default function PermissoesUsuario({ valor, aoAlterar, desabilitado = fal
         </div>
       )}
       <div className="permissoes__barra">
-        <span className="p-input-icon-left permissoes__filtro">
-          <i className="pi pi-search" />
+        <IconField iconPosition="left" className="permissoes__filtro">
+          <InputIcon className="pi pi-search" />
           <InputText value={filtro} onChange={(e) => { setFiltro(e.target.value); expandirTudo() }}
                      placeholder="Filtrar telas e permissões" aria-label="Filtrar telas e permissões" />
-        </span>
+        </IconField>
         <button type="button" className="permissoes__link" onClick={expandirTudo}>Expandir tudo</button>
         <button type="button" className="permissoes__link" onClick={() => setExpandidos({})}>Recolher tudo</button>
+        {aoCopiar && !administrador && !desabilitado && (
+          <button type="button" className="permissoes__link permissoes__link--direita" onClick={aoCopiar}>
+            <i className="pi pi-copy" aria-hidden="true" /> Copiar de outro usuário
+          </button>
+        )}
       </div>
       <TreeTable value={nos} expandedKeys={expandidos} onToggle={(e) => setExpandidos(e.value)}
                  globalFilter={filtro} filterMode="lenient" className="permissoes__arvore"

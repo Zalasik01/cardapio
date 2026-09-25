@@ -297,7 +297,8 @@ export default function PaginaUsuarioCrud() {
 
   const permissoes = (
     <PermissoesUsuario valor={permissoesUsuario} aoAlterar={setPermissoesUsuario}
-                       administrador={form.administrador} desabilitado={!podeConcederPermissoes} />
+                       administrador={form.administrador} desabilitado={!podeConcederPermissoes}
+                       aoCopiar={editando ? () => setCopiandoPermissoes(true) : undefined} />
   )
 
   return (

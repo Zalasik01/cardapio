@@ -373,7 +373,6 @@
   .p-inputtext {
     width: 100%;
     font-size: 0.85rem;
-    padding-left: 2.2rem;
   }
 }
 
@@ -386,6 +385,10 @@
   color: var(--cor-primaria);
   cursor: pointer;
   outline: none;
+}
+
+.permissoes__link--direita {
+  margin-left: auto;
 }
 
 .permissoes__arvore {

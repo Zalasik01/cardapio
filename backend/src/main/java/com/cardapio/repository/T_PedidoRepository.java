@@ -24,6 +24,12 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
     @Query("select distinct p from T_Pedido p left join fetch p.itens where p.id = :id and p.tenant = :tenant")
     Optional<T_Pedido> buscarComItensPorId(@Param("id") Long id, @Param("tenant") UUID tenant);
 
+    /** Pedidos do quadro: os em andamento (de qualquer dia) e os encerrados a partir de "desde". */
+    @Query("select distinct p from T_Pedido p left join fetch p.itens where p.tenant = :tenant "
+            + "and (p.status in :abertos or p.dataAtualizacao >= :desde) order by p.dataCriacao")
+    List<T_Pedido> buscarParaQuadro(@Param("tenant") UUID tenant, @Param("abertos") Collection<StatusPedido> abertos,
+                                    @Param("desde") LocalDateTime desde);
+
     /** Soma das quantidades dos itens de cada pedido: linhas [pedidoId, quantidade]. */
     @Query("select i.pedido.id, sum(i.quantidade) from I_ItemPedido i where i.pedido.id in :ids group by i.pedido.id")
     List<Object[]> somarItensPorPedido(@Param("ids") Collection<Long> ids);

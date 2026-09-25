@@ -1,5 +1,6 @@
 package com.cardapio.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import com.cardapio.dto.frete.CalculoFreteRequest;
 import com.cardapio.dto.frete.CalculoFreteResponse;
 import com.cardapio.dto.pedido.ItemPedidoRequest;
@@ -27,6 +28,7 @@ public class PedidoService {
     private final LojaService lojaService;
     private final FreteService freteService;
     private final FuncionamentoService funcionamentoService;
+    private final ApplicationEventPublisher eventos;
 
     @Transactional
     public T_Pedido criar(PedidoRequest request) {
@@ -98,7 +100,9 @@ public class PedidoService {
         pedido.setTaxaEntrega(taxaEntrega);
         pedido.setTotal(subtotal.add(taxaEntrega));
 
-        return pedidoRepository.save(pedido);
+        T_Pedido salvo = pedidoRepository.save(pedido);
+        eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "NOVO", salvo.getId()));
+        return salvo;
     }
 
     @Transactional(readOnly = true)

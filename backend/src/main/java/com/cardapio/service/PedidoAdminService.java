@@ -1,5 +1,6 @@
 package com.cardapio.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pedido.PedidoAdminResponse;
 import com.cardapio.dto.pedido.PedidoAdminResumoResponse;
@@ -36,6 +37,7 @@ public class PedidoAdminService {
             StatusPedido.PENDENTE, StatusPedido.CONFIRMADO, StatusPedido.EM_PREPARO, StatusPedido.SAIU_PARA_ENTREGA);
 
     private final T_PedidoRepository pedidoRepository;
+    private final ApplicationEventPublisher eventos;
 
     /** Filtros da busca: o período (início e fim, no máximo 90 dias) é obrigatório; os demais são opcionais. */
     public record Filtro(String busca, StatusPedido status, TipoEntrega tipoEntrega, LocalDate inicio, LocalDate fim) {
@@ -57,6 +59,14 @@ public class PedidoAdminService {
         return PaginaResponse.of(resultado, p -> PedidoAdminResumoResponse.of(p, itens.getOrDefault(p.getId(), 0L)));
     }
 
+    /** Quadro do painel: pedidos em andamento e os encerrados hoje, já com itens e próximos passos. */
+    @Transactional(readOnly = true)
+    public List<PedidoAdminResponse> quadro(UUID tenant) {
+        return pedidoRepository.buscarParaQuadro(tenant, EM_ANDAMENTO, LocalDate.now().atStartOfDay()).stream()
+                .map(pedido -> PedidoAdminResponse.of(pedido, proximosStatus(pedido)))
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public PedidoAdminResponse obter(UUID tenant, Long id) {
         T_Pedido pedido = buscarPedido(tenant, id);
@@ -72,6 +82,7 @@ public class PedidoAdminService {
         }
         pedido.setStatus(novoStatus);
         pedidoRepository.save(pedido);
+        eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
         return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
     }
 

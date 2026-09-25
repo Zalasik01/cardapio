@@ -11,7 +11,8 @@ import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
 import { ACAO_STATUS, rotuloTipoEntrega, STATUS_PEDIDO } from '../../utils/pedido'
 
-const COLUNAS = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE', 'CANCELADO']
+// cancelado não ganha coluna (o pedido sai do quadro): cancela-se pelo X do cartão
+const COLUNAS = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE']
 const CHAVE_SOM = 'painelPedidosSom'
 const ITENS_NO_CARTAO = 3
 
@@ -219,8 +220,7 @@ export default function PaginaPainelPedidos() {
       dispatchMsgWarn(`O pedido ${pedido.id} não pode ir de "${STATUS_PEDIDO[pedido.status].rotulo}" para "${STATUS_PEDIDO[over.id].rotulo}".`)
       return
     }
-    if (over.id === 'CANCELADO') cancelar(pedido)
-    else mudarStatus(pedido, over.id)
+    mudarStatus(pedido, over.id)
   }
 
   const porStatus = useMemo(() => {
@@ -234,7 +234,7 @@ export default function PaginaPainelPedidos() {
   return (
     <div className="pagina-admin painel-pagina">
       <div className="painel-pagina__topo">
-        <div>
+        <div className="painel-pagina__texto">
           <h1>Painel de pedidos</h1>
           <p className="texto-auxiliar">
             Atualiza sozinho. Arraste o pedido para a próxima situação ou use o botão do cartão. Mostra os pedidos em andamento e os encerrados hoje.

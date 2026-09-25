@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button } from 'primereact/button'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
+import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
@@ -34,7 +35,7 @@ function tempoDecorrido(iso, agora) {
 }
 
 /** Aparência do cartão de um pedido (também usada na cópia que acompanha o mouse durante o arraste). */
-function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
+function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, aoImprimir, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
   const proximo = pedido.proximosStatus.find((s) => s !== 'CANCELADO')
   const restantes = pedido.itens.length - ITENS_NO_CARTAO
 
@@ -61,6 +62,10 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, p
       <footer className="painel-cartao__rodape">
         <strong>{formatarMoeda(pedido.total)}</strong>
         <span onPointerDown={(e) => e.stopPropagation()} className="painel-cartao__acoes">
+          {aoImprimir && (
+            <Button type="button" icon="pi pi-print" severity="secondary" text rounded aria-label="Imprimir para a cozinha"
+                    data-pr-tooltip="Imprimir para a cozinha" onClick={() => aoImprimir(pedido, 'COZINHA')} />
+          )}
           {pedido.proximosStatus.includes('CANCELADO') && podeCancelar && (
             <Button type="button" icon="pi pi-times" severity="danger" text rounded aria-label="Cancelar pedido"
                     disabled={atualizando} onClick={() => aoCancelar(pedido)} />
@@ -132,6 +137,7 @@ function PainelSkeleton() {
 export default function PaginaPainelPedidos() {
   const { loja, pode } = useAuth()
   const { abrirNovo, limiteAtingido } = useChatPedidos()
+  const { imprimir } = useImpressaoPedido()
   const tenant = loja.tenant
   const [pedidos, setPedidos] = useState(null)
   const [atualizando, setAtualizando] = useState(null)
@@ -231,7 +237,7 @@ export default function PaginaPainelPedidos() {
     return grupos
   }, [pedidos])
 
-  const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, podeAlterar, podeCancelar }
+  const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, aoImprimir: imprimir, podeAlterar, podeCancelar }
 
   return (
     <div className="pagina-admin painel-pagina">

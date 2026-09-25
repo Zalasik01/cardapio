@@ -1,0 +1,116 @@
+// Comprovante de pedido (impressão em 80 mm). Fica fora da tela e só aparece no papel.
+.comprovante-escondido {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+}
+
+@media print {
+  @page { size: 80mm auto; margin: 3mm; }
+}
+
+.comprovante {
+  width: 74mm;
+  color: #000;
+  background: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.comprovante__topo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #000;
+  text-align: center;
+}
+
+.comprovante__loja { font-size: 15px; }
+.comprovante__via { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+
+.comprovante__numero {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.comprovante__linha { text-align: center; }
+
+.comprovante__destaque {
+  margin: 4px 0;
+  padding: 2px 0;
+  border: 2px solid #000;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.comprovante__bloco {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #000;
+}
+
+.comprovante__item { margin-bottom: 4px; }
+
+.comprovante__item-nome {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-weight: 700;
+
+  &--grande { font-size: 16px; }
+}
+
+.comprovante__obs {
+  padding-left: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.comprovante__obs-geral { font-size: 13px; }
+
+.comprovante__totais > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.comprovante__total {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.comprovante__titulo {
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.comprovante__par {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+
+  &--forte { font-size: 15px; font-weight: 700; }
+}
+
+.comprovante__historico { font-weight: 700; }
+
+.comprovante__unit {
+  padding-left: 8px;
+  font-size: 11px;
+}
+
+.comprovante__rodape {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #000;
+  font-size: 10px;
+  text-align: center;
+}

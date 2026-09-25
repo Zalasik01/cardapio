@@ -218,3 +218,8 @@ $largura-janela: 27rem;
 
   small { color: var(--cor-texto-suave); }
 }
+
+// nas telas de cadastro a barra de ações fixa ocupa a base: o dock sobe para não cobrir os botões
+body:has(.crud__rodape) .dock-pedidos {
+  bottom: 4.6rem;
+}

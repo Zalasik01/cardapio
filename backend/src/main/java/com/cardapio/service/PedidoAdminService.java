@@ -68,7 +68,7 @@ public class PedidoAdminService {
     @Transactional(readOnly = true)
     public List<PedidoAdminResponse> quadro(UUID tenant) {
         return pedidoRepository.buscarParaQuadro(tenant, EM_ANDAMENTO, LocalDate.now().atStartOfDay()).stream()
-                .map(pedido -> PedidoAdminResponse.of(pedido, proximosStatus(pedido)))
+                .map(pedido -> resposta(pedido))
                 .toList();
     }
 
@@ -91,15 +91,16 @@ public class PedidoAdminService {
         PedidoRequest daLoja = new PedidoRequest(tenant, request.nomeCliente(), request.telefoneCliente(),
                 request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
                 request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
-                request.itens(), request.formaPagamento(), request.observacoes(), request.descontoTipo(), request.descontoValor());
+                request.itens(), request.formaPagamento(), request.observacoes(), request.descontoTipo(), request.descontoValor(),
+                request.taxaEntrega());
         T_Pedido pedido = pedidoService.criar(daLoja, true);
-        return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
+        return resposta(pedido);
     }
 
     @Transactional(readOnly = true)
     public PedidoAdminResponse obter(UUID tenant, Long id) {
         T_Pedido pedido = buscarPedido(tenant, id);
-        return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
+        return resposta(pedido);
     }
 
     /** Move o pedido para o próximo status (ou cancela). Só as transições de proximosStatus são aceitas. */
@@ -112,7 +113,7 @@ public class PedidoAdminService {
         pedido.setStatus(novoStatus);
         pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
-        return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
+        return resposta(pedido);
     }
 
     /** Exclusão lógica: o pedido some das listas, do painel e dos números do dashboard. */
@@ -150,6 +151,11 @@ public class PedidoAdminService {
             case SAIU_PARA_ENTREGA -> List.of(StatusPedido.ENTREGUE, StatusPedido.CANCELADO);
             case ENTREGUE, CANCELADO -> List.of();
         };
+    }
+
+    private PedidoAdminResponse resposta(T_Pedido pedido) {
+        long total = pedidoRepository.contarPedidosDoTelefone(pedido.getTenant(), pedido.getTelefoneCliente());
+        return PedidoAdminResponse.of(pedido, proximosStatus(pedido), total);
     }
 
     private T_Pedido buscarPedido(UUID tenant, Long id) {

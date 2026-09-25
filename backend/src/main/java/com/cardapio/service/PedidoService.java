@@ -96,7 +96,13 @@ public class PedidoService {
         }
 
         BigDecimal taxaEntrega = BigDecimal.ZERO;
-        if (request.tipoEntrega() == TipoEntrega.ENTREGA) {
+        if (request.tipoEntrega() == TipoEntrega.ENTREGA && pelaLoja && request.taxaEntrega() != null) {
+            // a loja pode informar a taxa na mão (ex.: bairro sem zona cadastrada)
+            if (request.taxaEntrega().signum() < 0) {
+                throw new RegraNegocioException("A taxa de entrega não pode ser negativa");
+            }
+            taxaEntrega = request.taxaEntrega().setScale(2, RoundingMode.HALF_UP);
+        } else if (request.tipoEntrega() == TipoEntrega.ENTREGA) {
             CalculoFreteResponse frete = freteService.calcular(new CalculoFreteRequest(
                     tenant, request.enderecoBairro(), request.latitude(), request.longitude()));
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
+import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { useAuth } from '../../context/AuthContext'
 import { buscarPedidos, excluirPedido } from '../../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
@@ -48,6 +49,7 @@ const COLUNAS = [
 export default function PaginaPedidos() {
   const { loja, pode } = useAuth()
   const { abrirNovo } = useChatPedidos()
+  const { imprimir } = useImpressaoPedido()
   const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de excluir
 
   function excluir(pedido) {
@@ -84,9 +86,11 @@ export default function PaginaPedidos() {
       aoNovo={pode('PEDIDOS_INCLUIR') ? () => abrirNovo() : undefined}
       rotuloNovo="Novo pedido"
       chaveAtualizacao={versao}
-      acoesExtras={(pedido) => (pode('PEDIDOS_EXCLUIR')
-        ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(pedido) }]
-        : [])}
+      acoesExtras={(pedido) => [
+        { label: 'Imprimir para a cozinha', icon: 'pi pi-print', command: () => imprimir(pedido, 'COZINHA') },
+        { label: 'Imprimir para entrega', icon: 'pi pi-print', command: () => imprimir(pedido, 'ENTREGA') },
+        ...(pode('PEDIDOS_EXCLUIR') ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(pedido) }] : []),
+      ]}
       aoAbrir={(pedido) => navigate(`/admin/pedidos/${pedido.id}`)}
     />
   )

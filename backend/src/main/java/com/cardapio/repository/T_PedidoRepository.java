@@ -30,6 +30,11 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
     List<T_Pedido> buscarParaQuadro(@Param("tenant") UUID tenant, @Param("abertos") Collection<StatusPedido> abertos,
                                     @Param("desde") LocalDateTime desde);
 
+    /** Pedidos não cancelados e não excluídos de um telefone na loja (histórico do cliente). */
+    @Query("select count(p) from T_Pedido p where p.tenant = :tenant and p.deletado = false "
+            + "and p.telefoneCliente = :telefone and p.status <> com.cardapio.entity.StatusPedido.CANCELADO")
+    long contarPedidosDoTelefone(@Param("tenant") UUID tenant, @Param("telefone") String telefone);
+
     /** Soma das quantidades dos itens de cada pedido: linhas [pedidoId, quantidade]. */
     @Query("select i.pedido.id, sum(i.quantidade) from I_ItemPedido i where i.pedido.id in :ids group by i.pedido.id")
     List<Object[]> somarItensPorPedido(@Param("ids") Collection<Long> ids);

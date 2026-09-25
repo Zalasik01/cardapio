@@ -30,7 +30,8 @@ public record PedidoAdminResponse(
         StatusPedido status,
         List<StatusPedido> proximosStatus,
         LocalDateTime dataCriacao,
-        LocalDateTime dataAtualizacao
+        LocalDateTime dataAtualizacao,
+        long totalPedidosCliente
 ) {
 
     public record Item(String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes) {
@@ -39,12 +40,13 @@ public record PedidoAdminResponse(
         }
     }
 
-    public static PedidoAdminResponse of(T_Pedido p, List<StatusPedido> proximosStatus) {
+    /** totalPedidosCliente: quantos pedidos (não cancelados) esse telefone já fez na loja, contando este. */
+    public static PedidoAdminResponse of(T_Pedido p, List<StatusPedido> proximosStatus, long totalPedidosCliente) {
         return new PedidoAdminResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoRua(),
                 p.getEnderecoNumero(), p.getEnderecoComplemento(), p.getEnderecoBairro(), p.getEnderecoCidade(),
                 p.getItens().stream().map(Item::of).toList(), p.getSubtotal(), p.getTaxaEntrega(), p.getDesconto(), p.getTotal(),
                 p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), proximosStatus,
-                p.getDataCriacao(), p.getDataAtualizacao());
+                p.getDataCriacao(), p.getDataAtualizacao(), totalPedidosCliente);
     }
 }

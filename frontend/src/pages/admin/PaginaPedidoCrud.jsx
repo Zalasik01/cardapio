@@ -4,6 +4,7 @@ import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
 import { useAuth } from '../../context/AuthContext'
+import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import { atualizarStatusPedido, excluirPedido, obterPedido } from '../../api/pedidosApi'
@@ -33,6 +34,7 @@ export default function PaginaPedidoCrud() {
   const { loja, pode } = useAuth()
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
+  const { imprimir } = useImpressaoPedido()
 
   const [pedido, setPedido] = useState(null)
   const [atualizando, setAtualizando] = useState(false)
@@ -143,6 +145,10 @@ export default function PaginaPedidoCrud() {
             <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined disabled={!pedido} onClick={excluir} />
           )}
           <span className="crud__espaco" />
+          <Button type="button" label="Cozinha" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}
+                  onClick={() => imprimir(pedido, 'COZINHA')} />
+          <Button type="button" label="Entrega" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}
+                  onClick={() => imprimir(pedido, 'ENTREGA')} />
           <Button type="button" label="Fechar" severity="secondary" outlined onClick={() => navigate(ROTA_LISTA)} />
           {(pode('PEDIDOS_ALTERAR_STATUS') ? (pedido?.proximosStatus ?? []) : []).filter((proximo) => proximo !== 'CANCELADO').map((proximo) => (
             <Button key={proximo} type="button" label={ACAO_STATUS[proximo].rotulo} icon={ACAO_STATUS[proximo].icone}

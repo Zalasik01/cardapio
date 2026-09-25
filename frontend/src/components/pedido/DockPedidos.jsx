@@ -38,7 +38,9 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento }) {
   const entrega = rascunho.tipoEntrega === 'ENTREGA'
 
   const subtotal = rascunho.itens.reduce((soma, item) => soma + item.preco * item.quantidade, 0)
-  const taxa = entrega && frete?.entregavel ? Number(frete.taxa) : 0
+  const taxaManual = rascunho.taxaEntrega ?? null // definida na mão pela loja; vazio = usa a da zona de entrega
+  const taxaCalculada = frete?.entregavel ? Number(frete.taxa) : null
+  const taxa = entrega ? (taxaManual ?? taxaCalculada ?? 0) : 0
   const tipoDesconto = rascunho.descontoTipo ?? 'PERCENTUAL' // rascunhos antigos não têm o campo
   const descontoValor = Number(rascunho.descontoValor) || 0
   const desconto = Math.min(subtotal, tipoDesconto === 'PERCENTUAL' ? (subtotal * descontoValor) / 100 : descontoValor)
@@ -134,6 +136,10 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento }) {
       dispatchMsgWarn('Informe a rua e o bairro da entrega.')
       return
     }
+    if (entrega && taxaManual === null && taxaCalculada === null) {
+      dispatchMsgWarn('Este bairro não tem taxa de entrega cadastrada: informe a taxa de entrega.')
+      return
+    }
     setEnviando(true)
     try {
       const pedido = await criarPedido(loja.tenant, {
@@ -146,6 +152,7 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento }) {
         enderecoBairro: entrega ? rascunho.enderecoBairro.trim() : null,
         enderecoCidade: entrega ? rascunho.enderecoCidade.trim() : null,
         formaPagamento: formasSelecionadas.length ? formasSelecionadas.join(', ') : null,
+        taxaEntrega: entrega ? taxa : null,
         descontoTipo: desconto > 0 ? tipoDesconto : null,
         descontoValor: desconto > 0 ? descontoValor : null,
         observacoes: rascunho.observacoes.trim() || null,
@@ -208,9 +215,15 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento }) {
                            onChange={(e) => definir('enderecoCidade')(e.target.value)} />
                 <InputText className="dock-janela__larga" placeholder="Complemento" value={rascunho.enderecoComplemento}
                            onChange={(e) => definir('enderecoComplemento')(e.target.value)} />
+                <InputNumber className="dock-janela__larga" value={taxaManual} min={0} mode="currency" currency="BRL"
+                             locale="pt-BR"
+                             placeholder={taxaCalculada !== null ? `Taxa de entrega: ${formatarMoeda(taxaCalculada)}` : 'Taxa de entrega (R$)'}
+                             onValueChange={(e) => definir('taxaEntrega')(e.value ?? null)} />
                 {frete && (
-                  <small className={frete.entregavel ? 'dock-janela__frete' : 'dock-janela__frete dock-janela__frete--erro'}>
-                    {frete.entregavel ? `Taxa de entrega: ${formatarMoeda(frete.taxa)}` : frete.mensagem}
+                  <small className={frete.entregavel ? 'dock-janela__frete' : 'dock-janela__frete dock-janela__frete--aviso'}>
+                    {frete.entregavel
+                      ? `Taxa da zona: ${formatarMoeda(frete.taxa)} (você pode alterar acima)`
+                      : 'Bairro sem zona de entrega cadastrada: informe a taxa acima.'}
                   </small>
                 )}
               </div>

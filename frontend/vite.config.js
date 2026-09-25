@@ -55,7 +55,13 @@ export default defineConfig({
     allowedHosts: ['.trycloudflare.com'],
     // a API passa pelo mesmo endereço do site: quem acessa de fora (túnel) não precisa alcançar o localhost:8080
     proxy: {
-      '/api': { target: process.env.API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: true },
+      '/api': {
+        target: process.env.API_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+        // para o backend a chamada é do próprio site (mesma origem): sem o Origin do navegador (localhost ou túnel),
+        // ele não trata como pedido de outra origem e não aplica a regra de CORS
+        configure: (proxy) => proxy.on('proxyReq', (requisicao) => requisicao.removeHeader('origin')),
+      },
     },
   },
 })

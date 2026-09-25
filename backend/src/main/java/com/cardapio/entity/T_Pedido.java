@@ -87,6 +87,14 @@ public class T_Pedido extends TenantAbstract {
     @Builder.Default
     private BigDecimal taxaCancelamento = BigDecimal.ZERO;
 
+    /** Marca de pedido editado depois de criado (o que mudou fica em T_PedidoAlteracao). */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean editado = false;
+
+    @Column(columnDefinition = "timestamp(0)")
+    private LocalDateTime dataEdicao;
+
     private String formaPagamento;
     private String observacoes;
 

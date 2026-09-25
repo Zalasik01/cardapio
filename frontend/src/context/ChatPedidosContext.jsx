@@ -48,6 +48,17 @@ export function ChatPedidosProvider({ children }) {
     })
   }, [])
 
+  /** Abre (ou destaca, se já estiver aberta) a janela de edição de um pedido existente. */
+  const abrirEdicao = useCallback((pedido, rascunho) => {
+    setJanelas((atual) => {
+      const aberta = atual.find((j) => j.pedidoId === pedido.id)
+      if (aberta) return atual.map((j) => ({ ...j, minimizada: j.id !== aberta.id }))
+      if (atual.length >= MAXIMO_JANELAS) return atual
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+      return [...atual.map((j) => ({ ...j, minimizada: true })), { id, pedidoId: pedido.id, minimizada: false, rascunho }]
+    })
+  }, [])
+
   const fechar = useCallback((id) => setJanelas((atual) => atual.filter((j) => j.id !== id)), [])
 
   const alternar = useCallback((id) => {
@@ -59,8 +70,8 @@ export function ChatPedidosProvider({ children }) {
   }, [])
 
   const valor = useMemo(
-    () => ({ janelas, abrirNovo, fechar, alternar, atualizar, limiteAtingido: janelas.length >= MAXIMO_JANELAS }),
-    [janelas, abrirNovo, fechar, alternar, atualizar],
+    () => ({ janelas, abrirNovo, abrirEdicao, fechar, alternar, atualizar, limiteAtingido: janelas.length >= MAXIMO_JANELAS }),
+    [janelas, abrirNovo, abrirEdicao, fechar, alternar, atualizar],
   )
 
   return <ChatPedidosContext.Provider value={valor}>{children}</ChatPedidosContext.Provider>

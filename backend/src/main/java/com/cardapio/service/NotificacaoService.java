@@ -54,6 +54,13 @@ public class NotificacaoService {
                 pedido.getNomeCliente() + " · " + entrega + " · " + moeda(pedido));
     }
 
+    /** Pedido editado: a cozinha precisa saber (mostra as primeiras mudanças na notificação). */
+    @Transactional
+    public void pedidoEditado(T_Pedido pedido, List<String> mudancas) {
+        String resumo = String.join("; ", mudancas.stream().limit(2).toList()) + (mudancas.size() > 2 ? "..." : "");
+        criar(pedido, TipoNotificacao.PEDIDO_EDITADO, "Pedido " + pedido.getId() + " foi editado", resumo);
+    }
+
     private void criar(T_Pedido pedido, TipoNotificacao tipo, String titulo, String mensagem) {
         T_Notificacao notificacao = new T_Notificacao();
         notificacao.setTenant(pedido.getTenant());

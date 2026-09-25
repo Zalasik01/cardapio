@@ -128,6 +128,28 @@ public class PedidoService {
         return salvo;
     }
 
+    /** Valor do desconto (em reais) para o tipo e o valor informados; 0 quando não há desconto. */
+    public BigDecimal valorDoDesconto(String tipo, BigDecimal valor, BigDecimal subtotal) {
+        if (tipo == null || valor == null || valor.signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal desconto;
+        switch (tipo) {
+            case "PERCENTUAL" -> {
+                if (valor.compareTo(BigDecimal.valueOf(100)) > 0) {
+                    throw new RegraNegocioException("O desconto percentual não pode passar de 100%");
+                }
+                desconto = subtotal.multiply(valor).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            }
+            case "VALOR" -> desconto = valor.setScale(2, RoundingMode.HALF_UP);
+            default -> throw new RegraNegocioException("Tipo de desconto inválido");
+        }
+        if (desconto.compareTo(subtotal) > 0) {
+            throw new RegraNegocioException("O desconto não pode ser maior que o valor dos itens");
+        }
+        return desconto;
+    }
+
     /** Desconto da loja sobre os itens: percentual (0 a 100) ou valor fixo, nunca maior que o subtotal. */
     private BigDecimal calcularDesconto(PedidoRequest request, BigDecimal subtotal, T_Pedido pedido) {
         if (request.descontoTipo() == null || request.descontoValor() == null

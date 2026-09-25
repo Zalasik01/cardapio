@@ -17,12 +17,13 @@ public record PedidoAdminResumoResponse(
         long quantidadeItens,
         BigDecimal total,
         StatusPedido status,
-        LocalDateTime dataCriacao
+        LocalDateTime dataCriacao,
+        boolean editado
 ) {
 
     public static PedidoAdminResumoResponse of(T_Pedido p, long quantidadeItens) {
         return new PedidoAdminResumoResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoBairro(),
-                quantidadeItens, p.getTotal(), p.getStatus(), p.getDataCriacao());
+                quantidadeItens, p.getTotal(), p.getStatus(), p.getDataCriacao(), p.isEditado());
     }
 }

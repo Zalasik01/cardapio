@@ -44,6 +44,8 @@ public class PedidoAdminService {
     private final ApplicationEventPublisher eventos;
     private final PedidoService pedidoService;
     private final NotificacaoService notificacaoService;
+    private final PedidoEdicaoService edicaoService;
+    private final com.cardapio.repository.T_PedidoAlteracaoRepository alteracaoRepository;
     private final T_ProdutoRepository produtoRepository;
 
     /** Filtros da busca: o período (início e fim, no máximo 90 dias) é obrigatório; os demais são opcionais. */
@@ -69,8 +71,23 @@ public class PedidoAdminService {
     /** Quadro do painel: pedidos em andamento e os encerrados hoje, já com itens e próximos passos. */
     @Transactional(readOnly = true)
     public List<PedidoAdminResponse> quadro(UUID tenant) {
-        return pedidoRepository.buscarParaQuadro(tenant, EM_ANDAMENTO, LocalDate.now().atStartOfDay()).stream()
-                .map(pedido -> resposta(pedido))
+        List<T_Pedido> pedidos = pedidoRepository.buscarParaQuadro(tenant, EM_ANDAMENTO, LocalDate.now().atStartOfDay());
+        // histórico dos clientes e alterações em consultas únicas (nada de uma consulta por pedido)
+        Map<String, Long> historico = new HashMap<>();
+        var telefones = pedidos.stream().map(T_Pedido::getTelefoneCliente).distinct().toList();
+        if (!telefones.isEmpty()) {
+            pedidoRepository.contarPedidosPorTelefone(tenant, telefones)
+                    .forEach(linha -> historico.put((String) linha[0], ((Number) linha[1]).longValue()));
+        }
+        var idsEditados = pedidos.stream().filter(T_Pedido::isEditado).map(T_Pedido::getId).toList();
+        Map<Long, List<PedidoAdminResponse.Alteracao>> alteracoes = new HashMap<>();
+        if (!idsEditados.isEmpty()) {
+            alteracaoRepository.findByIdPedidoInOrderByIdDesc(idsEditados).forEach(a -> alteracoes
+                    .computeIfAbsent(a.getIdPedido(), chave -> new ArrayList<>()).add(PedidoAdminResponse.Alteracao.of(a)));
+        }
+        return pedidos.stream()
+                .map(p -> PedidoAdminResponse.of(p, proximosStatus(p), historico.getOrDefault(p.getTelefoneCliente(), 1L),
+                        alteracoes.getOrDefault(p.getId(), List.of())))
                 .toList();
     }
 
@@ -141,6 +158,12 @@ public class PedidoAdminService {
         return resposta(pedido);
     }
 
+    /** Edita o pedido (itens, cliente, entrega, valores) e devolve o pedido já com o histórico de alterações. */
+    @Transactional
+    public PedidoAdminResponse editar(UUID tenant, Long id, com.cardapio.dto.pedido.PedidoEdicaoRequest request, String usuarioNome) {
+        return resposta(edicaoService.editar(tenant, id, request, usuarioNome));
+    }
+
     /** Exclusão lógica: o pedido some das listas, do painel e dos números do dashboard. */
     @Transactional
     public void excluir(UUID tenant, Long id) {
@@ -180,7 +203,9 @@ public class PedidoAdminService {
 
     private PedidoAdminResponse resposta(T_Pedido pedido) {
         long total = pedidoRepository.contarPedidosDoTelefone(pedido.getTenant(), pedido.getTelefoneCliente());
-        return PedidoAdminResponse.of(pedido, proximosStatus(pedido), total);
+        List<PedidoAdminResponse.Alteracao> alteracoes = alteracaoRepository.findByIdPedidoOrderByIdDesc(pedido.getId()).stream()
+                .map(PedidoAdminResponse.Alteracao::of).toList();
+        return PedidoAdminResponse.of(pedido, proximosStatus(pedido), total, alteracoes);
     }
 
     private T_Pedido buscarPedido(UUID tenant, Long id) {

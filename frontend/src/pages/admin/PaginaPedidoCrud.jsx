@@ -5,6 +5,8 @@ import { Tooltip } from 'primereact/tooltip'
 import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
 import { useAuth } from '../../context/AuthContext'
+import { useChatPedidos } from '../../context/ChatPedidosContext'
+import { rascunhoDoPedido } from '../../utils/edicaoPedido'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
@@ -38,6 +40,7 @@ export default function PaginaPedidoCrud() {
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
   const { imprimir } = useImpressaoPedido()
+  const { abrirEdicao } = useChatPedidos()
 
   const [pedido, setPedido] = useState(null)
   const [atualizando, setAtualizando] = useState(false)
@@ -100,7 +103,10 @@ export default function PaginaPedidoCrud() {
     <>
       <SecaoCrud id="secao-pedido" titulo="Pedido">
         <div className="pedido__dados">
-          <Dado rotulo="Situação"><span className={`selo selo--${status.tom}`}>{status.rotulo}</span></Dado>
+          <Dado rotulo="Situação">
+            <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
+            {pedido.editado && <span className="selo selo--info selo--editado">Editado</span>}
+          </Dado>
           <Dado rotulo="Criado em">{formatarDataHora(pedido.dataCriacao)}</Dado>
           <Dado rotulo="Atualizado em">{pedido.dataAtualizacao && formatarDataHora(pedido.dataAtualizacao)}</Dado>
           <Dado rotulo="Cliente">{pedido.nomeCliente}</Dado>
@@ -137,6 +143,22 @@ export default function PaginaPedidoCrud() {
           <span className="pedido__total">Total: <strong>{formatarMoeda(pedido.total)}</strong></span>
         </div>
       </SecaoCrud>
+
+      {pedido.alteracoes?.length > 0 && (
+        <SecaoCrud id="secao-alteracoes" titulo="Alterações do pedido">
+          <ul className="pedido__alteracoes">
+            {pedido.alteracoes.map((alteracao, i) => (
+              <li key={i}>
+                <strong>{formatarDataHora(alteracao.data)}</strong>
+                {alteracao.usuario && <span> · {alteracao.usuario}</span>}
+                <ul>
+                  {alteracao.descricoes.map((descricao, j) => <li key={j}>{descricao}</li>)}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </SecaoCrud>
+      )}
     </>
   )
 
@@ -155,6 +177,10 @@ export default function PaginaPedidoCrud() {
             <Button type="button" label="Excluir" icon="pi pi-trash" severity="danger" outlined disabled={!pedido} onClick={excluir} />
           )}
           <span className="crud__espaco" />
+          {pode('PEDIDOS_ALTERAR') && pedido && pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO' && (
+            <Button type="button" label="Editar" icon="pi pi-pencil" severity="secondary" outlined
+                    onClick={() => abrirEdicao(pedido, rascunhoDoPedido(pedido))} />
+          )}
           <Button type="button" label="Cozinha" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}
                   onClick={() => imprimir(pedido, 'COZINHA')} />
           <Button type="button" label="Entrega" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}

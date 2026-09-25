@@ -15,7 +15,7 @@ import { calcularFrete } from '../../api/cardapioApi'
 import { buscarLoja } from '../../api/adminApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
 import {
-  buscarClientesParaPedido, criarPedido, obterFormasPagamentoParaPedido, obterProdutosParaPedido,
+  buscarClientesParaPedido, criarPedido, editarPedido, obterFormasPagamentoParaPedido, obterProdutosParaPedido,
 } from '../../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -24,7 +24,10 @@ import { TIPOS_ENTREGA } from '../../utils/pedido'
 const PERMISSOES_CRIAR = ['PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR']
 
 /** Título da janela: o cliente, quando já foi informado. */
-const tituloDe = (rascunho, indice) => (rascunho.nomeCliente.trim() ? rascunho.nomeCliente.trim() : `Novo pedido ${indice + 1}`)
+const tituloDe = (rascunho, indice, pedidoId) => {
+  if (pedidoId) return `Editando pedido ${pedidoId}`
+  return rascunho.nomeCliente.trim() ? rascunho.nomeCliente.trim() : `Novo pedido ${indice + 1}`
+}
 
 /** Uma janela de pedido em andamento (formulário compacto, estilo bate-papo). */
 function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
@@ -48,8 +51,10 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
   const desconto = Math.min(subtotal, tipoDesconto === 'PERCENTUAL' ? (subtotal * descontoValor) / 100 : descontoValor)
   const formasSelecionadas = rascunho.formasPagamento ?? []
   // só aparecem as formas que valem para o tipo do pedido e para o valor dele
-  const formasDisponiveis = formasPagamento.filter((f) => (entrega ? f.aceitaEntrega : f.aceitaRetirada)
+  const formasDisponiveisBase = formasPagamento.filter((f) => (entrega ? f.aceitaEntrega : f.aceitaRetirada)
     && (f.valorMinimo === null || subtotal >= Number(f.valorMinimo)))
+  // formas já gravadas no pedido que não estão mais na lista continuam aparecendo (edição de pedido antigo)
+  const opcoesFormas = [...formasDisponiveisBase, ...formasSelecionadas.filter((nome) => !formasDisponiveisBase.some((f) => f.nome === nome)).map((nome) => ({ nome }))]
 
   // a taxa depende do bairro: consulta quando o bairro muda (com uma pausa enquanto digita)
   useEffect(() => {
@@ -140,7 +145,7 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
     }
     setEnviando(true)
     try {
-      const pedido = await criarPedido(loja.tenant, {
+      const dados = {
         nomeCliente: rascunho.nomeCliente.trim(),
         telefoneCliente: rascunho.telefoneCliente.trim(),
         tipoEntrega: rascunho.tipoEntrega,
@@ -154,9 +159,12 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
         descontoTipo: desconto > 0 ? tipoDesconto : null,
         descontoValor: desconto > 0 ? descontoValor : null,
         observacoes: rascunho.observacoes.trim() || null,
-        itens: rascunho.itens.map((i) => ({ produtoGuid: i.guid, quantidade: i.quantidade })),
-      })
-      dispatchMsgSuccess(`Pedido ${pedido.id} criado com sucesso`)
+        itens: rascunho.itens.map((i) => ({ produtoGuid: i.guid, quantidade: i.quantidade, observacoes: i.observacoes ?? null })),
+      }
+      const pedido = janela.pedidoId
+        ? await editarPedido(loja.tenant, janela.pedidoId, dados)
+        : await criarPedido(loja.tenant, dados)
+      dispatchMsgSuccess(janela.pedidoId ? `Pedido ${pedido.id} atualizado com sucesso` : `Pedido ${pedido.id} criado com sucesso`)
       fechar(janela.id)
     } catch (e) {
       dispatchMsgError(e.mensagem)
@@ -166,12 +174,12 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
   }
 
   return (
-    <section className={`dock-janela${janela.minimizada ? ' dock-janela--minimizada' : ''}`} aria-label={tituloDe(rascunho, indice)}>
+    <section className={`dock-janela${janela.minimizada ? ' dock-janela--minimizada' : ''}`} aria-label={tituloDe(rascunho, indice, janela.pedidoId)}>
       <header className="dock-janela__topo">
         <button type="button" className="dock-janela__titulo" onClick={() => alternar(janela.id)}
                 aria-expanded={!janela.minimizada}>
           <i className="fa-solid fa-receipt" aria-hidden="true" />
-          <span className="dock-janela__nome">{tituloDe(rascunho, indice)}</span>
+          <span className="dock-janela__nome">{tituloDe(rascunho, indice, janela.pedidoId)}</span>
           {rascunho.itens.length > 0 && <span className="dock-janela__contagem">{rascunho.itens.length}</span>}
         </button>
         <button type="button" className="dock-janela__botao" aria-label={janela.minimizada ? 'Expandir' : 'Minimizar'}
@@ -260,7 +268,7 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
                 : <InputNumber value={rascunho.descontoValor} min={0} mode="currency" currency="BRL" locale="pt-BR"
                                placeholder="R$ 0,00" onValueChange={(e) => definir('descontoValor')(e.value)} />}
             </div>
-            <MultiSelect value={formasSelecionadas} options={formasDisponiveis} optionLabel="nome" optionValue="nome"
+            <MultiSelect value={formasSelecionadas} options={opcoesFormas} optionLabel="nome" optionValue="nome"
                          placeholder="Formas de pagamento" display="chip" maxSelectedLabels={3}
                          emptyMessage="Nenhuma forma de pagamento cadastrada"
                          onChange={(e) => definir('formasPagamento')(e.value)} />
@@ -272,7 +280,7 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
               {desconto > 0 && <small>Desconto - {formatarMoeda(desconto)}</small>}
               Total <strong>{formatarMoeda(subtotal - desconto + taxa)}</strong>
             </span>
-            <Button type="button" size="small" label={enviando ? 'Criando...' : 'Criar pedido'} icon="pi pi-check"
+            <Button type="button" size="small" label={enviando ? 'Salvando...' : (janela.pedidoId ? 'Salvar alterações' : 'Criar pedido')} icon="pi pi-check"
                     disabled={enviando} onClick={enviar} />
           </footer>
         </>

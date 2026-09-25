@@ -33,23 +33,37 @@ public record PedidoAdminResponse(
         LocalDateTime dataAtualizacao,
         long totalPedidosCliente,
         String motivoCancelamento,
-        BigDecimal taxaCancelamento
+        BigDecimal taxaCancelamento,
+        String descontoTipo,
+        BigDecimal descontoValor,
+        boolean editado,
+        LocalDateTime dataEdicao,
+        List<Alteracao> alteracoes
 ) {
 
-    public record Item(String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes) {
+    public record Item(java.util.UUID produtoGuid, String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes) {
         static Item of(I_ItemPedido i) {
-            return new Item(i.getNomeProduto(), i.getPrecoUnitario(), i.getQuantidade(), i.getTotalItem(), i.getObservacoes());
+            return new Item(i.getProduto() != null ? i.getProduto().getGuid() : null, i.getNomeProduto(), i.getPrecoUnitario(), i.getQuantidade(), i.getTotalItem(), i.getObservacoes());
+        }
+    }
+
+    /** Uma edição do pedido: quando, quem e o que mudou. */
+    public record Alteracao(LocalDateTime data, String usuario, List<String> descricoes) {
+        public static Alteracao of(com.cardapio.entity.T_PedidoAlteracao a) {
+            return new Alteracao(a.getDataCriacao(), a.getUsuarioNome(), List.of(a.getDescricoes().split("\n")));
         }
     }
 
     /** totalPedidosCliente: quantos pedidos (não cancelados) esse telefone já fez na loja, contando este. */
-    public static PedidoAdminResponse of(T_Pedido p, List<StatusPedido> proximosStatus, long totalPedidosCliente) {
+    public static PedidoAdminResponse of(T_Pedido p, List<StatusPedido> proximosStatus, long totalPedidosCliente,
+                                         List<Alteracao> alteracoes) {
         return new PedidoAdminResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoRua(),
                 p.getEnderecoNumero(), p.getEnderecoComplemento(), p.getEnderecoBairro(), p.getEnderecoCidade(),
                 p.getItens().stream().map(Item::of).toList(), p.getSubtotal(), p.getTaxaEntrega(), p.getDesconto(), p.getTotal(),
                 p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), proximosStatus,
                 p.getDataCriacao(), p.getDataAtualizacao(), totalPedidosCliente,
-                p.getMotivoCancelamento(), p.getTaxaCancelamento());
+                p.getMotivoCancelamento(), p.getTaxaCancelamento(), p.getDescontoTipo(), p.getDescontoValor(),
+                p.isEditado(), p.getDataEdicao(), alteracoes);
     }
 }

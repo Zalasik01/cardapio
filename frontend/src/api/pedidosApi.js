@@ -39,6 +39,9 @@ export const excluirPedido = (tenant, id) => http.delete(`${base(tenant)}/${id}`
 /** TEMPORÁRIO: cria um pedido como se fosse de um cliente, para testar as notificações. */
 export const simularPedidoCliente = (tenant) => http.post(`${base(tenant)}/simular-cliente`).then((res) => res.data)
 
+/** Edita o pedido (mesmo formato do lançamento, sem o tenant). Devolve o pedido com o histórico de alterações. */
+export const editarPedido = (tenant, id, dados) => http.put(`${base(tenant)}/${id}`, dados).then((res) => res.data)
+
 export const atualizarStatusPedido = (tenant, id, status, extra = {}) =>
   http.put(`${base(tenant)}/${id}/status`, { status, ...extra }).then((res) => res.data)
 

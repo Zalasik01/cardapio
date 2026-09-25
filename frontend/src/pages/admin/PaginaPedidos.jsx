@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { useAuth } from '../../context/AuthContext'
-import { buscarPedidos, excluirPedido } from '../../api/pedidosApi'
+import { rascunhoDoPedido } from '../../utils/edicaoPedido'
+import { buscarPedidos, excluirPedido, obterPedido } from '../../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import TelaBusca from '../../components/crud/TelaBusca'
@@ -40,7 +41,12 @@ const COLUNAS = [
     cabecalho: 'Situação',
     render: (pedido) => {
       const status = STATUS_PEDIDO[pedido.status]
-      return <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
+      return (
+        <>
+          <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
+          {pedido.editado && <span className="selo selo--info selo--editado">Editado</span>}
+        </>
+      )
     },
   },
 ]
@@ -48,9 +54,18 @@ const COLUNAS = [
 /** Operação > Pedidos: os pedidos da loja num período (no máximo 90 dias; padrão: últimos 7 dias). */
 export default function PaginaPedidos() {
   const { loja, pode } = useAuth()
-  const { abrirNovo } = useChatPedidos()
+  const { abrirNovo, abrirEdicao } = useChatPedidos()
   const { imprimir } = useImpressaoPedido()
   const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de excluir
+
+  async function editar(pedido) {
+    try {
+      const completo = await obterPedido(loja.tenant, pedido.id)
+      abrirEdicao(completo, rascunhoDoPedido(completo))
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
+  }
 
   function excluir(pedido) {
     confirmar({
@@ -87,6 +102,8 @@ export default function PaginaPedidos() {
       rotuloNovo="Novo pedido"
       chaveAtualizacao={versao}
       acoesExtras={(pedido) => [
+        ...(pode('PEDIDOS_ALTERAR') && pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO'
+          ? [{ label: 'Editar', icon: 'pi pi-pencil', command: () => editar(pedido) }] : []),
         { label: 'Imprimir para a cozinha', icon: 'pi pi-print', command: () => imprimir(pedido, 'COZINHA') },
         { label: 'Imprimir para entrega', icon: 'pi pi-print', command: () => imprimir(pedido, 'ENTREGA') },
         ...(pode('PEDIDOS_EXCLUIR') ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(pedido) }] : []),

@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import { atualizarStatusPedido, obterQuadroPedidos } from '../../api/pedidosApi'
+import { rascunhoDoPedido, resumoUltimaEdicao } from '../../utils/edicaoPedido'
 import BotaoRota from '../../components/pedido/BotaoRota'
 import { useNotificacoes } from '../../context/NotificacoesContext'
 import { Skeleton } from '../../components/Skeleton'
@@ -28,7 +29,7 @@ function tempoDecorrido(iso, agora) {
 }
 
 /** Aparência do cartão de um pedido (também usada na cópia que acompanha o mouse durante o arraste). */
-function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, aoImprimir, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
+function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, aoImprimir, aoEditar, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
   const proximo = pedido.proximosStatus.find((s) => s !== 'CANCELADO')
   const restantes = pedido.itens.length - ITENS_NO_CARTAO
 
@@ -39,6 +40,12 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
         <Link to={`/admin/pedidos/${pedido.id}`} className="painel-cartao__numero" onPointerDown={(e) => e.stopPropagation()}>
           Pedido {pedido.id}
         </Link>
+        {pedido.editado && (
+          <span className="selo selo--info selo--editado painel-cartao__editado" data-pr-tooltip={resumoUltimaEdicao(pedido)}
+                data-pr-position="top">
+            <i className="fa-solid fa-pen" aria-hidden="true" /> Editado
+          </span>
+        )}
         <span className="painel-cartao__tempo">{tempoDecorrido(pedido.dataCriacao, agora)}</span>
       </header>
       <strong className="painel-cartao__cliente">{pedido.nomeCliente}</strong>
@@ -56,6 +63,10 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
         <strong>{formatarMoeda(pedido.total)}</strong>
         <span onPointerDown={(e) => e.stopPropagation()} className="painel-cartao__acoes">
           <BotaoRota pedido={pedido} />
+          {aoEditar && pedido.status !== 'ENTREGUE' && (
+            <Button type="button" icon="pi pi-pencil" severity="secondary" text rounded aria-label="Editar pedido"
+                    data-pr-tooltip="Editar pedido" onClick={() => aoEditar(pedido)} />
+          )}
           {aoImprimir && (
             <Button type="button" icon="pi pi-print" severity="secondary" text rounded aria-label="Imprimir para a cozinha"
                     data-pr-tooltip="Imprimir para a cozinha" onClick={() => aoImprimir(pedido, 'COZINHA')} />
@@ -130,7 +141,7 @@ function PainelSkeleton() {
  */
 export default function PaginaPainelPedidos() {
   const { loja, pode } = useAuth()
-  const { abrirNovo, limiteAtingido } = useChatPedidos()
+  const { abrirNovo, abrirEdicao, limiteAtingido } = useChatPedidos()
   const { imprimir } = useImpressaoPedido()
   const tenant = loja.tenant
   const [pedidos, setPedidos] = useState(null)
@@ -211,11 +222,11 @@ export default function PaginaPainelPedidos() {
     return grupos
   }, [pedidos])
 
-  const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, aoImprimir: imprimir, podeAlterar, podeCancelar }
+  const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, aoImprimir: imprimir, aoEditar: pode('PAINEL_PEDIDOS_ALTERAR') ? (p) => abrirEdicao(p, rascunhoDoPedido(p)) : undefined, podeAlterar, podeCancelar }
 
   return (
     <div className="pagina-admin painel-pagina">
-      <Tooltip target=".botao-rota, .painel-cartao .p-button" />
+      <Tooltip target=".botao-rota, .painel-cartao .p-button, .painel-cartao__editado" className="tooltip-multilinha" />
       <div className="painel-pagina__topo">
         <div className="painel-pagina__texto">
           <h1>Painel de pedidos</h1>

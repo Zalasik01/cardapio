@@ -164,3 +164,30 @@
 
   &--texto { width: auto; height: auto; margin-left: 0.4rem; padding: 0.1rem 0.4rem; border-radius: 3px; }
 }
+
+// selo "Editado" e a lista de alterações do pedido
+.selo--info { background: #dbeafe; color: #1e40af; }
+.selo--editado { margin-left: 0.4rem; }
+
+.painel-cartao__editado { margin-left: 0; cursor: default; font-size: 0.7rem; }
+
+.tooltip-multilinha .p-tooltip-text { white-space: pre-line; font-size: 0.75rem; }
+
+.pedido__alteracoes {
+  margin: 0;
+  padding-left: 1.1rem;
+
+  > li { margin-bottom: 0.7rem; }
+  ul { margin: 0.25rem 0 0; padding-left: 1.1rem; font-size: 0.85rem; }
+}
+
+// cartão do painel: com o selo "Editado" e vários ícones, o topo e as ações quebram em linhas limpas
+.painel-cartao__topo { flex-wrap: wrap; row-gap: 0.15rem; }
+.painel-cartao__numero { white-space: nowrap; }
+
+.painel-cartao__acoes {
+  .p-button.p-button-icon-only { width: 1.8rem; height: 1.8rem; }
+}
+
+.painel-cartao__rodape { row-gap: 0.3rem; }
+.painel-cartao__acoes { margin-left: auto; }

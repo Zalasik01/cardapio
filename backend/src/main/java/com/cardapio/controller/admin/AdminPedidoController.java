@@ -81,6 +81,15 @@ public class AdminPedidoController {
         return clientePedidoService.buscar(tenant, busca);
     }
 
+    /** Edita o pedido (só enquanto não foi entregue nem cancelado); registra o que mudou. */
+    @PreAuthorize("@perm.tem('PEDIDOS_ALTERAR', 'PAINEL_PEDIDOS_ALTERAR')")
+    @PutMapping("/{id}")
+    public PedidoAdminResponse editar(@PathVariable UUID tenant, @PathVariable Long id,
+                                      @Valid @RequestBody com.cardapio.dto.pedido.PedidoEdicaoRequest request,
+                                      @org.springframework.security.core.annotation.AuthenticationPrincipal com.cardapio.security.AppUserDetails usuario) {
+        return pedidoService.editar(tenant, id, request, usuario.getUsuario().getNome());
+    }
+
     /** TEMPORÁRIO: simula um pedido de cliente para testar as notificações. */
     @PreAuthorize("@perm.tem('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR')")
     @PostMapping("/simular-cliente")

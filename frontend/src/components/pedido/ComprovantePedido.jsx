@@ -44,6 +44,12 @@ export default function ComprovantePedido({ pedido, via, loja }) {
       </header>
 
       <div className="comprovante__numero">Pedido {pedido.id}</div>
+      {pedido.editado && (
+        <div className="comprovante__editado">
+          <strong>*** PEDIDO EDITADO ***</strong>
+          {pedido.alteracoes?.[0]?.descricoes.map((descricao, i) => <div key={i}>{descricao}</div>)}
+        </div>
+      )}
       <div className="comprovante__destaque">{rotuloTipoEntrega(pedido.tipoEntrega).toUpperCase()}</div>
       <section className="comprovante__bloco">
         <Linha rotulo="Feito em">{formatarDataHora(pedido.dataCriacao)}</Linha>

@@ -5,5 +5,7 @@ public enum TipoNotificacao {
     /** Chegou um pedido novo feito pelo cliente. */
     NOVO_PEDIDO,
     /** Pedido pendente há tempo demais sem ser confirmado. */
-    PEDIDO_AGUARDANDO
+    PEDIDO_AGUARDANDO,
+    /** Um pedido foi editado (a cozinha precisa saber). */
+    PEDIDO_EDITADO
 }

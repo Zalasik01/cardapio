@@ -1,6 +1,7 @@
 /** Permissão de leitura exigida por cada tela do painel (primeiro trecho da rota depois de /admin). */
 const LEITURA_POR_ROTA = {
   dashboard: 'DASHBOARD_LEITURA',
+  'painel-pedidos': 'PAINEL_PEDIDOS_LEITURA',
   pedidos: 'PEDIDOS_LEITURA',
   usuarios: 'USUARIOS_LEITURA',
   funcionarios: 'FUNCIONARIOS_LEITURA',

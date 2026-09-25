@@ -16,6 +16,9 @@ export const buscarPedidos = (tenant, { page = 0, size = 10, ...filtros }) => {
 
 export const obterPedido = (tenant, id) => http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 
+/** Pedidos do painel (kanban): em andamento e encerrados hoje, com itens e próximos passos. */
+export const obterQuadroPedidos = (tenant) => http.get(`${base(tenant)}/quadro`).then((res) => res.data)
+
 export const atualizarStatusPedido = (tenant, id, status) =>
   http.put(`${base(tenant)}/${id}/status`, { status }).then((res) => res.data)
 

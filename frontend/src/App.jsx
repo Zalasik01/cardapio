@@ -17,6 +17,7 @@ import PaginaCategoriaCrud from './pages/admin/PaginaCategoriaCrud'
 import PaginaPedidoCrud from './pages/admin/PaginaPedidoCrud'
 import PaginaZonaEntregaCrud from './pages/admin/PaginaZonaEntregaCrud'
 import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
+import PaginaPainelPedidos from './pages/admin/PaginaPainelPedidos'
 import PaginaPedidos from './pages/admin/PaginaPedidos'
 import PaginaLoja from './pages/admin/PaginaLoja'
 import PaginaDashboard from './pages/admin/PaginaDashboard'
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="ingredientes" element={<PaginaProdutosCadastro tipo="INGREDIENTE" />} />
             <Route path="ingredientes/novo" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-novo" />} />
             <Route path="ingredientes/:id" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-editar" />} />
+            <Route path="painel-pedidos" element={<PaginaPainelPedidos />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
             <Route path="pedidos/:id" element={<PaginaPedidoCrud />} />
             <Route path="categorias" element={<PaginaCategorias />} />

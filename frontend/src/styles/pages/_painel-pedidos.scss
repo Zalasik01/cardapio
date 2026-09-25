@@ -1,0 +1,132 @@
+// Painel de pedidos (kanban)
+.painel-pagina__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+// as colunas dividem a largura; em telas pequenas o quadro rola só dentro dele, nunca a página
+.painel-quadro {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(14rem, 1fr);
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  align-items: start;
+}
+
+.painel-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 12rem;
+  padding: 0.6rem;
+  background: #ebebeb;
+  border-radius: 3px;
+  border-top: 3px solid #bdbdbd;
+
+  &--alerta { border-top-color: #f59e0b; }
+  &--sucesso { border-top-color: #22c55e; }
+  &--erro { border-top-color: #ef4444; }
+
+  &--alvo { outline: 2px dashed #94a3b8; outline-offset: -2px; }
+  &--sobre { background: #dbeafe; }
+}
+
+.painel-coluna__titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.painel-coluna__total {
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.painel-coluna__cartoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.painel-coluna__vazio {
+  padding: 1rem 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.painel-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 3px;
+  font-size: 0.82rem;
+  cursor: grab;
+  touch-action: none;
+
+  &--arrastando { opacity: 0.35; }
+  &--esqueleto { cursor: default; }
+
+  // pedido que acabou de chegar: pisca até ser tratado
+  &--novo { animation: painel-cartao-novo 1.2s ease-in-out 6; border-color: #f59e0b; }
+}
+
+@keyframes painel-cartao-novo {
+  50% { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.45); }
+}
+
+.painel-cartao__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.painel-cartao__numero {
+  font-weight: 700;
+  color: var(--cor-primaria);
+  text-decoration: none;
+}
+
+.painel-cartao__tempo,
+.painel-cartao__linha,
+.painel-cartao__mais {
+  color: var(--cor-texto-suave);
+  font-size: 0.76rem;
+}
+
+.painel-cartao__itens {
+  margin: 0.2rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.painel-cartao__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.painel-cartao__acoes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  cursor: default;
+}

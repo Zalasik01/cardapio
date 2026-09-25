@@ -80,8 +80,8 @@ export function NotificacoesProvider({ children }) {
 
   const aoChegarNotificacao = useCallback((notificacao) => {
     setNotificacoes((atual) => (atual.some((n) => n.id === notificacao.id) ? atual : [notificacao, ...atual].slice(0, 30)))
-    // com a página aberta na frente, o aviso na própria tela basta; em segundo plano vale a notificação do navegador
-    if (!document.hidden) {
+    // a notificação do navegador tem prioridade; o aviso na própria tela só aparece quando ela não está ativada
+    if (navegadorRef.current !== 'granted') {
       const texto = [notificacao.titulo, notificacao.mensagem].filter(Boolean).join(' - ')
       if (notificacao.tipo === 'PEDIDO_AGUARDANDO') dispatchMsgWarn(texto)
       else dispatchMsgSuccess(texto)

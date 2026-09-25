@@ -58,7 +58,7 @@ export default function PaginaPedidoCrud() {
     setAtualizando(true)
     try {
       setPedido(await atualizarStatusPedido(loja.tenant, id, status, extra))
-      dispatchMsgSuccess('Situação do pedido atualizada')
+      dispatchMsgSuccess(`Pedido ${id} - ${pedido.nomeCliente}: ${STATUS_PEDIDO[status].rotulo.toLowerCase()}`)
     } catch (e) {
       dispatchMsgError(e.mensagem)
     } finally {

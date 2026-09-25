@@ -43,6 +43,7 @@ public class PedidoAdminService {
     private final T_PedidoRepository pedidoRepository;
     private final ApplicationEventPublisher eventos;
     private final PedidoService pedidoService;
+    private final NotificacaoService notificacaoService;
     private final T_ProdutoRepository produtoRepository;
 
     /** Filtros da busca: o período (início e fim, no máximo 90 dias) é obrigatório; os demais são opcionais. */
@@ -121,6 +122,22 @@ public class PedidoAdminService {
         pedido.setStatus(novoStatus);
         pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
+        return resposta(pedido);
+    }
+
+    /**
+     * TEMPORÁRIO (teste das notificações): cria um pedido de retirada como se fosse de um cliente do cardápio, com o
+     * primeiro produto disponível, e dispara a notificação de pedido novo. Remover junto com o botão do sino.
+     */
+    @Transactional
+    public PedidoAdminResponse simularPedidoCliente(UUID tenant) {
+        ProdutoParaPedido produto = produtosParaPedido(tenant).stream().findFirst()
+                .orElseThrow(() -> new RegraNegocioException("Cadastre um produto final ativo para simular um pedido"));
+        var item = new com.cardapio.dto.pedido.ItemPedidoRequest(produto.guid(), 2, null);
+        var request = new PedidoRequest(tenant, "Cliente Teste", "11999990000", com.cardapio.entity.TipoEntrega.RETIRADA,
+                null, null, null, null, null, null, null, List.of(item), "PIX", "Pedido de teste", null, null, null);
+        T_Pedido pedido = pedidoService.criar(request, true);
+        notificacaoService.pedidoNovo(pedido);
         return resposta(pedido);
     }
 

@@ -1,7 +1,10 @@
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { OverlayPanel } from 'primereact/overlaypanel'
+import { useAuth } from '../context/AuthContext'
 import { useNotificacoes } from '../context/NotificacoesContext'
+import { simularPedidoCliente } from '../api/pedidosApi'
+import { dispatchMsgError } from '../store/dispatchMsg'
 
 /** "há 5 min", "há 2 h" ou a data, a partir do horário da notificação. */
 function tempoDesde(iso) {
@@ -18,12 +21,18 @@ function tempoDesde(iso) {
  */
 export default function SinoNotificacoes() {
   const navigate = useNavigate()
+  const { loja, pode } = useAuth()
   const painel = useRef(null)
   const {
     ativo, notificacoes, naoLidas, lidasAte, marcarTodasLidas, somLigado, alternarSom, navegador, ativarNavegador,
   } = useNotificacoes()
 
   if (!ativo) return null
+
+  // TEMPORÁRIO (teste): cria um pedido como se fosse de um cliente e gera a notificação
+  function simular() {
+    simularPedidoCliente(loja.tenant).catch((e) => dispatchMsgError(e.mensagem))
+  }
 
   function abrir(notificacao) {
     painel.current.hide()
@@ -64,6 +73,14 @@ export default function SinoNotificacoes() {
               </li>
             ))}
           </ul>
+        )}
+
+        {pode('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR') && (
+          <div className="sino__rodape sino__teste">
+            <button type="button" className="sino__link" onClick={simular}>
+              <i className="fa-solid fa-flask" aria-hidden="true" /> Simular pedido de cliente (teste)
+            </button>
+          </div>
         )}
 
         <div className="sino__rodape">

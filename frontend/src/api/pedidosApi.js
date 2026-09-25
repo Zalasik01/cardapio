@@ -36,6 +36,9 @@ export const buscarClientesParaPedido = (tenant, busca) =>
 export const excluirPedido = (tenant, id) => http.delete(`${base(tenant)}/${id}`)
 
 /** extra: no cancelamento, { motivo, taxaCancelamento }. */
+/** TEMPORÁRIO: cria um pedido como se fosse de um cliente, para testar as notificações. */
+export const simularPedidoCliente = (tenant) => http.post(`${base(tenant)}/simular-cliente`).then((res) => res.data)
+
 export const atualizarStatusPedido = (tenant, id, status, extra = {}) =>
   http.put(`${base(tenant)}/${id}/status`, { status, ...extra }).then((res) => res.data)
 

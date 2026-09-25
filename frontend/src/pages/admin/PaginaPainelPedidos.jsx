@@ -176,7 +176,7 @@ export default function PaginaPainelPedidos() {
     try {
       const atualizado = await atualizarStatusPedido(tenant, pedido.id, status, extra)
       setPedidos((lista) => lista.map((p) => (p.id === atualizado.id ? atualizado : p)))
-      dispatchMsgSuccess(`Pedido ${pedido.id}: ${STATUS_PEDIDO[status].rotulo.toLowerCase()}`)
+      dispatchMsgSuccess(`Pedido ${pedido.id} - ${pedido.nomeCliente}: ${STATUS_PEDIDO[status].rotulo.toLowerCase()}`)
     } catch (e) {
       dispatchMsgError(e.mensagem)
       carregar()

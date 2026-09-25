@@ -81,6 +81,13 @@ public class AdminPedidoController {
         return clientePedidoService.buscar(tenant, busca);
     }
 
+    /** TEMPORÁRIO: simula um pedido de cliente para testar as notificações. */
+    @PreAuthorize("@perm.tem('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR')")
+    @PostMapping("/simular-cliente")
+    public ResponseEntity<PedidoAdminResponse> simularCliente(@PathVariable UUID tenant) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.simularPedidoCliente(tenant));
+    }
+
     /** Exclusão lógica do pedido. */
     @PreAuthorize("@perm.tem('PEDIDOS_EXCLUIR', 'PAINEL_PEDIDOS_EXCLUIR')")
     @DeleteMapping("/{id}")

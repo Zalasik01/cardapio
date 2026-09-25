@@ -1,5 +1,8 @@
 package com.cardapio.service;
 
+import java.math.BigDecimal;
+import com.cardapio.dto.pedido.PedidoRequest;
+import com.cardapio.repository.T_ProdutoRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import com.cardapio.dto.PaginaResponse;
 import com.cardapio.dto.pedido.PedidoAdminResponse;
@@ -38,6 +41,8 @@ public class PedidoAdminService {
 
     private final T_PedidoRepository pedidoRepository;
     private final ApplicationEventPublisher eventos;
+    private final PedidoService pedidoService;
+    private final T_ProdutoRepository produtoRepository;
 
     /** Filtros da busca: o período (início e fim, no máximo 90 dias) é obrigatório; os demais são opcionais. */
     public record Filtro(String busca, StatusPedido status, TipoEntrega tipoEntrega, LocalDate inicio, LocalDate fim) {
@@ -65,6 +70,30 @@ public class PedidoAdminService {
         return pedidoRepository.buscarParaQuadro(tenant, EM_ANDAMENTO, LocalDate.now().atStartOfDay()).stream()
                 .map(pedido -> PedidoAdminResponse.of(pedido, proximosStatus(pedido)))
                 .toList();
+    }
+
+    /** Produto que a loja pode lançar num pedido (produto final ativo e disponível). */
+    public record ProdutoParaPedido(java.util.UUID guid, String nome, BigDecimal preco, String categoria) {
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProdutoParaPedido> produtosParaPedido(UUID tenant) {
+        return produtoRepository.findByTenantOrderByOrdemExibicaoAsc(tenant).stream()
+                .filter(produto -> produto.isAtivo() && produto.isDisponivel())
+                .map(produto -> new ProdutoParaPedido(produto.getGuid(), produto.getNome(), produto.getPreco(),
+                        produto.getCategoria() != null ? produto.getCategoria().getNome() : null))
+                .toList();
+    }
+
+    /** Cria um pedido lançado pela loja; ele já chega ao painel (evento NOVO) como qualquer outro. */
+    @Transactional
+    public PedidoAdminResponse criar(UUID tenant, PedidoRequest request) {
+        PedidoRequest daLoja = new PedidoRequest(tenant, request.nomeCliente(), request.telefoneCliente(),
+                request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
+                request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
+                request.itens(), request.formaPagamento(), request.observacoes());
+        T_Pedido pedido = pedidoService.criar(daLoja, true);
+        return PedidoAdminResponse.of(pedido, proximosStatus(pedido));
     }
 
     @Transactional(readOnly = true)

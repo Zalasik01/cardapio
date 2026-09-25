@@ -1,5 +1,8 @@
 package com.cardapio.controller.admin;
 
+import com.cardapio.dto.pedido.PedidoRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import com.cardapio.service.PedidoEventos;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -52,6 +55,19 @@ public class AdminPedidoController {
                                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
                                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
         return pedidoService.resumo(tenant, inicio, fim);
+    }
+
+    @PreAuthorize("@perm.tem('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR')")
+    @GetMapping("/produtos")
+    public List<PedidoAdminService.ProdutoParaPedido> produtos(@PathVariable UUID tenant) {
+        return pedidoService.produtosParaPedido(tenant);
+    }
+
+    /** Cria um pedido lançado pela loja (balcão, telefone...). */
+    @PreAuthorize("@perm.tem('PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR')")
+    @PostMapping
+    public ResponseEntity<PedidoAdminResponse> criar(@PathVariable UUID tenant, @Valid @RequestBody PedidoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.criar(tenant, request));
     }
 
     /** Pedidos do painel (kanban): em andamento e encerrados hoje. */

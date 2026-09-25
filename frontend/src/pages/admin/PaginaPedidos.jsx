@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useAuth } from '../../context/AuthContext'
 import { buscarPedidos } from '../../api/pedidosApi'
 import TelaBusca from '../../components/crud/TelaBusca'
@@ -42,7 +43,8 @@ const COLUNAS = [
 
 /** Operação > Pedidos: os pedidos da loja num período (no máximo 90 dias; padrão: últimos 7 dias). */
 export default function PaginaPedidos() {
-  const { loja } = useAuth()
+  const { loja, pode } = useAuth()
+  const { abrirNovo } = useChatPedidos()
   const navigate = useNavigate()
 
   return (
@@ -59,6 +61,8 @@ export default function PaginaPedidos() {
         const { inicio, fim } = periodoParaIso(resolverPeriodo(periodo, PERIODO_PADRAO))
         return buscarPedidos(loja.tenant, { busca, ...demais, inicio, fim, page, size })
       }}
+      aoNovo={pode('PEDIDOS_INCLUIR') ? () => abrirNovo() : undefined}
+      rotuloNovo="Novo pedido"
       aoAbrir={(pedido) => navigate(`/admin/pedidos/${pedido.id}`)}
     />
   )

@@ -17,6 +17,7 @@ import PaginaCategoriaCrud from './pages/admin/PaginaCategoriaCrud'
 import PaginaPedidoCrud from './pages/admin/PaginaPedidoCrud'
 import PaginaZonaEntregaCrud from './pages/admin/PaginaZonaEntregaCrud'
 import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
+import { ChatPedidosProvider } from './context/ChatPedidosContext'
 import PaginaPainelPedidos from './pages/admin/PaginaPainelPedidos'
 import PaginaPedidos from './pages/admin/PaginaPedidos'
 import PaginaLoja from './pages/admin/PaginaLoja'
@@ -49,7 +50,7 @@ export default function App() {
             path="/admin"
             element={
               <RotaProtegida>
-                <LayoutAdmin />
+                <ChatPedidosProvider><LayoutAdmin /></ChatPedidosProvider>
               </RotaProtegida>
             }
           >

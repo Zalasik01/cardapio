@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { buscarMenu } from '../../api/menuApi'
 import { MenuSkeleton } from '../../components/Skeleton'
+import DockPedidos from '../../components/pedido/DockPedidos'
 import PaginaAcessoNegado from './PaginaAcessoNegado'
 import { permissaoDaRota } from '../../utils/permissoesRotas'
 import CabecalhoAdmin from '../../components/CabecalhoAdmin'
@@ -243,6 +244,8 @@ export default function LayoutAdmin() {
           {!trocaObrigatoria && (acessoNegado ? <PaginaAcessoNegado /> : <Outlet context={{ definirMigalha: setMigalhaExtra }} />)}
         </main>
       </div>
+
+      {!trocaObrigatoria && <DockPedidos />}
 
       {trocaObrigatoria && <DialogoTrocaSenhaObrigatoria aoSair={handleSair} />}
     </div>

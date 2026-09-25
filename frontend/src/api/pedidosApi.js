@@ -19,6 +19,12 @@ export const obterPedido = (tenant, id) => http.get(`${base(tenant)}/${id}`).the
 /** Pedidos do painel (kanban): em andamento e encerrados hoje, com itens e próximos passos. */
 export const obterQuadroPedidos = (tenant) => http.get(`${base(tenant)}/quadro`).then((res) => res.data)
 
+/** Produtos que a loja pode lançar num pedido: [{ guid, nome, preco, categoria }]. */
+export const obterProdutosParaPedido = (tenant) => http.get(`${base(tenant)}/produtos`).then((res) => res.data)
+
+/** Cria um pedido lançado pela loja (mesmo formato do pedido do cardápio, sem o tenant). */
+export const criarPedido = (tenant, dados) => http.post(base(tenant), { ...dados, tenant }).then((res) => res.data)
+
 export const atualizarStatusPedido = (tenant, id, status) =>
   http.put(`${base(tenant)}/${id}/status`, { status }).then((res) => res.data)
 

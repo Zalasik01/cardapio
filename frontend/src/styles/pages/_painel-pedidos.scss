@@ -7,6 +7,12 @@
   flex-wrap: wrap;
 }
 
+.painel-pagina__acoes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .painel-pagina__texto {
   flex: 1 1 20rem;
 }

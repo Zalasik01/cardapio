@@ -30,11 +30,21 @@ public class PedidoService {
     private final FuncionamentoService funcionamentoService;
     private final ApplicationEventPublisher eventos;
 
+    /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
     public T_Pedido criar(PedidoRequest request) {
+        return criar(request, false);
+    }
+
+    /**
+     * pelaLoja: pedido lançado pela própria loja (balcão, telefone, WhatsApp); não depende de a loja estar
+     * aberta nem do valor mínimo do pedido.
+     */
+    @Transactional
+    public T_Pedido criar(PedidoRequest request, boolean pelaLoja) {
         S_Loja loja = lojaService.buscarPorTenant(request.tenant());
         UUID tenant = loja.getGuid();
-        if (!funcionamentoService.estaAberta(loja)) {
+        if (!pelaLoja && !funcionamentoService.estaAberta(loja)) {
             throw new RegraNegocioException("A loja está fechada no momento. Confira o horário de funcionamento.");
         }
 
@@ -81,7 +91,7 @@ public class PedidoService {
             subtotal = subtotal.add(totalItem);
         }
 
-        if (subtotal.compareTo(loja.getValorMinimoPedido()) < 0) {
+        if (!pelaLoja && subtotal.compareTo(loja.getValorMinimoPedido()) < 0) {
             throw new RegraNegocioException("Valor mínimo do pedido é R$ " + loja.getValorMinimoPedido());
         }
 

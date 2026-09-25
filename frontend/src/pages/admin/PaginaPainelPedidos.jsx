@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button } from 'primereact/button'
+import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
@@ -130,6 +131,7 @@ function PainelSkeleton() {
  */
 export default function PaginaPainelPedidos() {
   const { loja, pode } = useAuth()
+  const { abrirNovo, limiteAtingido } = useChatPedidos()
   const tenant = loja.tenant
   const [pedidos, setPedidos] = useState(null)
   const [atualizando, setAtualizando] = useState(null)
@@ -240,9 +242,15 @@ export default function PaginaPainelPedidos() {
             Atualiza sozinho. Arraste o pedido para a próxima situação ou use o botão do cartão. Mostra os pedidos em andamento e os encerrados hoje.
           </p>
         </div>
+        <div className="painel-pagina__acoes">
+        {pode('PAINEL_PEDIDOS_INCLUIR') && (
+          <Button type="button" size="small" icon="pi pi-plus" label="Novo pedido" disabled={limiteAtingido}
+                  onClick={() => abrirNovo()} />
+        )}
         <Button type="button" outlined severity="secondary" size="small" aria-pressed={somLigado}
                 icon={somLigado ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark'}
                 label={somLigado ? 'Som ligado' : 'Som desligado'} onClick={alternarSom} />
+        </div>
       </div>
 
       {pedidos === null ? <PainelSkeleton /> : (

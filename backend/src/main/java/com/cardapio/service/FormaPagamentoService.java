@@ -44,6 +44,11 @@ public class FormaPagamentoService {
     }
 
     @Transactional(readOnly = true)
+    public int proximaOrdem(UUID tenant) {
+        return repository.proximaOrdem(tenant);
+    }
+
+    @Transactional(readOnly = true)
     public FormaPagamentoResponse obter(UUID tenant, Long id) {
         return FormaPagamentoResponse.of(buscarForma(tenant, id));
     }
@@ -107,7 +112,7 @@ public class FormaPagamentoService {
         }
         forma.setAceitaEntrega(entrega);
         forma.setAceitaRetirada(retirada);
-        forma.setOrdem(r.ordem() != null ? r.ordem() : 0);
+        forma.setOrdem(r.ordem() != null ? r.ordem() : repository.proximaOrdem(forma.getTenant()));
         if (r.ativo() != null) {
             forma.setAtivo(r.ativo());
         }

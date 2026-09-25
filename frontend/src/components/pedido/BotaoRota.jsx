@@ -1,30 +1,42 @@
-import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { obterDadosLoja } from '../../api/adminApi'
+import { dispatchMsgError, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { rotaGoogleMaps } from '../../utils/mapa'
 
 /**
  * Ícone de mapa que abre o Google Maps com a rota da loja até o endereço do cliente (só pedidos de entrega
- * com endereço). Renderiza um link comum, então abre em nova aba sem ser barrado pelo navegador.
- * A classe "permissoes__botao" não é usada aqui: o tooltip vem de data-pr-tooltip (componente Tooltip da tela).
+ * com endereço). A cada clique consulta o endereço ATUAL da loja (Minha loja), para a origem nunca ficar velha.
+ * A aba é aberta no clique (antes da consulta) para o navegador não barrar como pop-up.
+ * O tooltip vem de data-pr-tooltip (componente Tooltip da tela).
  */
 export default function BotaoRota({ pedido, className = 'botao-rota' }) {
   const { loja } = useAuth()
-  const [dadosLoja, setDadosLoja] = useState(null)
 
-  useEffect(() => {
-    if (pedido.tipoEntrega !== 'ENTREGA') return
-    obterDadosLoja(loja.tenant).then(setDadosLoja).catch(() => setDadosLoja({}))
-  }, [pedido.tipoEntrega, loja.tenant])
+  if (pedido.tipoEntrega !== 'ENTREGA' || (!pedido.enderecoRua && !pedido.enderecoBairro)) return null
 
-  if (pedido.tipoEntrega !== 'ENTREGA' || !dadosLoja) return null
-  const url = rotaGoogleMaps(dadosLoja, pedido)
-  if (!url) return null
+  async function abrirRota(evento) {
+    evento.stopPropagation()
+    const aba = window.open('', '_blank')
+    try {
+      const dadosLoja = await obterDadosLoja(loja.tenant, { atualizado: true })
+      const url = rotaGoogleMaps(dadosLoja, pedido)
+      if (!url) throw new Error('sem endereço')
+      if (aba) aba.location.href = url
+      else window.location.assign(url)
+      if (!dadosLoja.enderecoRua && !dadosLoja.enderecoCidade) {
+        dispatchMsgWarn('A loja ainda não tem endereço cadastrado: informe em Loja > Minha loja para a rota sair certa.')
+      }
+    } catch {
+      aba?.close()
+      dispatchMsgError('Não foi possível abrir a rota agora.')
+    }
+  }
 
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className={className} aria-label="Ver rota no Google Maps"
-       data-pr-tooltip="Ver rota no Google Maps" data-pr-position="top" onPointerDown={(e) => e.stopPropagation()}>
+    <button type="button" className={className} aria-label="Ver rota no Google Maps"
+            data-pr-tooltip="Ver rota no Google Maps" data-pr-position="top"
+            onPointerDown={(e) => e.stopPropagation()} onClick={abrirRota}>
       <i className="fa-solid fa-map-location-dot" aria-hidden="true" />
-    </a>
+    </button>
   )
 }

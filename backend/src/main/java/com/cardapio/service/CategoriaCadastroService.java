@@ -48,6 +48,11 @@ public class CategoriaCadastroService {
     }
 
     @Transactional(readOnly = true)
+    public int proximaOrdem(UUID tenant) {
+        return categoriaRepository.proximaOrdem(tenant);
+    }
+
+    @Transactional(readOnly = true)
     public CategoriaCadastroResponse obter(UUID tenant, Long id) {
         T_Categoria categoria = buscarCategoria(tenant, id);
         return CategoriaCadastroResponse.of(categoria, produtoRepository.countByCategoriaIdAndDeletadoFalse(id));
@@ -115,7 +120,7 @@ public class CategoriaCadastroService {
 
     private void preencher(T_Categoria categoria, CategoriaCadastroRequest r) {
         categoria.setNome(r.nome().trim());
-        categoria.setOrdemExibicao(r.ordemExibicao() != null ? r.ordemExibicao() : 0);
+        categoria.setOrdemExibicao(r.ordemExibicao() != null ? r.ordemExibicao() : categoriaRepository.proximaOrdem(categoria.getTenant()));
         if (r.ativo() != null) {
             categoria.setAtivo(r.ativo());
         }

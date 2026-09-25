@@ -147,6 +147,11 @@
 // ícone de rota no Google Maps (cartão do painel e detalhe do pedido)
 .botao-rota {
   display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  outline: none;
   align-items: center;
   justify-content: center;
   width: 2rem;

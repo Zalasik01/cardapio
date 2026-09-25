@@ -5,18 +5,21 @@ function textoEndereco({ rua, numero, complemento, bairro, cidade, estado, cep }
 }
 
 /**
- * Link do Google Maps com a rota da loja até o endereço de entrega do pedido (modo carro). A origem usa a
- * coordenada da loja quando ela existe; o destino usa o endereço digitado no pedido. Sem rua/bairro no pedido,
+ * Link do Google Maps com a rota da loja até o endereço de entrega do pedido (modo carro). A origem é o endereço
+ * cadastrado da loja (só na falta dele usa a coordenada); o destino é o endereço digitado no pedido. Sem rua/bairro no pedido,
  * devolve null.
  */
 export function rotaGoogleMaps(loja, pedido) {
   if (!pedido.enderecoRua && !pedido.enderecoBairro) return null
-  const origem = loja?.latitude != null && loja?.longitude != null
-    ? `${loja.latitude},${loja.longitude}`
-    : textoEndereco({
-      rua: loja?.enderecoRua, numero: loja?.enderecoNumero, bairro: loja?.enderecoBairro,
-      cidade: loja?.enderecoCidade, estado: loja?.enderecoEstado, cep: loja?.enderecoCep,
-    })
+  // o endereço cadastrado vale mais que as coordenadas: elas podem ser de um endereço antigo da loja
+  const enderecoLoja = textoEndereco({
+    rua: loja?.enderecoRua, numero: loja?.enderecoNumero, bairro: loja?.enderecoBairro,
+    cidade: loja?.enderecoCidade, estado: loja?.enderecoEstado, cep: loja?.enderecoCep,
+  })
+  const temEndereco = enderecoLoja.replace(/[,\s]|Brasil/g, '') !== ''
+  const origem = temEndereco || loja?.latitude == null || loja?.longitude == null
+    ? enderecoLoja
+    : `${loja.latitude},${loja.longitude}`
   const destino = textoEndereco({
     rua: pedido.enderecoRua, numero: pedido.enderecoNumero, bairro: pedido.enderecoBairro, cidade: pedido.enderecoCidade,
   })

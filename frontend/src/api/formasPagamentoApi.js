@@ -13,6 +13,10 @@ export const buscarFormasPagamento = (tenant, { page = 0, size = 10, ...filtros 
 
 export const obterFormaPagamento = (tenant, id) => http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 
+/** Próxima posição livre (maior ordem + 1). */
+export const obterProximaOrdemFormaPagamento = (tenant) =>
+  http.get(`${base(tenant)}/proxima-ordem`).then((res) => res.data.ordem)
+
 export const criarFormaPagamento = (tenant, dados) => http.post(base(tenant), dados).then((res) => res.data)
 
 export const atualizarFormaPagamento = (tenant, id, dados) =>

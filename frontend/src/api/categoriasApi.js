@@ -13,6 +13,10 @@ export const buscarCategorias = (tenant, { page = 0, size = 10, ...filtros }) =>
 
 export const obterCategoria = (tenant, id) => http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 
+/** Próxima posição livre no cardápio (maior ordem + 1). */
+export const obterProximaOrdemCategoria = (tenant) =>
+  http.get(`${base(tenant)}/proxima-ordem`).then((res) => res.data.ordem)
+
 export const criarCategoria = (tenant, dados) => http.post(base(tenant), dados).then((res) => res.data)
 
 export const atualizarCategoria = (tenant, id, dados) => http.put(`${base(tenant)}/${id}`, dados).then((res) => res.data)

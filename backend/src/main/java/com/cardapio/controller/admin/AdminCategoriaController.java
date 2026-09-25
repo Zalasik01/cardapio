@@ -32,6 +32,16 @@ public class AdminCategoriaController {
         return categoriaService.buscar(tenant, busca, mostrarInativos, page, size);
     }
 
+    public record OrdemResponse(int ordem) {
+    }
+
+    /** Próxima posição livre (maior ordem + 1), sugerida ao cadastrar. */
+    @PreAuthorize("@perm.tem('CATEGORIAS_INCLUIR')")
+    @GetMapping("/proxima-ordem")
+    public OrdemResponse proximaOrdem(@PathVariable UUID tenant) {
+        return new OrdemResponse(categoriaService.proximaOrdem(tenant));
+    }
+
     @PreAuthorize("@perm.tem('CATEGORIAS_LEITURA')")
     @GetMapping("/{id}")
     public CategoriaCadastroResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {

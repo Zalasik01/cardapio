@@ -39,6 +39,16 @@ public class AdminFormaPagamentoController {
         return formaService.buscar(tenant, busca, mostrarInativos, page, size);
     }
 
+    public record OrdemResponse(int ordem) {
+    }
+
+    /** Próxima posição livre (maior ordem + 1), sugerida ao cadastrar. */
+    @PreAuthorize("@perm.tem('FORMAS_PAGAMENTO_INCLUIR')")
+    @GetMapping("/proxima-ordem")
+    public OrdemResponse proximaOrdem(@PathVariable UUID tenant) {
+        return new OrdemResponse(formaService.proximaOrdem(tenant));
+    }
+
     @PreAuthorize("@perm.tem('FORMAS_PAGAMENTO_LEITURA')")
     @GetMapping("/{id}")
     public FormaPagamentoResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {

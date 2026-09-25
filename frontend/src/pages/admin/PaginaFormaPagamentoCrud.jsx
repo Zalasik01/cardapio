@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import {
-  atualizarFormaPagamento, criarFormaPagamento, excluirFormaPagamento, obterFormaPagamento,
+  atualizarFormaPagamento, criarFormaPagamento, excluirFormaPagamento, obterFormaPagamento, obterProximaOrdemFormaPagamento,
 } from '../../api/formasPagamentoApi'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
@@ -40,6 +40,12 @@ export default function PaginaFormaPagamentoCrud() {
     definirMigalha(editando ? 'Editando forma de pagamento' : 'Nova forma de pagamento')
     return () => definirMigalha(null)
   }, [editando, definirMigalha])
+
+  // cadastro novo: a ordem já vem com a próxima posição livre
+  useEffect(() => {
+    if (editando) return
+    obterProximaOrdemFormaPagamento(loja.tenant).then((ordem) => setForm((atual) => ({ ...atual, ordem }))).catch(() => {})
+  }, [editando, loja.tenant])
 
   useEffect(() => {
     if (!editando) return

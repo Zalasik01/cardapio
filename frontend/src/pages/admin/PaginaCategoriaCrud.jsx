@@ -5,7 +5,9 @@ import { InputText } from 'primereact/inputtext'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
-import { atualizarCategoria, criarCategoria, excluirCategoria, obterCategoria } from '../../api/categoriasApi'
+import {
+  atualizarCategoria, criarCategoria, excluirCategoria, obterCategoria, obterProximaOrdemCategoria,
+} from '../../api/categoriasApi'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import CrudPagina from '../../components/crud/CrudPagina'
@@ -30,6 +32,12 @@ export default function PaginaCategoriaCrud() {
     definirMigalha(editando ? 'Editando categoria' : 'Nova categoria')
     return () => definirMigalha(null)
   }, [editando, definirMigalha])
+
+  // cadastro novo: a ordem já vem com a próxima posição livre
+  useEffect(() => {
+    if (editando) return
+    obterProximaOrdemCategoria(loja.tenant).then((ordem) => setForm((atual) => ({ ...atual, ordemExibicao: ordem }))).catch(() => {})
+  }, [editando, loja.tenant])
 
   useEffect(() => {
     if (!editando) return

@@ -12,6 +12,7 @@ import { atualizarLoja, buscarLoja } from '../../api/adminApi'
 import { obterFuncionamento, salvarFuncionamento } from '../../api/funcionamentoApi'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import CrudPagina from '../../components/crud/CrudPagina'
+import Endereco from '../../components/crud/Endereco'
 import HorarioFuncionamento from '../../components/loja/HorarioFuncionamento'
 import { CrudSkeleton } from '../../components/Skeleton'
 import { avisarFuncionamentoAlterado, cortarSegundos, MODOS_FUNCIONAMENTO } from '../../utils/funcionamento'
@@ -20,6 +21,7 @@ const moeda = { mode: 'currency', currency: 'BRL', locale: 'pt-BR' }
 
 const ANCORAS = [
   { id: 'secao-principal', titulo: 'Principal' },
+  { id: 'secao-endereco', titulo: 'Endereço' },
   { id: 'secao-entrega', titulo: 'Entrega' },
   { id: 'secao-funcionamento', titulo: 'Horário de funcionamento' },
 ]
@@ -75,6 +77,25 @@ export default function PaginaLoja() {
     }
   }
 
+  // a loja guarda o endereço em campos "enderecoXxx"; o bloco de endereço trabalha com nomes curtos
+  const enderecoDaLoja = form && {
+    cep: form.enderecoCep ?? '', logradouro: form.enderecoRua ?? '', numero: form.enderecoNumero ?? '',
+    complemento: '', bairro: form.enderecoBairro ?? '', cidade: form.enderecoCidade ?? '', estado: form.enderecoEstado ?? null,
+  }
+
+  function alterarEndereco(campos) {
+    setForm((atual) => {
+      const atualCurto = {
+        cep: atual.enderecoCep ?? '', logradouro: atual.enderecoRua ?? '', numero: atual.enderecoNumero ?? '',
+        complemento: '', bairro: atual.enderecoBairro ?? '', cidade: atual.enderecoCidade ?? '', estado: atual.enderecoEstado ?? null,
+      }
+      const novos = typeof campos === 'function' ? campos(atualCurto) : campos
+      const nomes = { cep: 'enderecoCep', logradouro: 'enderecoRua', numero: 'enderecoNumero', bairro: 'enderecoBairro', cidade: 'enderecoCidade', estado: 'enderecoEstado' }
+      const alterados = Object.fromEntries(Object.entries(novos).filter(([chave]) => nomes[chave]).map(([chave, valor]) => [nomes[chave], valor]))
+      return { ...atual, ...alterados }
+    })
+  }
+
   const carregando = !form && !erro
 
   const conteudo = form && (
@@ -97,6 +118,8 @@ export default function PaginaLoja() {
           </Campo>
         </GradeCampos>
       </SecaoCrud>
+
+      <Endereco endereco={enderecoDaLoja} aoAlterar={alterarEndereco} semComplemento />
 
       <SecaoCrud id="secao-entrega" titulo="Entrega">
         <GradeCampos>
@@ -160,7 +183,7 @@ export default function PaginaLoja() {
           </div>
         )}
       >
-        {carregando && <CrudSkeleton blocos={[[8, 4, 12, 12], [3, 3, 3, 3], [12, 12, 12]]} />}
+        {carregando && <CrudSkeleton blocos={[[8, 4, 12, 12], [2, 6, 2, 4, 4, 4], [3, 3, 3, 3], [12, 12, 12]]} />}
         {erro && <p className="mensagem-erro">{erro}</p>}
         {conteudo}
       </CrudPagina>

@@ -55,7 +55,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/publico/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/pedidos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/pedidos/*").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/admin/lojas/{tenant}", "/api/admin/lojas/{tenant}/**")
                         .access(this::acessoAoTenantDaSessao)
                         .requestMatchers("/api/admin/gestao/**").hasAuthority(AppUserDetails.PAPEL_ADMINISTRADOR)

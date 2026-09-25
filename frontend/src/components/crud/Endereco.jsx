@@ -12,9 +12,10 @@ import { Campo, GradeCampos, SecaoCrud } from './Campo'
  * pelo ViaCEP (número e complemento continuam manuais).
  *
  * Props: endereco { cep, logradouro, numero, complemento, bairro, cidade, estado } e
- * aoAlterar(campos | (atual) => campos), que mescla os campos no endereço do formulário.
+ * aoAlterar(campos | (atual) => campos), que mescla os campos no endereço do formulário. semComplemento esconde
+ * o campo de complemento (quando o cadastro não guarda esse dado, como a loja).
  */
-export default function Endereco({ endereco, aoAlterar }) {
+export default function Endereco({ endereco, aoAlterar, semComplemento = false }) {
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [avisoCep, setAvisoCep] = useState(null)
   const numeroRef = useRef(null)
@@ -58,7 +59,7 @@ export default function Endereco({ endereco, aoAlterar }) {
                      onChange={(e) => definir('cep')(e.target.value ?? '')}
                      onComplete={(e) => preencherPorCep(e.value)} />
         </Campo>
-        <Campo id="logradouro" rotulo="Logradouro" tamanho={5}>
+        <Campo id="logradouro" rotulo="Logradouro" tamanho={semComplemento ? 6 : 5}>
           <InputText id="logradouro" maxLength={255} value={endereco.logradouro}
                      onChange={(e) => definir('logradouro')(e.target.value)} />
         </Campo>
@@ -66,19 +67,21 @@ export default function Endereco({ endereco, aoAlterar }) {
           <InputText id="numero" ref={numeroRef} maxLength={20} value={endereco.numero}
                      onChange={(e) => definir('numero')(e.target.value)} />
         </Campo>
-        <Campo id="complemento" rotulo="Complemento" tamanho={3}>
-          <InputText id="complemento" maxLength={255} value={endereco.complemento}
-                     onChange={(e) => definir('complemento')(e.target.value)} />
-        </Campo>
-        <Campo id="bairro" rotulo="Bairro" tamanho={5}>
+        {!semComplemento && (
+          <Campo id="complemento" rotulo="Complemento" tamanho={3}>
+            <InputText id="complemento" maxLength={255} value={endereco.complemento}
+                       onChange={(e) => definir('complemento')(e.target.value)} />
+          </Campo>
+        )}
+        <Campo id="bairro" rotulo="Bairro" tamanho={semComplemento ? 4 : 5}>
           <InputText id="bairro" maxLength={255} value={endereco.bairro}
                      onChange={(e) => definir('bairro')(e.target.value)} />
         </Campo>
-        <Campo id="cidade" rotulo="Cidade" tamanho={5}>
+        <Campo id="cidade" rotulo="Cidade" tamanho={semComplemento ? 4 : 5}>
           <InputText id="cidade" maxLength={255} value={endereco.cidade}
                      onChange={(e) => definir('cidade')(e.target.value)} />
         </Campo>
-        <Campo id="uf" rotulo="Estado" tamanho={2}>
+        <Campo id="uf" rotulo="Estado" tamanho={semComplemento ? 4 : 2}>
           <Dropdown inputId="uf" value={endereco.estado} options={UFS} optionLabel="rotulo" optionValue="valor"
                     showClear filter placeholder="UF" onChange={(e) => definir('estado')(e.value ?? null)} />
         </Campo>

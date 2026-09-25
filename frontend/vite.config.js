@@ -51,5 +51,11 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    // aceita o acesso pelo endereço do túnel (Cloudflare) além do localhost
+    allowedHosts: ['.trycloudflare.com'],
+    // a API passa pelo mesmo endereço do site: quem acessa de fora (túnel) não precisa alcançar o localhost:8080
+    proxy: {
+      '/api': { target: process.env.API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: true },
+    },
   },
 })

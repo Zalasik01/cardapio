@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { InputSwitch } from 'primereact/inputswitch'
 import Drawer from '../Drawer'
+import DialogoPeriodo from '../periodo/DialogoPeriodo'
 import { dispatchMsgError } from '../../store/dispatchMsg'
 import TabelaDados from '../TabelaDados'
 import { lerFiltrosSalvos, salvarFiltros } from '../../utils/filtrosSalvos'
+import { resolverPeriodo, rotuloPeriodo } from '../../utils/periodo'
 
 /**
  * Tela de busca padrao: campo de busca + lupa + filtros (drawer) + botao "Novo",
@@ -14,7 +16,10 @@ import { lerFiltrosSalvos, salvarFiltros } from '../../utils/filtrosSalvos'
  *  - titulo, placeholder, rotuloNovo
  *  - colunas: [{ chave, cabecalho, render?(linha) }]
  *  - buscar({ busca, filtros, page, size }) -> Promise<{ content, page, totalElements, totalPages }>
- *  - filtros: [{ nome, rotulo, tipo: 'texto' | 'selecao', opcoes?: [{ valor, rotulo }] }]
+ *  - filtros: [{ nome, rotulo, tipo: 'texto' | 'selecao' | 'periodo', opcoes?: [{ valor, rotulo }], padrao? }]
+ *    'periodo' abre o seletor de periodo padrao (calendario com atalhos, no maximo 90 dias) e vale como
+ *    { preset } ou { inicio, fim }; "padrao" e o valor usado enquanto o usuario nao escolher outro.
+ *  - comInativos (padrao true): mostra a opcao "Mostrar inativos" (telas de registros que podem ser inativados)
  *  - chaveFiltros: identifica a tela no localStorage ("filtros") quando "Manter filtros salvos" esta ligado
  *  - aoNovo(), aoAbrir(linha), chaveLinha(linha)
  *
@@ -35,6 +40,7 @@ export default function TelaBusca({
   chaveAtualizacao,
   chaveLinha,
   chaveFiltros,
+  comInativos = true,
   rotuloNovo = 'Novo',
   placeholder = 'Buscar',
   tamanhoPagina = 10,
@@ -57,6 +63,10 @@ export default function TelaBusca({
   const [carregando, setCarregando] = useState(automatico)
 
   const deveCarregar = automatico || pesquisou
+  const [periodoAberto, setPeriodoAberto] = useState(null) // nome do filtro de periodo em edicao
+
+  // valor padrao de cada filtro que tem um; so vai para "aplicados" quando o usuario escolhe outro valor
+  const padroes = Object.fromEntries(filtros.filter((filtro) => filtro.padrao).map((filtro) => [filtro.nome, filtro.padrao]))
 
   // a funcao de busca pode mudar a cada render do pai; a ref evita refazer a consulta por isso
   const buscarRef = useRef(buscar)
@@ -78,7 +88,12 @@ export default function TelaBusca({
     let descartada = false
     setCarregando(true)
     buscarRef
-      .current({ busca: termoAplicado, filtros: { ...aplicados, mostrarInativos }, page: pagina, size: tamanhoPagina })
+      .current({
+        busca: termoAplicado,
+        filtros: { ...padroes, ...aplicados, ...(comInativos ? { mostrarInativos } : {}) },
+        page: pagina,
+        size: tamanhoPagina,
+      })
       .then((resposta) => {
         if (descartada) return
         setDados(resposta)
@@ -88,7 +103,7 @@ export default function TelaBusca({
     return () => {
       descartada = true
     }
-  }, [deveCarregar, termoAplicado, aplicados, mostrarInativos, pagina, tamanhoPagina, chaveAtualizacao])
+  }, [deveCarregar, termoAplicado, aplicados, mostrarInativos, pagina, tamanhoPagina, chaveAtualizacao]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fecharDrawer = useCallback(() => setDrawerAberto(false), [])
 
@@ -100,7 +115,7 @@ export default function TelaBusca({
   }
 
   function abrirFiltros() {
-    setRascunho(aplicados)
+    setRascunho({ ...padroes, ...aplicados })
     setRascunhoOpcoes({ mostrarInativos, automatico, manterFiltros })
     setDrawerAberto(true)
   }
@@ -109,7 +124,8 @@ export default function TelaBusca({
     e.preventDefault()
     setPagina(0)
     setPesquisou(true)
-    setAplicados(limpar(rascunho))
+    // o que continua igual ao padrao nao conta como filtro aplicado
+    setAplicados(Object.fromEntries(Object.entries(limpar(rascunho)).filter(([nome, valor]) => JSON.stringify(valor) !== JSON.stringify(padroes[nome]))))
     setMostrarInativos(rascunhoOpcoes.mostrarInativos)
     setAutomatico(rascunhoOpcoes.automatico)
     setManterFiltros(rascunhoOpcoes.manterFiltros)
@@ -125,7 +141,7 @@ export default function TelaBusca({
     setDrawerAberto(false)
   }
 
-  const totalFiltros = Object.keys(aplicados).length + (mostrarInativos ? 1 : 0)
+  const totalFiltros = Object.keys(aplicados).length + (comInativos && mostrarInativos ? 1 : 0)
   // a TabelaDados identifica cada linha por um campo unico
   const linhas = (dados?.content ?? []).map((linha) => ({ ...linha, __chave: chaveLinha(linha) }))
 
@@ -215,7 +231,15 @@ export default function TelaBusca({
         )}
       >
         <form id="form-filtros" className="drawer__filtros" onSubmit={aplicarFiltros}>
-          {filtros.map((filtro) => (
+          {filtros.map((filtro) => (filtro.tipo === 'periodo' ? (
+            <div key={filtro.nome} className="drawer__periodo">
+              <span className="drawer__periodo-rotulo">{filtro.rotulo}</span>
+              <button type="button" className="botao-secundario drawer__periodo-botao" onClick={() => setPeriodoAberto(filtro.nome)}>
+                <i className="fa-solid fa-calendar-days" aria-hidden="true" />
+                {rotuloPeriodo(rascunho[filtro.nome], resolverPeriodo(rascunho[filtro.nome], filtro.padrao))}
+              </button>
+            </div>
+          ) : (
             <label key={filtro.nome}>
               {filtro.rotulo}
               {filtro.tipo === 'selecao' ? (
@@ -235,9 +259,9 @@ export default function TelaBusca({
                 />
               )}
             </label>
-          ))}
+          )))}
           <div className="drawer__opcoes">
-            {OPCOES_PADRAO.map(({ nome, rotulo }) => (
+            {OPCOES_PADRAO.filter(({ nome }) => comInativos || nome !== 'mostrarInativos').map(({ nome, rotulo }) => (
               <label key={nome} className="drawer__opcao">
                 <InputSwitch
                   checked={!!rascunhoOpcoes[nome]}
@@ -249,6 +273,16 @@ export default function TelaBusca({
           </div>
         </form>
       </Drawer>
+
+      {periodoAberto && (
+        <DialogoPeriodo
+          aberto
+          periodo={rascunho[periodoAberto]}
+          atual={resolverPeriodo(rascunho[periodoAberto], padroes[periodoAberto])}
+          aoFechar={() => setPeriodoAberto(null)}
+          aoAplicar={(periodo) => setRascunho((atual) => ({ ...atual, [periodoAberto]: periodo }))}
+        />
+      )}
     </div>
   )
 }

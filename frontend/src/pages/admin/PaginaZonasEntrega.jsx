@@ -1,67 +1,54 @@
-import { useEffect, useState } from 'react'
-import TabelaDados from '../../components/TabelaDados'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { alterarAtivoZona, buscarZonas, excluirZona } from '../../api/zonasApi'
+import TelaBusca from '../../components/crud/TelaBusca'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
-import { atualizarZonaEntrega, criarZonaEntrega, excluirZonaEntrega, listarZonasEntrega } from '../../api/adminApi'
 import { formatarMoeda } from '../../utils/formatadores'
 
-const FORM_VAZIO = { bairro: '', taxa: '', tempoEstimadoMinutos: 45, ativo: true }
+const COLUNAS = [
+  { chave: 'bairro', cabecalho: 'Bairro' },
+  { chave: 'taxa', cabecalho: 'Taxa de entrega', render: (zona) => formatarMoeda(zona.taxa) },
+  { chave: 'tempoEstimadoMinutos', cabecalho: 'Tempo estimado', render: (zona) => `${zona.tempoEstimadoMinutos} min` },
+]
 
+/** Entrega > Zonas de entrega: a taxa e o tempo estimado de cada bairro atendido. */
 export default function PaginaZonasEntrega() {
   const { loja } = useAuth()
-  const tenant = loja.tenant
+  const navigate = useNavigate()
+  const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de inativar/excluir
 
-  const [zonas, setZonas] = useState([])
-  const [form, setForm] = useState(FORM_VAZIO)
-  const [editandoGuid, setEditandoGuid] = useState(null)
-  const [carregando, setCarregando] = useState(true)
-
-  function carregar() {
-    listarZonasEntrega(tenant)
-      .then(setZonas)
-      .catch((e) => dispatchMsgError(e.mensagem))
-      .finally(() => setCarregando(false))
-  }
-
-  useEffect(carregar, [tenant])
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const dados = { ...form, taxa: Number(form.taxa), tempoEstimadoMinutos: Number(form.tempoEstimadoMinutos) }
-    try {
-      if (editandoGuid) {
-        await atualizarZonaEntrega(tenant, editandoGuid, dados)
-      } else {
-        await criarZonaEntrega(tenant, dados)
+  function alterarAtivo(zona, ativo) {
+    const executar = async () => {
+      try {
+        await alterarAtivoZona(loja.tenant, zona.id, ativo)
+        dispatchMsgSuccess(ativo ? 'Zona ativada com sucesso' : 'Zona inativada com sucesso')
+        setVersao((atual) => atual + 1)
+      } catch (e) {
+        dispatchMsgError(e.mensagem)
       }
-      dispatchMsgSuccess(editandoGuid ? 'Zona de entrega atualizada com sucesso' : 'Zona de entrega criada com sucesso')
-      setForm(FORM_VAZIO)
-      setEditandoGuid(null)
-      carregar()
-    } catch (e) {
-      dispatchMsgError(e.mensagem)
     }
-  }
-
-  function handleEditar(zona) {
-    setEditandoGuid(zona.guid)
-    setForm({
-      bairro: zona.bairro,
-      taxa: zona.taxa,
-      tempoEstimadoMinutos: zona.tempoEstimadoMinutos,
-      ativo: zona.ativo,
+    if (ativo) {
+      executar()
+      return
+    }
+    confirmar({
+      mensagem: `Inativar a zona "${zona.bairro}"? A loja deixa de entregar nesse bairro até ela ser ativada novamente.`,
+      rotuloConfirmar: 'Inativar',
+      aoConfirmar: executar,
     })
   }
 
-  function handleExcluir(guid) {
+  function excluir(zona) {
     confirmar({
-      mensagem: 'Excluir esta zona de entrega?',
+      mensagem: `Excluir a zona "${zona.bairro}"? Essa ação não pode ser desfeita.`,
+      rotuloConfirmar: 'Excluir',
       aoConfirmar: async () => {
         try {
-          await excluirZonaEntrega(tenant, guid)
-          dispatchMsgSuccess('Zona de entrega excluída com sucesso')
-          carregar()
+          await excluirZona(loja.tenant, zona.id)
+          dispatchMsgSuccess('Zona excluída com sucesso')
+          setVersao((atual) => atual + 1)
         } catch (e) {
           dispatchMsgError(e.mensagem)
         }
@@ -70,51 +57,23 @@ export default function PaginaZonasEntrega() {
   }
 
   return (
-    <div className="pagina-admin">
-      <h1>Zonas de entrega</h1>
-      <p className="texto-auxiliar">
-        Cadastre uma taxa fixa por bairro. Bairros nao cadastrados usam o calculo por distancia
-        configurado na loja.
-      </p>
-
-      <form onSubmit={handleSubmit} className="formulario-inline">
-        <input placeholder="Bairro" required value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} />
-        <input
-          type="number" step="0.01" placeholder="Taxa" required
-          value={form.taxa} onChange={(e) => setForm({ ...form, taxa: e.target.value })}
-        />
-        <input
-          type="number" placeholder="Tempo (min)"
-          value={form.tempoEstimadoMinutos} onChange={(e) => setForm({ ...form, tempoEstimadoMinutos: e.target.value })}
-        />
-        <label>
-          <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
-          Ativa
-        </label>
-        <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
-        {editandoGuid && (
-          <button type="button" className="botao-secundario" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
-            Cancelar
-          </button>
-        )}
-      </form>
-
-
-      <TabelaDados
-        dados={zonas}
-        chave="guid"
-        carregando={carregando}
-        colunas={[
-          { campo: 'bairro', cabecalho: 'Bairro' },
-          { campo: 'taxa', cabecalho: 'Taxa', corpo: (zona) => formatarMoeda(zona.taxa) },
-          { campo: 'tempoEstimadoMinutos', cabecalho: 'Tempo estimado', corpo: (zona) => `${zona.tempoEstimadoMinutos} min` },
-          { campo: 'ativo', cabecalho: 'Ativa', corpo: (zona) => (zona.ativo ? 'Sim' : 'Não') },
-        ]}
-        acoes={(zona) => [
-          { label: 'Editar', icon: 'pi pi-pencil', command: () => handleEditar(zona) },
-          { label: 'Excluir', icon: 'pi pi-trash', className: 'item-perigo', command: () => handleExcluir(zona.guid) },
-        ]}
-      />
-    </div>
+    <TelaBusca
+      titulo="Zonas de entrega"
+      chaveFiltros="zonas-entrega"
+      placeholder="Buscar por bairro"
+      colunas={COLUNAS}
+      chaveLinha={(zona) => zona.id}
+      buscar={({ busca, filtros, page, size }) => buscarZonas(loja.tenant, { busca, ...filtros, page, size })}
+      aoNovo={() => navigate('/admin/zonas-entrega/novo')}
+      aoAbrir={(zona) => navigate(`/admin/zonas-entrega/${zona.id}`)}
+      rotuloNovo="Nova zona"
+      chaveAtualizacao={versao}
+      acoesExtras={(zona) => [
+        zona.ativo
+          ? { label: 'Inativar', icon: 'pi pi-ban', command: () => alterarAtivo(zona, false) }
+          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(zona, true) },
+        { label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(zona) },
+      ]}
+    />
   )
 }

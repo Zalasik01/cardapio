@@ -321,3 +321,33 @@
     order: 3;
   }
 }
+
+// Detalhe do pedido: grade de informações e totais
+.pedido__dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.pedido__dado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pedido__rotulo {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.pedido__totais {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 2rem;
+  margin-top: 1rem;
+}
+
+.pedido__total {
+  font-size: 1.05rem;
+}

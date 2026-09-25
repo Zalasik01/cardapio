@@ -1,75 +1,65 @@
-import { useEffect, useRef, useState } from 'react'
-import TabelaDados from '../../components/TabelaDados'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
-import { atualizarStatusPedido, listarPedidosDaLoja } from '../../api/adminApi'
-import { formatarMoeda } from '../../utils/formatadores'
+import { buscarPedidos } from '../../api/pedidosApi'
+import TelaBusca from '../../components/crud/TelaBusca'
+import { formatarMoeda, formatarTelefone } from '../../utils/formatadores'
+import { OPCOES_STATUS, rotuloTipoEntrega, STATUS_PEDIDO, TIPOS_ENTREGA } from '../../utils/pedido'
+import { periodoParaIso, resolverPeriodo } from '../../utils/periodo'
 
-const STATUS_OPCOES = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE', 'CANCELADO']
+const PERIODO_PADRAO = { preset: 'ultimos-7' }
 
+const FILTROS = [
+  { nome: 'periodo', rotulo: 'Período do pedido', tipo: 'periodo', padrao: PERIODO_PADRAO },
+  { nome: 'status', rotulo: 'Situação', tipo: 'selecao', opcoes: OPCOES_STATUS },
+  { nome: 'tipoEntrega', rotulo: 'Tipo', tipo: 'selecao', opcoes: TIPOS_ENTREGA },
+]
+
+const COLUNAS = [
+  { chave: 'id', cabecalho: 'Nº' },
+  {
+    chave: 'dataCriacao',
+    cabecalho: 'Data',
+    render: (pedido) => new Date(pedido.dataCriacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
+  },
+  { chave: 'nomeCliente', cabecalho: 'Cliente' },
+  { chave: 'telefoneCliente', cabecalho: 'Telefone', render: (pedido) => formatarTelefone(pedido.telefoneCliente) },
+  {
+    chave: 'tipoEntrega',
+    cabecalho: 'Tipo',
+    render: (pedido) => [rotuloTipoEntrega(pedido.tipoEntrega), pedido.bairro].filter(Boolean).join(' · '),
+  },
+  { chave: 'quantidadeItens', cabecalho: 'Itens' },
+  { chave: 'total', cabecalho: 'Total', render: (pedido) => formatarMoeda(pedido.total) },
+  {
+    chave: 'status',
+    cabecalho: 'Situação',
+    render: (pedido) => {
+      const status = STATUS_PEDIDO[pedido.status]
+      return <span className={`selo selo--${status.tom}`}>{status.rotulo}</span>
+    },
+  },
+]
+
+/** Operação > Pedidos: os pedidos da loja num período (no máximo 90 dias; padrão: últimos 7 dias). */
 export default function PaginaPedidos() {
   const { loja } = useAuth()
-  const tenant = loja.tenant
-
-  const [pedidos, setPedidos] = useState([])
-  const erroAvisado = useRef(false)
-  const [carregando, setCarregando] = useState(true)
-
-  function carregar() {
-    listarPedidosDaLoja(tenant)
-      .then((lista) => {
-        setPedidos(lista)
-        erroAvisado.current = false
-      })
-      .catch((e) => {
-        if (!erroAvisado.current) dispatchMsgError(e.mensagem)
-        erroAvisado.current = true
-      })
-      .finally(() => setCarregando(false))
-  }
-
-  useEffect(() => {
-    carregar()
-    const intervalo = setInterval(carregar, 15000)
-    return () => clearInterval(intervalo)
-  }, [tenant])
-
-  async function handleAlterarStatus(pedidoGuid, status) {
-    try {
-      await atualizarStatusPedido(pedidoGuid, status)
-      dispatchMsgSuccess('Status do pedido atualizado')
-      carregar()
-    } catch (e) {
-      dispatchMsgError(e.mensagem)
-    }
-  }
+  const navigate = useNavigate()
 
   return (
-    <div className="pagina-admin">
-      <h1>Pedidos</h1>
-
-      <TabelaDados
-        dados={pedidos}
-        chave="guid"
-        carregando={carregando}
-        colunas={[
-          { campo: 'guid', cabecalho: '#', corpo: (pedido) => pedido.guid.slice(0, 8) },
-          { campo: 'nomeCliente', cabecalho: 'Cliente', corpo: (pedido) => `${pedido.nomeCliente} — ${pedido.telefoneCliente}` },
-          { campo: 'tipoEntrega', cabecalho: 'Tipo', corpo: (pedido) => (pedido.tipoEntrega === 'ENTREGA' ? 'Entrega' : 'Retirada') },
-          { campo: 'total', cabecalho: 'Total', corpo: (pedido) => formatarMoeda(pedido.total) },
-          {
-            campo: 'status',
-            cabecalho: 'Status',
-            corpo: (pedido) => (
-              <select value={pedido.status} onChange={(e) => handleAlterarStatus(pedido.guid, e.target.value)}>
-                {STATUS_OPCOES.map((status) => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            ),
-          },
-        ]}
-      />
-    </div>
+    <TelaBusca
+      titulo="Pedidos"
+      chaveFiltros="pedidos"
+      placeholder="Buscar por cliente, telefone ou número do pedido"
+      colunas={COLUNAS}
+      filtros={FILTROS}
+      comInativos={false}
+      chaveLinha={(pedido) => pedido.id}
+      buscar={({ busca, filtros, page, size }) => {
+        const { periodo, ...demais } = filtros
+        const { inicio, fim } = periodoParaIso(resolverPeriodo(periodo, PERIODO_PADRAO))
+        return buscarPedidos(loja.tenant, { busca, ...demais, inicio, fim, page, size })
+      }}
+      aoAbrir={(pedido) => navigate(`/admin/pedidos/${pedido.id}`)}
+    />
   )
 }

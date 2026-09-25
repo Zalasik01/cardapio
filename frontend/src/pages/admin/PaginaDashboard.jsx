@@ -2,13 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError } from '../../store/dispatchMsg'
-import { listarPedidosDaLoja } from '../../api/adminApi'
+import { obterResumoPedidos } from '../../api/pedidosApi'
 import PainelDashboard from '../../components/dashboard/PainelDashboard'
 import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
 import { periodoParaIso } from '../../utils/periodo'
 
-const EM_ANDAMENTO = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA']
 const PERIODOS_PADRAO = { pedidos: { preset: 'hoje' } }
 const ESQUELETO = { cartoes: 4, blocos: 0 }
 
@@ -26,79 +25,78 @@ function ConteudoCartao({ rotulo, valor, apoio, icone, carregando }) {
   )
 }
 
-/** Tela padrao do painel: resumo da loja selecionada (pedidos do periodo escolhido, hoje por padrao). */
-export default function PaginaDashboard() {
-  const { loja, usuarioLogado } = useAuth()
-  const [pedidos, setPedidos] = useState(null)
-  const [erro, setErro] = useState(null)
+/**
+ * Cartão do dashboard da loja alimentado pelo resumo de pedidos do período. Vários cartões pedem o mesmo
+ * período: a consulta é compartilhada (cache curto em pedidosApi).
+ */
+function CartaoPedidos({ periodo, rotulo, icone, valor, apoio }) {
+  const { loja } = useAuth()
+  const [resumo, setResumo] = useState(null)
+  const { inicio, fim } = periodoParaIso(periodo)
 
   useEffect(() => {
-    listarPedidosDaLoja(loja.tenant)
-      .then(setPedidos)
-      .catch((e) => {
-        setErro(e.mensagem)
-        dispatchMsgError(e.mensagem)
-      })
-  }, [loja.tenant])
-
-  const carregando = pedidos === null && !erro
-
-  const widgets = useMemo(() => {
-    // pedidos criados dentro do periodo (datas ISO comparam como texto)
-    const noPeriodo = (periodo) => {
-      const { inicio, fim } = periodoParaIso(periodo)
-      return (pedidos ?? []).filter((p) => {
-        const dia = String(p.dataCriacao).slice(0, 10)
-        return dia >= inicio && dia <= fim
-      })
+    let descartada = false
+    setResumo(null)
+    obterResumoPedidos(loja.tenant, inicio, fim)
+      .then((dados) => !descartada && setResumo(dados))
+      .catch((e) => dispatchMsgError(e.mensagem))
+    return () => {
+      descartada = true
     }
-    const dicaPeriodo = 'Use o menu "..." para filtrar o período: no máximo 90 dias.'
-    return [
-      {
-        id: 'pedidos',
-        tamanho: 'cartao',
-        periodo: 'pedidos',
-        dica: `Pedidos criados no período escolhido (hoje por padrão). ${dicaPeriodo}`,
-        conteudo: (ctx) => {
-          const periodo = ctx.periodo('pedidos')
-          return <ConteudoCartao rotulo="Pedidos" valor={noPeriodo(periodo).length} apoio={periodo.rotulo}
-                                 icone="fa-solid fa-receipt" carregando={carregando} />
-        },
-      },
-      {
-        id: 'em-andamento',
-        tamanho: 'cartao',
-        dica: 'Pedidos que ainda estão sendo atendidos agora (pendentes, confirmados, em preparo ou em entrega), de qualquer dia.',
-        conteudo: () => (
-          <ConteudoCartao rotulo="Em andamento" valor={(pedidos ?? []).filter((p) => EM_ANDAMENTO.includes(p.status)).length}
-                          icone="fa-solid fa-fire-burner" carregando={carregando} />
-        ),
-      },
-      {
-        id: 'entregues',
-        tamanho: 'cartao',
-        periodo: 'pedidos',
-        dica: `Pedidos entregues entre os criados no período escolhido. ${dicaPeriodo}`,
-        conteudo: (ctx) => {
-          const periodo = ctx.periodo('pedidos')
-          return <ConteudoCartao rotulo="Entregues" valor={noPeriodo(periodo).filter((p) => p.status === 'ENTREGUE').length}
-                                 apoio={periodo.rotulo} icone="fa-solid fa-circle-check" carregando={carregando} />
-        },
-      },
-      {
-        id: 'faturamento',
-        tamanho: 'cartao',
-        periodo: 'pedidos',
-        dica: `Soma dos pedidos entregues criados no período escolhido. ${dicaPeriodo}`,
-        conteudo: (ctx) => {
-          const periodo = ctx.periodo('pedidos')
-          const entregues = noPeriodo(periodo).filter((p) => p.status === 'ENTREGUE')
-          return <ConteudoCartao rotulo="Faturamento" valor={formatarMoeda(entregues.reduce((soma, p) => soma + Number(p.total), 0))}
-                                 apoio={periodo.rotulo} icone="fa-solid fa-sack-dollar" carregando={carregando} />
-        },
-      },
-    ]
-  }, [pedidos, carregando])
+  }, [loja.tenant, inicio, fim])
+
+  return (
+    <ConteudoCartao rotulo={rotulo} icone={icone} carregando={resumo === null}
+                    valor={resumo && valor(resumo)} apoio={resumo && (apoio ? apoio(resumo) : periodo.rotulo)} />
+  )
+}
+
+const DICA_PERIODO = 'Use o menu "..." para filtrar o período: no máximo 90 dias.'
+
+/** Tela padrão do painel: resumo da loja selecionada (pedidos do período escolhido, hoje por padrão). */
+export default function PaginaDashboard() {
+  const { loja, usuarioLogado } = useAuth()
+
+  const widgets = useMemo(() => [
+    {
+      id: 'pedidos',
+      tamanho: 'cartao',
+      periodo: 'pedidos',
+      dica: `Pedidos criados no período escolhido (hoje por padrão). ${DICA_PERIODO}`,
+      conteudo: (ctx) => (
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Pedidos" icone="fa-solid fa-receipt" valor={(r) => r.total} />
+      ),
+    },
+    {
+      id: 'em-andamento',
+      tamanho: 'cartao',
+      periodo: 'pedidos',
+      dica: 'Pedidos que ainda estão sendo atendidos agora (pendentes, confirmados, em preparo ou em entrega), de qualquer dia.',
+      conteudo: (ctx) => (
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Em andamento" icone="fa-solid fa-fire-burner"
+                       valor={(r) => r.emAndamento} apoio={() => 'Agora, de qualquer dia'} />
+      ),
+    },
+    {
+      id: 'entregues',
+      tamanho: 'cartao',
+      periodo: 'pedidos',
+      dica: `Pedidos entregues entre os criados no período escolhido. ${DICA_PERIODO}`,
+      conteudo: (ctx) => (
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Entregues" icone="fa-solid fa-circle-check" valor={(r) => r.entregues} />
+      ),
+    },
+    {
+      id: 'faturamento',
+      tamanho: 'cartao',
+      periodo: 'pedidos',
+      dica: `Soma dos pedidos entregues criados no período escolhido. ${DICA_PERIODO}`,
+      conteudo: (ctx) => (
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Faturamento" icone="fa-solid fa-sack-dollar"
+                       valor={(r) => formatarMoeda(r.faturamento)} />
+      ),
+    },
+  ], [])
 
   return (
     <div className="pagina-admin">

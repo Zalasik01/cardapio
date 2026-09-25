@@ -13,7 +13,9 @@ import PaginaConfirmacaoPedido from './pages/cliente/PaginaConfirmacaoPedido'
 import PaginaLogin from './pages/admin/PaginaLogin'
 import LayoutAdmin from './pages/admin/LayoutAdmin'
 import PaginaCategorias from './pages/admin/PaginaCategorias'
-import PaginaProdutos from './pages/admin/PaginaProdutos'
+import PaginaCategoriaCrud from './pages/admin/PaginaCategoriaCrud'
+import PaginaPedidoCrud from './pages/admin/PaginaPedidoCrud'
+import PaginaZonaEntregaCrud from './pages/admin/PaginaZonaEntregaCrud'
 import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
 import PaginaPedidos from './pages/admin/PaginaPedidos'
 import PaginaLoja from './pages/admin/PaginaLoja'
@@ -76,9 +78,13 @@ export default function App() {
             <Route path="ingredientes/novo" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-novo" />} />
             <Route path="ingredientes/:id" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-editar" />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
+            <Route path="pedidos/:id" element={<PaginaPedidoCrud />} />
             <Route path="categorias" element={<PaginaCategorias />} />
-            <Route path="produtos" element={<PaginaProdutos />} />
+            <Route path="categorias/novo" element={<PaginaCategoriaCrud key="novo" />} />
+            <Route path="categorias/:id" element={<PaginaCategoriaCrud key="editar" />} />
             <Route path="zonas-entrega" element={<PaginaZonasEntrega />} />
+            <Route path="zonas-entrega/novo" element={<PaginaZonaEntregaCrud key="novo" />} />
+            <Route path="zonas-entrega/:id" element={<PaginaZonaEntregaCrud key="editar" />} />
             <Route path="loja" element={<PaginaLoja />} />
           </Route>
 

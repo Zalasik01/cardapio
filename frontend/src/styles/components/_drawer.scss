@@ -83,3 +83,20 @@
 .drawer__filtros .drawer__opcoes {
   gap: 10px 16px;
 }
+
+// filtro de período no drawer: rótulo e botão que abre o seletor
+.drawer__periodo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.drawer__periodo-botao {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  font-weight: 500;
+}

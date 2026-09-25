@@ -59,11 +59,11 @@ export default function HorarioFuncionamento({ horarios, aoAlterar }) {
 
             <span className="horario__acoes">
               <Button type="button" icon="pi pi-plus" rounded text size="small" aria-label={`Adicionar intervalo em ${dia.rotulo}`}
-                      tooltip="Adicionar intervalo" tooltipOptions={{ position: 'top' }} onClick={() => adicionar(dia.valor)} />
+                      title="Adicionar intervalo" onClick={() => adicionar(dia.valor)} />
               {intervalos.length > 0 && (
                 <Button type="button" icon="pi pi-copy" rounded text severity="secondary" size="small"
                         aria-label={`Copiar o horário de ${dia.rotulo} para todos os dias`}
-                        tooltip="Copiar para todos os dias" tooltipOptions={{ position: 'top' }}
+                        title="Copiar para todos os dias"
                         onClick={() => copiarParaTodos(dia.valor)} />
               )}
             </span>

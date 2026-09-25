@@ -1,60 +1,53 @@
-import { useEffect, useState } from 'react'
-import TabelaDados from '../../components/TabelaDados'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { alterarAtivoCategoria, buscarCategorias, excluirCategoria } from '../../api/categoriasApi'
+import TelaBusca from '../../components/crud/TelaBusca'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
-import { atualizarCategoria, criarCategoria, excluirCategoria, listarCategorias } from '../../api/adminApi'
 
-const FORM_VAZIO = { nome: '', ordemExibicao: 0, ativo: true }
+const COLUNAS = [
+  { chave: 'nome', cabecalho: 'Nome' },
+  { chave: 'ordemExibicao', cabecalho: 'Ordem no cardápio' },
+  { chave: 'quantidadeProdutos', cabecalho: 'Produtos' },
+]
 
+/** Cardápio > Produtos > Categorias: as categorias em que os produtos finais aparecem no cardápio. */
 export default function PaginaCategorias() {
   const { loja } = useAuth()
-  const tenant = loja.tenant
+  const navigate = useNavigate()
+  const [versao, setVersao] = useState(0) // muda para recarregar a lista depois de inativar/excluir
 
-  const [categorias, setCategorias] = useState([])
-  const [form, setForm] = useState(FORM_VAZIO)
-  const [editandoGuid, setEditandoGuid] = useState(null)
-  const [carregando, setCarregando] = useState(true)
-
-  function carregar() {
-    listarCategorias(tenant)
-      .then(setCategorias)
-      .catch((e) => dispatchMsgError(e.mensagem))
-      .finally(() => setCarregando(false))
-  }
-
-  useEffect(carregar, [tenant])
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    try {
-      if (editandoGuid) {
-        await atualizarCategoria(tenant, editandoGuid, form)
-      } else {
-        await criarCategoria(tenant, form)
+  function alterarAtivo(categoria, ativo) {
+    const executar = async () => {
+      try {
+        await alterarAtivoCategoria(loja.tenant, categoria.id, ativo)
+        dispatchMsgSuccess(ativo ? 'Categoria ativada com sucesso' : 'Categoria inativada com sucesso')
+        setVersao((atual) => atual + 1)
+      } catch (e) {
+        dispatchMsgError(e.mensagem)
       }
-      dispatchMsgSuccess(editandoGuid ? 'Categoria atualizada com sucesso' : 'Categoria criada com sucesso')
-      setForm(FORM_VAZIO)
-      setEditandoGuid(null)
-      carregar()
-    } catch (e) {
-      dispatchMsgError(e.mensagem)
     }
-  }
-
-  function handleEditar(categoria) {
-    setEditandoGuid(categoria.guid)
-    setForm({ nome: categoria.nome, ordemExibicao: categoria.ordemExibicao, ativo: categoria.ativo })
-  }
-
-  function handleExcluir(guid) {
+    if (ativo) {
+      executar()
+      return
+    }
     confirmar({
-      mensagem: 'Excluir esta categoria?',
+      mensagem: `Inativar "${categoria.nome}"? Ela deixa de aparecer no cardápio até ser ativada novamente.`,
+      rotuloConfirmar: 'Inativar',
+      aoConfirmar: executar,
+    })
+  }
+
+  function excluir(categoria) {
+    confirmar({
+      mensagem: `Excluir "${categoria.nome}"? Essa ação não pode ser desfeita.`,
+      rotuloConfirmar: 'Excluir',
       aoConfirmar: async () => {
         try {
-          await excluirCategoria(tenant, guid)
+          await excluirCategoria(loja.tenant, categoria.id)
           dispatchMsgSuccess('Categoria excluída com sucesso')
-          carregar()
+          setVersao((atual) => atual + 1)
         } catch (e) {
           dispatchMsgError(e.mensagem)
         }
@@ -63,49 +56,23 @@ export default function PaginaCategorias() {
   }
 
   return (
-    <div className="pagina-admin">
-      <h1>Categorias</h1>
-
-      <form onSubmit={handleSubmit} className="formulario-inline">
-        <input
-          placeholder="Nome da categoria"
-          required
-          value={form.nome}
-          onChange={(e) => setForm({ ...form, nome: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Ordem"
-          value={form.ordemExibicao}
-          onChange={(e) => setForm({ ...form, ordemExibicao: Number(e.target.value) })}
-        />
-        <label>
-          <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
-          Ativa
-        </label>
-        <button type="submit">{editandoGuid ? 'Salvar' : 'Adicionar'}</button>
-        {editandoGuid && (
-          <button type="button" className="botao-secundario" onClick={() => { setEditandoGuid(null); setForm(FORM_VAZIO) }}>
-            Cancelar
-          </button>
-        )}
-      </form>
-
-
-      <TabelaDados
-        dados={categorias}
-        chave="guid"
-        carregando={carregando}
-        colunas={[
-          { campo: 'nome', cabecalho: 'Nome' },
-          { campo: 'ordemExibicao', cabecalho: 'Ordem' },
-          { campo: 'ativo', cabecalho: 'Ativa', corpo: (categoria) => (categoria.ativo ? 'Sim' : 'Não') },
-        ]}
-        acoes={(categoria) => [
-          { label: 'Editar', icon: 'pi pi-pencil', command: () => handleEditar(categoria) },
-          { label: 'Excluir', icon: 'pi pi-trash', className: 'item-perigo', command: () => handleExcluir(categoria.guid) },
-        ]}
-      />
-    </div>
+    <TelaBusca
+      titulo="Categorias"
+      chaveFiltros="categorias"
+      placeholder="Buscar por nome"
+      colunas={COLUNAS}
+      chaveLinha={(categoria) => categoria.id}
+      buscar={({ busca, filtros, page, size }) => buscarCategorias(loja.tenant, { busca, ...filtros, page, size })}
+      aoNovo={() => navigate('/admin/categorias/novo')}
+      aoAbrir={(categoria) => navigate(`/admin/categorias/${categoria.id}`)}
+      rotuloNovo="Nova categoria"
+      chaveAtualizacao={versao}
+      acoesExtras={(categoria) => [
+        categoria.ativo
+          ? { label: 'Inativar', icon: 'pi pi-ban', command: () => alterarAtivo(categoria, false) }
+          : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(categoria, true) },
+        { label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(categoria) },
+      ]}
+    />
   )
 }

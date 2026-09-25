@@ -1,5 +1,6 @@
 import { Button } from 'primereact/button'
 import { Calendar } from 'primereact/calendar'
+import BotaoDica from '../BotaoDica'
 import { dataParaHora, DIAS_SEMANA, horaParaData } from '../../utils/funcionamento'
 
 /**
@@ -58,12 +59,12 @@ export default function HorarioFuncionamento({ horarios, aoAlterar }) {
             </div>
 
             <span className="horario__acoes">
-              <Button type="button" icon="pi pi-plus" rounded text size="small" aria-label={`Adicionar intervalo em ${dia.rotulo}`}
-                      title="Adicionar intervalo" onClick={() => adicionar(dia.valor)} />
+              <BotaoDica type="button" icon="pi pi-plus" rounded text size="small" aria-label={`Adicionar intervalo em ${dia.rotulo}`}
+                          dica="Adicionar intervalo" posicao="left" onClick={() => adicionar(dia.valor)} />
               {intervalos.length > 0 && (
-                <Button type="button" icon="pi pi-copy" rounded text severity="secondary" size="small"
+                <BotaoDica type="button" icon="pi pi-copy" rounded text severity="secondary" size="small"
                         aria-label={`Copiar o horário de ${dia.rotulo} para todos os dias`}
-                        title="Copiar para todos os dias"
+                        dica="Copiar para todos os dias" posicao="left"
                         onClick={() => copiarParaTodos(dia.valor)} />
               )}
             </span>

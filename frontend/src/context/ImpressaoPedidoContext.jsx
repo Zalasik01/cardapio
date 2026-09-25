@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useReactToPrint } from 'react-to-print'
 import { useAuth } from './AuthContext'
 import ComprovantePedido from '../components/pedido/ComprovantePedido'
-import { buscarLoja } from '../api/adminApi'
+import { obterDadosLoja } from '../api/adminApi'
 import { obterPedido } from '../api/pedidosApi'
 import { dispatchMsgError } from '../store/dispatchMsg'
 
@@ -34,7 +34,7 @@ export function ImpressaoPedidoProvider({ children }) {
   const imprimir = useCallback(async (pedido, via) => {
     try {
       const completo = pedido.itens ? pedido : await obterPedido(loja.tenant, pedido.id)
-      if (!dadosLoja.current) dadosLoja.current = await buscarLoja(loja.tenant)
+      if (!dadosLoja.current) dadosLoja.current = await obterDadosLoja(loja.tenant)
       setAlvo({ pedido: completo, via })
     } catch (e) {
       dispatchMsgError(e.mensagem)

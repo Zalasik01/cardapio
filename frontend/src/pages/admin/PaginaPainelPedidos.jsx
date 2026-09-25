@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button } from 'primereact/button'
+import { Tooltip } from 'primereact/tooltip'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import { atualizarStatusPedido, obterQuadroPedidos } from '../../api/pedidosApi'
+import BotaoRota from '../../components/pedido/BotaoRota'
 import usePedidosAoVivo from '../../hooks/usePedidosAoVivo'
 import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -62,6 +64,7 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
       <footer className="painel-cartao__rodape">
         <strong>{formatarMoeda(pedido.total)}</strong>
         <span onPointerDown={(e) => e.stopPropagation()} className="painel-cartao__acoes">
+          <BotaoRota pedido={pedido} />
           {aoImprimir && (
             <Button type="button" icon="pi pi-print" severity="secondary" text rounded aria-label="Imprimir para a cozinha"
                     data-pr-tooltip="Imprimir para a cozinha" onClick={() => aoImprimir(pedido, 'COZINHA')} />
@@ -243,6 +246,7 @@ export default function PaginaPainelPedidos() {
 
   return (
     <div className="pagina-admin painel-pagina">
+      <Tooltip target=".botao-rota, .painel-cartao .p-button" />
       <div className="painel-pagina__topo">
         <div className="painel-pagina__texto">
           <h1>Painel de pedidos</h1>

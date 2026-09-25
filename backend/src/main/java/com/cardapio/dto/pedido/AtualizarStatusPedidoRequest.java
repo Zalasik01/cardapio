@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 /**
- * Muda a situação do pedido. Ao cancelar, o motivo é obrigatório e a taxa de cancelamento é opcional
- * (vazio ou zero = sem taxa).
+ * Muda a situação do pedido. Ao cancelar, o motivo e a taxa de cancelamento são opcionais
+ * (taxa vazia ou zero = sem taxa).
  */
 public record AtualizarStatusPedidoRequest(
         @NotNull StatusPedido status,

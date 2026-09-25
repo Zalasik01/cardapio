@@ -136,7 +136,26 @@
 
 .painel-cartao__acoes {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
   align-items: center;
   gap: 0.2rem;
   cursor: default;
+}
+
+// ícone de rota no Google Maps (cartão do painel e detalhe do pedido)
+.botao-rota {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: var(--cor-primaria);
+  text-decoration: none;
+
+  &:hover { background: rgba(37, 99, 235, 0.1); }
+
+  &--texto { width: auto; height: auto; margin-left: 0.4rem; padding: 0.1rem 0.4rem; border-radius: 3px; }
 }

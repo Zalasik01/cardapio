@@ -113,10 +113,8 @@ public class PedidoAdminService {
             throw new RegraNegocioException("Este pedido não pode ir de " + pedido.getStatus() + " para " + novoStatus);
         }
         if (novoStatus == StatusPedido.CANCELADO) {
-            if (request.motivo() == null || request.motivo().isBlank()) {
-                throw new RegraNegocioException("Informe o motivo do cancelamento");
-            }
-            pedido.setMotivoCancelamento(request.motivo().trim());
+            // o motivo é opcional
+            pedido.setMotivoCancelamento(request.motivo() == null || request.motivo().isBlank() ? null : request.motivo().trim());
             pedido.setTaxaCancelamento(request.taxaCancelamento() != null
                     ? request.taxaCancelamento().setScale(2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
         }

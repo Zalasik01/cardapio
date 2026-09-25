@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
+import { Tooltip } from 'primereact/tooltip'
 import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
 import { useAuth } from '../../context/AuthContext'
@@ -8,6 +9,7 @@ import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import { atualizarStatusPedido, excluirPedido, obterPedido } from '../../api/pedidosApi'
+import BotaoRota from '../../components/pedido/BotaoRota'
 import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import CrudPagina from '../../components/crud/CrudPagina'
 import { SecaoCrud } from '../../components/crud/Campo'
@@ -105,9 +107,13 @@ export default function PaginaPedidoCrud() {
           <Dado rotulo="Telefone">{formatarTelefone(pedido.telefoneCliente)}</Dado>
           <Dado rotulo="Forma de pagamento">{pedido.formaPagamento}</Dado>
           <Dado rotulo="Tipo">{rotuloTipoEntrega(pedido.tipoEntrega)}</Dado>
-          {pedido.tipoEntrega === 'ENTREGA' && <Dado rotulo="Endereço de entrega">{endereco}</Dado>}
+          {pedido.tipoEntrega === 'ENTREGA' && (
+            <Dado rotulo="Endereço de entrega">
+              {endereco} <BotaoRota pedido={pedido} className="botao-rota botao-rota--texto" />
+            </Dado>
+          )}
           <Dado rotulo="Observações">{pedido.observacoes}</Dado>
-          {pedido.status === 'CANCELADO' && <Dado rotulo="Motivo do cancelamento">{pedido.motivoCancelamento}</Dado>}
+          {pedido.status === 'CANCELADO' && <Dado rotulo="Motivo do cancelamento">{pedido.motivoCancelamento || 'Não informado'}</Dado>}
           {pedido.status === 'CANCELADO' && (
             <Dado rotulo="Taxa de cancelamento">
               {Number(pedido.taxaCancelamento) > 0 ? formatarMoeda(pedido.taxaCancelamento) : 'Sem taxa'}
@@ -161,6 +167,7 @@ export default function PaginaPedidoCrud() {
         </div>
       )}
     >
+      <Tooltip target=".botao-rota" />
       <DialogoCancelarPedido pedido={cancelando ? { id } : null} enviando={atualizando} aoFechar={() => setCancelando(false)}
                              aoConfirmar={async (dados) => { await mudarStatus('CANCELADO', dados); setCancelando(false) }} />
       {pedido ? conteudo : <CrudSkeleton blocos={[[4, 4, 4, 4, 4, 4, 12], [12, 12, 12]]} />}

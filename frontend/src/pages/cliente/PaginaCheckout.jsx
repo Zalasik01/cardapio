@@ -3,23 +3,16 @@ import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { Steps } from 'primereact/steps'
 import { calcularFreteEndereco, criarPedido } from '../../api/cardapioApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
+import { mascaraTelefone } from '../../utils/telefone'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
-import { guardarPedidoAnterior } from '../../utils/pedidosAnteriores'
+import { useCliente } from '../../context/ClienteContext'
 
 const somenteDigitos = (v) => v.replace(/\D/g, '')
 
 function mascaraCep(v) {
   const d = somenteDigitos(v).slice(0, 8)
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d
-}
-
-function mascaraTelefone(v) {
-  const d = somenteDigitos(v).slice(0, 11)
-  if (d.length <= 2) return d
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`
-  const corte = d.length === 11 ? 7 : 6
-  return `(${d.slice(0, 2)}) ${d.slice(2, corte)}-${d.slice(corte)}`
 }
 
 const PASSOS = [{ label: 'Dados' }, { label: 'Entrega' }, { label: 'Pagamento' }, { label: 'Revisão' }]
@@ -35,6 +28,7 @@ export default function PaginaCheckout() {
   const { loja } = cardapio
   const navigate = useNavigate()
   const { itens, subtotal, limparCarrinho } = useCarrinho()
+  const { cliente, abrirLogin } = useCliente()
 
   const [tipoEntrega, setTipoEntrega] = useState('ENTREGA')
   const [form, setForm] = useState(FORM_INICIAL)
@@ -55,6 +49,19 @@ export default function PaginaCheckout() {
       setForm((atual) => ({ ...atual, formaPagamento: formas[0]?.nome ?? '' }))
     }
   }, [formas, form.formaPagamento])
+
+  // pedir exige entrar com o telefone: abre o login e preenche os dados com os da conta
+  useEffect(() => {
+    if (!cliente) {
+      abrirLogin()
+      return
+    }
+    setForm((atual) => ({
+      ...atual,
+      nomeCliente: atual.nomeCliente || cliente.nome || '',
+      telefoneCliente: mascaraTelefone(cliente.telefone),
+    }))
+  }, [cliente, abrirLogin])
 
   const campo = (nome, valor) => setForm((atual) => ({ ...atual, [nome]: valor }))
 
@@ -149,7 +156,6 @@ export default function PaginaCheckout() {
         formaPagamento: form.formaPagamento,
         observacoes: form.observacoes,
       })
-      guardarPedidoAnterior(slug, itens)
       limparCarrinho()
       navigate(`/pedido/${pedido.guid}`)
     } catch (err) {
@@ -160,6 +166,21 @@ export default function PaginaCheckout() {
   }
 
   if (itens.length === 0) return <Navigate to={`/${slug}`} replace />
+  if (!cliente) {
+    return (
+      <div className="loja-pagina">
+        <header className="loja-pagina__topo">
+          <Link to={`/${slug}/carrinho`} aria-label="Voltar ao carrinho"><i className="fa-solid fa-arrow-left" /></Link>
+          <h1>Finalizar pedido</h1>
+        </header>
+        <div className="loja-vazio">
+          <i className="fa-solid fa-mobile-screen" aria-hidden="true" />
+          <p>Entre com seu telefone para enviar o pedido.</p>
+          <button type="button" className="loja-botao" onClick={() => abrirLogin()}>Entrar</button>
+        </div>
+      </div>
+    )
+  }
 
   const taxa = tipoEntrega === 'ENTREGA' && frete?.entregavel ? Number(frete.taxa || 0) : 0
   const total = subtotal + taxa
@@ -181,8 +202,7 @@ export default function PaginaCheckout() {
           <input required autoComplete="name" value={form.nomeCliente} onChange={(e) => campo('nomeCliente', e.target.value)} />
         </label>
         <label className="loja-campo">Telefone / WhatsApp
-          <input required type="tel" inputMode="tel" autoComplete="tel" value={form.telefoneCliente} placeholder="(00) 00000-0000"
-                 onChange={(e) => campo('telefoneCliente', mascaraTelefone(e.target.value))} />
+          <input required type="tel" readOnly value={form.telefoneCliente} />
         </label>
       </section>
       )}

@@ -18,10 +18,13 @@ import java.util.UUID;
 public class PedidoController {
 
     private final PedidoService pedidoService;
+    private final com.cardapio.service.ClienteContaService contaService;
 
     @PostMapping
-    public ResponseEntity<PedidoResponse> criar(@Valid @RequestBody PedidoRequest request) {
-        T_Pedido pedido = pedidoService.criar(request);
+    public ResponseEntity<PedidoResponse> criar(@RequestHeader(value = "Authorization", required = false) String auth,
+                                                @Valid @RequestBody PedidoRequest request) {
+        // pedir exige entrar com o telefone (OTP): o pedido fica na conta do cliente
+        T_Pedido pedido = pedidoService.criarParaCliente(request, contaService.autenticar(auth));
         return ResponseEntity.status(HttpStatus.CREATED).body(PedidoResponse.of(pedido));
     }
 

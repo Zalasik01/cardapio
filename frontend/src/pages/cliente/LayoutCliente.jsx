@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import { buscarCardapio } from '../../api/cardapioApi'
 import { CarrinhoProvider } from '../../context/CarrinhoContext'
+import { ClienteProvider } from '../../context/ClienteContext'
 import { CardapioSkeleton } from '../../components/Skeleton'
 
 /** Carrega a loja e o cardápio uma vez; as telas filhas (cardápio, carrinho, checkout) recebem pelo contexto da rota. */
@@ -23,6 +24,7 @@ export default function LayoutCliente() {
   }, [cardapio])
 
   return (
+    <ClienteProvider>
     <CarrinhoProvider slug={slug}>
       <div className="loja">
         {erro && <p className="loja__erro" role="alert">{erro}</p>}
@@ -30,5 +32,6 @@ export default function LayoutCliente() {
         {cardapio && <Outlet context={{ cardapio, slug }} />}
       </div>
     </CarrinhoProvider>
+    </ClienteProvider>
   )
 }

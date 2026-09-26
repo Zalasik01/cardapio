@@ -4,7 +4,8 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { Dialog } from 'primereact/dialog'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
-import { lerPedidosAnteriores } from '../../utils/pedidosAnteriores'
+import { useCliente } from '../../context/ClienteContext'
+import { listarPedidosCliente } from '../../api/clienteApi'
 
 const semAcento = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -254,6 +255,8 @@ export default function PaginaCardapio() {
   const { cardapio, slug } = useOutletContext()
   const { loja, aberta, proximaMudanca, categorias } = cardapio
   const { itens, totalItens, subtotal } = useCarrinho()
+  const { cliente, abrirLogin } = useCliente()
+  const [historico, setHistorico] = useState([])
   const [busca, setBusca] = useState('')
   const [produto, setProduto] = useState(null)
   const chips = useRef(null)
@@ -271,11 +274,20 @@ export default function PaginaCardapio() {
   const todos = useMemo(() => categorias.flatMap((c) => c.produtos), [categorias])
   const destaques = useMemo(() => todos.filter((p) => p.destaque && !p.precoOriginal), [todos])
   const promocoes = useMemo(() => todos.filter((p) => p.precoOriginal), [todos])
+  // "Peça novamente": produtos dos pedidos anteriores do cliente logado (os mais recentes primeiro)
+  useEffect(() => {
+    if (!cliente) {
+      setHistorico([])
+      return
+    }
+    listarPedidosCliente(slug).then(setHistorico).catch(() => setHistorico([]))
+  }, [cliente, slug])
   const pecaNovamente = useMemo(() => {
+    const porGuid = new Map(todos.map((p) => [p.guid, p]))
     const vistos = new Set()
-    lerPedidosAnteriores(slug).forEach((pedido) => pedido.produtos.forEach((g) => vistos.add(g)))
-    return todos.filter((p) => vistos.has(p.guid)).slice(0, 10)
-  }, [todos, slug])
+    historico.forEach((pedido) => pedido.itens.forEach((i) => vistos.add(i.produtoGuid)))
+    return [...vistos].map((g) => porGuid.get(g)).filter(Boolean).slice(0, 10)
+  }, [todos, historico])
   const mostrarBlocos = !busca.trim()
   const guids = useMemo(() => filtradas.map((c) => c.guid), [filtradas])
   const [ativa, setAtiva] = useCategoriaAtiva(guids)
@@ -312,6 +324,15 @@ export default function PaginaCardapio() {
               {aberta ? 'Aberta agora' : 'Fechada'}
             </span>
             <BotaoCompartilhar nome={loja.nome} />
+            {cliente ? (
+              <Link className="loja-compartilhar" to={`/${slug}/pedidos`}>
+                <i className="fa-solid fa-circle-user" aria-hidden="true" /> {(cliente.nome || 'Meus pedidos').split(' ')[0]}
+              </Link>
+            ) : (
+              <button type="button" className="loja-compartilhar" onClick={() => abrirLogin()}>
+                <i className="fa-regular fa-circle-user" aria-hidden="true" /> Entrar
+              </button>
+            )}
           </div>
           <ul className="loja-capa__infos">
             {abertura && <li><i className="fa-regular fa-calendar" aria-hidden="true" /> {abertura}</li>}

@@ -902,3 +902,70 @@
   .loja { max-width: 1320px; }
   .loja-corpo { grid-template-columns: minmax(0, 1fr) 380px; }
 }
+
+/* ---------- Conta do cliente: login, meus pedidos ---------- */
+.loja-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cor-primaria);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover { background: transparent; color: var(--cor-primaria-escura); }
+}
+
+.loja-login {
+  display: grid;
+  gap: 0.9rem;
+
+  p { margin: 0; color: var(--cor-texto-suave); }
+}
+
+.loja-login__codigo { font-size: 1.6rem !important; letter-spacing: 0.5em; text-align: center; font-weight: 800 !important; }
+
+.loja-botao--pequeno { min-height: 2.5rem; padding: 0.5rem 0.9rem; border-radius: 10px; font-size: 0.875rem; }
+
+.loja-conta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 0.75rem;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.loja-historico {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loja-historico__pedido {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  background: var(--cor-superficie);
+  border-radius: 18px;
+  box-shadow: var(--sombra-cartao);
+
+  header, footer { display: flex; gap: 0.75rem; align-items: center; justify-content: space-between; }
+  footer { padding-top: 0.6rem; border-top: 1px dashed var(--cor-borda); flex-wrap: wrap; > span { display: flex; gap: 0.5rem; } }
+  small { color: var(--cor-texto-suave); }
+  ul { display: grid; gap: 0.15rem; margin: 0.25rem 0; padding: 0; list-style: none; font-size: 0.9rem; }
+}
+
+.loja-historico__situacao {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cor-selo) 15%, white);
+  color: var(--cor-selo);
+  font-size: 0.78rem;
+  font-weight: 800;
+}

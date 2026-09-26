@@ -24,6 +24,8 @@ public class JwtService {
     private static final String CLAIM_TIPO = "tipo";
     private static final String TIPO_ACCESS = "access";
     private static final String TIPO_REFRESH = "refresh";
+    private static final String TIPO_CLIENTE = "cliente";
+    private static final long CLIENTE_EXPIRACAO_MS = 30L * 24 * 60 * 60 * 1000;
 
     private final SecretKey key;
     private final long accessExpirationMs;
@@ -43,6 +45,20 @@ public class JwtService {
 
     public String gerarRefreshToken(String email, Map<String, Object> claims) {
         return gerar(email, claims, TIPO_REFRESH, refreshExpirationMs);
+    }
+
+    /** Token do cliente final (cardápio online): não vale para o painel, pois o tipo é outro. Subject = id da conta. */
+    public String gerarTokenCliente(Long contaId) {
+        return gerar(String.valueOf(contaId), Map.of(), TIPO_CLIENTE, CLIENTE_EXPIRACAO_MS);
+    }
+
+    /** Devolve o id da conta do cliente; lança JwtException se o token for inválido, vencido ou de outro tipo. */
+    public Long lerTokenCliente(String token) {
+        try {
+            return Long.valueOf(ler(token, TIPO_CLIENTE).getSubject());
+        } catch (NumberFormatException e) {
+            throw new JwtException("Token inválido");
+        }
     }
 
     /** Valida assinatura, validade e tipo access. Lanca JwtException se invalido. */

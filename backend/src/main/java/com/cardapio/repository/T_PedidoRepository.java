@@ -63,6 +63,11 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
     @Query("select p from T_Pedido p where p.deletado = false and p.tempoPreparoMinutos is not null and p.status in :status")
     List<T_Pedido> buscarComPrazo(@Param("status") Collection<StatusPedido> status);
 
+    /** Histórico do cliente numa loja: mais recentes primeiro, com os itens. */
+    @Query("select distinct p from T_Pedido p left join fetch p.itens i left join fetch i.produto "
+            + "where p.idClienteConta = :conta and p.tenant = :tenant and p.deletado = false order by p.dataCriacao desc")
+    List<T_Pedido> historicoDoCliente(@Param("conta") Long conta, @Param("tenant") UUID tenant);
+
     /** Pedidos entregues no período que tinham prazo: linhas [total, noPrazo, somaAtrasoMinutos]. */
     @Query(value = "select count(*), "
             + "count(*) filter (where data_atualizacao <= data_criacao + tempo_preparo_minutos * interval '1 minute'), "

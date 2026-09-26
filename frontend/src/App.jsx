@@ -8,6 +8,7 @@ import LayoutCliente from './pages/cliente/LayoutCliente'
 import PaginaCardapio from './pages/cliente/PaginaCardapio'
 import PaginaCarrinho from './pages/cliente/PaginaCarrinho'
 import PaginaCheckout from './pages/cliente/PaginaCheckout'
+import PaginaMeusPedidos from './pages/cliente/PaginaMeusPedidos'
 
 import PaginaLogin from './pages/admin/PaginaLogin'
 import LayoutAdmin from './pages/admin/LayoutAdmin'
@@ -121,6 +122,7 @@ export default function App() {
             <Route index element={<PaginaCardapio />} />
             <Route path="carrinho" element={<PaginaCarrinho />} />
             <Route path="checkout" element={<PaginaCheckout />} />
+            <Route path="pedidos" element={<PaginaMeusPedidos />} />
             <Route path="pedido/:pedidoGuid" element={<RedirecionaAcompanhamento />} />
           </Route>
         </Routes>

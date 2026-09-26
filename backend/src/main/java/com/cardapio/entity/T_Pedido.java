@@ -98,6 +98,9 @@ public class T_Pedido extends TenantAbstract {
     /** Entregador responsável (pedidos de entrega), o repasse dele por esta entrega e a foto da entrega feita. */
     private Long idEntregador;
 
+    /** Conta do cliente que fez o pedido pelo cardápio online (vazio nos pedidos lançados pela loja). */
+    private Long idClienteConta;
+
     private BigDecimal repasseEntregador;
 
     private String fotoEntregaUrl;

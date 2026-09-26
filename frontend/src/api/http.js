@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { lerSessao, limparSessao, salvarSessao } from '../utils/sessao'
+import { lerSessaoCliente, limparSessaoCliente } from '../utils/sessaoCliente'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
@@ -10,8 +11,14 @@ const http = axios.create({ baseURL: BASE_URL })
 const ehRotaPublica = (url = '') => url.startsWith('/publico/') || url === '/pedidos' || url.startsWith('/pedidos/')
 
 http.interceptors.request.use((config) => {
+  if (ehRotaPublica(config.url)) {
+    // rotas do cliente do cardápio levam o token do CLIENTE (nunca o do painel)
+    const { token } = lerSessaoCliente()
+    if (token) config.headers.Authorization = `Bearer ${token}`
+    return config
+  }
   const { accessToken } = lerSessao()
-  if (accessToken && !ehRotaPublica(config.url)) {
+  if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`
   }
   return config
@@ -60,6 +67,11 @@ http.interceptors.response.use(
         if (window.location.pathname.startsWith('/admin')) window.location.assign('/admin/login')
         return Promise.reject({ ...error, mensagem: 'Sua sessao expirou. Entre novamente.' })
       }
+    }
+
+    // sessão do cliente vencida: volta a pedir o telefone
+    if (error.response?.status === 401 && original && ehRotaPublica(original.url) && lerSessaoCliente().token) {
+      limparSessaoCliente()
     }
 
     const mensagem = error.response?.data?.mensagem || 'Ocorreu um erro inesperado. Tente novamente.'

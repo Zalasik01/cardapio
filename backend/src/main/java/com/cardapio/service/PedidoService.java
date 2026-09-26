@@ -39,6 +39,18 @@ public class PedidoService {
         return criar(request, false);
     }
 
+    /** Pedido do cliente logado: o telefone é o da conta (confirmado por OTP) e o pedido fica no histórico dela. */
+    @Transactional
+    public T_Pedido criarParaCliente(PedidoRequest request, com.cardapio.entity.S_ClienteConta conta) {
+        PedidoRequest daConta = new PedidoRequest(request.tenant(), request.nomeCliente(), conta.getTelefone(),
+                request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
+                request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
+                request.itens(), request.formaPagamento(), request.observacoes(), null, null, null, null);
+        T_Pedido pedido = criar(daConta, false);
+        pedido.setIdClienteConta(conta.getId());
+        return pedidoRepository.save(pedido);
+    }
+
     /**
      * pelaLoja: pedido lançado pela própria loja (balcão, telefone, WhatsApp); não depende de a loja estar
      * aberta nem do valor mínimo do pedido.

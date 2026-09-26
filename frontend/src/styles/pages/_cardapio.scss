@@ -1330,9 +1330,78 @@ body:has(.loja) { background: #fbf7f4; }
 .pedido-anim--entregue span { position: absolute; left: 50%; top: 60%; width: 8px; height: 12px; border-radius: 2px; background: hsl(calc(var(--i) * 26), 85%, 55%); animation: pedido-confete 1.6s ease-out both; animation-delay: calc(var(--i) * 25ms); }
 @keyframes pedido-confete {
   0% { transform: translate(0, 0) rotate(0); opacity: 1; }
-  100% { transform: translate(calc((var(--i) - 7) * 22px), calc(-1.4rem - (var(--i) % 4) * 6px)) rotate(calc(var(--i) * 70deg)); opacity: 0; }
+  100% { transform: translate(calc((var(--i) - 7) * 22px), calc(-1.4rem - var(--j) * 6px)) rotate(calc(var(--i) * 70deg)); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pedido-hero *, .pedido-anim * { animation: none !important; }
 }
+
+/* ---------- Meus pedidos: perfil, números, filtros ---------- */
+.cliente-perfil {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  color: #fff;
+  border-radius: 20px;
+  background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 3px) 0 0 / 22px 22px, linear-gradient(135deg, #dc2626 0%, #b91c1c 55%, #a16207 100%);
+  box-shadow: var(--sombra-cartao);
+
+  > div { flex: 1; min-width: 0; display: grid; small { opacity: 0.9; } strong { font-size: 1.1rem; } }
+  .loja-link { color: #fff; opacity: 0.9; &:hover { color: #fff; opacity: 1; } }
+}
+
+.cliente-perfil__avatar { display: grid; place-items: center; flex: none; width: 3rem; height: 3rem; border-radius: 50%; background: rgba(255, 255, 255, 0.22); border: 2px solid rgba(255, 255, 255, 0.7); font-size: 1.3rem; font-weight: 800; }
+
+.cliente-numeros {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+
+  > div { display: grid; gap: 0.1rem; padding: 0.85rem 1rem; background: var(--cor-superficie); border-radius: 16px; box-shadow: var(--sombra-cartao); }
+  strong { font-size: 1.25rem; font-weight: 800; line-height: 1.2; }
+  small { color: var(--cor-texto-suave); font-weight: 600; }
+}
+
+.cliente-favorito { display: flex; gap: 0.5rem; align-items: center; margin: 0 0 0.75rem; padding: 0.65rem 0.9rem; border-radius: 12px; background: #fff1f2; color: var(--cor-texto); font-size: 0.9rem; i { color: var(--cor-primaria); } }
+
+.cliente-filtros {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+
+  button {
+    flex: none;
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: 999px;
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    span { padding: 0 0.4rem; border-radius: 999px; background: var(--cor-fundo); font-size: 0.75rem; }
+    &:hover { background: var(--cor-superficie); color: var(--cor-primaria); }
+    &.ativo, &.ativo:hover { background: var(--cor-texto); border-color: var(--cor-texto); color: #fff; span { background: rgba(255, 255, 255, 0.2); } }
+  }
+}
+
+.loja-historico__pedido { border-left: 5px solid var(--cor-selo, var(--cor-borda)); }
+.loja-historico__pedido--cancelado { opacity: 0.75; }
+.loja-historico__pedido--esqueleto { min-height: 9rem; animation: loja-pulso-fundo 1.4s infinite ease-in-out; }
+.loja-historico__pedido ul li span { font-weight: 800; color: var(--cor-texto-suave); }
+
+@media (min-width: 640px) { .cliente-numeros { grid-template-columns: repeat(4, 1fr); } }

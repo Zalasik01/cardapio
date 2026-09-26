@@ -520,3 +520,16 @@ fieldset.crud__somente-leitura {
     pointer-events: auto;
   }
 }
+
+// aviso de origem do cadastro (cliente que se cadastrou pelo app/site)
+.aviso-origem {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0 0 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.9rem;
+}

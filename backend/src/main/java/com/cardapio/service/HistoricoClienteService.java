@@ -29,6 +29,21 @@ public class HistoricoClienteService {
                                   boolean concluido, String tipoEntrega, BigDecimal total, List<ItemHistorico> itens) {
     }
 
+    /** Números do cliente na loja (cancelados não contam). */
+    public record ResumoCliente(long totalPedidos, BigDecimal totalGasto, BigDecimal ticketMedio, LocalDateTime clienteDesde, String favorito) {
+    }
+
+    @Transactional(readOnly = true)
+    public ResumoCliente resumo(S_ClienteConta conta, String slug) {
+        UUID tenant = lojaService.buscarPorSlug(slug).getGuid();
+        Object[] linha = pedidoRepository.resumoDoCliente(conta.getId(), tenant).get(0);
+        long total = ((Number) linha[0]).longValue();
+        BigDecimal gasto = new BigDecimal(String.valueOf(linha[1])).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal ticket = total == 0 ? BigDecimal.ZERO : gasto.divide(BigDecimal.valueOf(total), 2, java.math.RoundingMode.HALF_UP);
+        var favoritos = pedidoRepository.favoritosDoCliente(conta.getId(), tenant, org.springframework.data.domain.PageRequest.of(0, 1));
+        return new ResumoCliente(total, gasto, ticket, (LocalDateTime) linha[2], favoritos.isEmpty() ? null : (String) favoritos.get(0)[0]);
+    }
+
     @Transactional(readOnly = true)
     public List<PedidoHistorico> listar(S_ClienteConta conta, String slug) {
         UUID tenant = lojaService.buscarPorSlug(slug).getGuid();

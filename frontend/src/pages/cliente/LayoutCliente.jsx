@@ -41,7 +41,7 @@ export default function LayoutCliente() {
   }, [slug])
 
   return (
-    <ClienteProvider>
+    <ClienteProvider slug={slug}>
     <CarrinhoProvider slug={slug}>
       <div className="loja">
         {erro && <p className="loja__erro" role="alert">{erro}</p>}

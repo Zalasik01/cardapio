@@ -9,7 +9,7 @@ import {
 const ClienteContext = createContext(null)
 
 /** Entrar com o telefone: passo 1 pede o número, passo 2 o código enviado (e o nome, se ainda não tiver conta). */
-function DialogoLogin({ aoFechar, aoEntrar }) {
+function DialogoLogin({ aoFechar, aoEntrar, slug }) {
   const [passo, setPasso] = useState('telefone')
   const [telefone, setTelefone] = useState('')
   const [codigo, setCodigo] = useState('')
@@ -43,7 +43,7 @@ function DialogoLogin({ aoFechar, aoEntrar }) {
     setErro(null)
     setOcupado(true)
     try {
-      const sessao = await verificarCodigoCliente({ telefone, codigo, nome })
+      const sessao = await verificarCodigoCliente({ telefone, codigo, nome, slug })
       aoEntrar(sessao)
     } catch (err) {
       setErro(err.mensagem)
@@ -97,7 +97,7 @@ function DialogoLogin({ aoFechar, aoEntrar }) {
 }
 
 /** Cliente logado no cardápio online (por telefone/OTP) e o diálogo de entrada, que qualquer tela pode abrir. */
-export function ClienteProvider({ children }) {
+export function ClienteProvider({ children, slug }) {
   const [sessao, setSessao] = useState(lerSessaoCliente)
   const [aberto, setAberto] = useState(false)
   const depois = useRef(null)
@@ -131,7 +131,7 @@ export function ClienteProvider({ children }) {
   return (
     <ClienteContext.Provider value={{ cliente: sessao.token ? sessao.cliente : null, abrirLogin, sair }}>
       {children}
-      {aberto && <DialogoLogin aoFechar={() => setAberto(false)} aoEntrar={entrou} />}
+      {aberto && <DialogoLogin aoFechar={() => setAberto(false)} aoEntrar={entrou} slug={slug} />}
     </ClienteContext.Provider>
   )
 }

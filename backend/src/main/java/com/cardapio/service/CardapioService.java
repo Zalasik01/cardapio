@@ -76,6 +76,10 @@ public class CardapioService {
         if (loja.getLogoUrl() != null && !loja.getLogoUrl().isBlank()) {
             icones.add(java.util.Map.of("src", loja.getLogoUrl(), "sizes", "512x512", "purpose", "any"));
         }
+        // PNGs em todos os tamanhos exigidos para instalar em qualquer aparelho (o SVG fica como reserva)
+        icones.add(java.util.Map.of("src", "/icons/icon-192.png", "sizes", "192x192", "type", "image/png", "purpose", "any"));
+        icones.add(java.util.Map.of("src", "/icons/icon-512.png", "sizes", "512x512", "type", "image/png", "purpose", "any"));
+        icones.add(java.util.Map.of("src", "/icons/icon-maskable-512.png", "sizes", "512x512", "type", "image/png", "purpose", "maskable"));
         icones.add(java.util.Map.of("src", "/favicon.svg", "sizes", "any", "type", "image/svg+xml", "purpose", "any"));
         var manifesto = new java.util.LinkedHashMap<String, Object>();
         manifesto.put("id", inicio);

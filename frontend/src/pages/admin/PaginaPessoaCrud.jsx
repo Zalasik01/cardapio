@@ -123,6 +123,7 @@ export default function PaginaPessoaCrud() {
   const { definirMigalha } = useOutletContext()
 
   const [form, setForm] = useState(FORM_VAZIO)
+  const [origem, setOrigem] = useState(null)
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
@@ -140,7 +141,10 @@ export default function PaginaPessoaCrud() {
     if (!editando) return
     setCarregando(true)
     obterPessoa(loja.tenant, id)
-      .then((pessoa) => setForm(paraFormulario(pessoa)))
+      .then((pessoa) => {
+        setForm(paraFormulario(pessoa))
+        setOrigem(pessoa.origem)
+      })
       .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }, [editando, id, loja.tenant])
@@ -260,6 +264,12 @@ export default function PaginaPessoaCrud() {
 
   const conteudo = (
     <>
+      {origem === 'APP_SITE' && (
+        <p className="aviso-origem" role="status">
+          <i className="pi pi-mobile" aria-hidden="true" /> Cadastro feito pelo próprio cliente no app/site (conta por telefone, confirmada por código).
+        </p>
+      )}
+
       <SecaoCrud id="secao-principal" titulo="Principal">
         <GradeCampos>
           <CampoAtivo valor={form.ativo} aoAlterar={definir('ativo')} />

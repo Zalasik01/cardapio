@@ -73,6 +73,17 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
 
     long countByIdClienteContaAndTenantAndDeletadoFalseAndStatusNot(Long idClienteConta, UUID tenant, StatusPedido status);
 
+    /** [quantidade, total gasto, primeiro pedido] do cliente na loja, sem contar os cancelados. */
+    @Query("select count(p), coalesce(sum(p.total), 0), min(p.dataCriacao) from T_Pedido p where p.idClienteConta = :conta "
+            + "and p.tenant = :tenant and p.deletado = false and p.status <> com.cardapio.entity.StatusPedido.CANCELADO")
+    List<Object[]> resumoDoCliente(@Param("conta") Long conta, @Param("tenant") UUID tenant);
+
+    /** Produtos que o cliente mais pediu na loja (nome, quantidade somada), do mais para o menos. */
+    @Query("select i.nomeProduto, sum(i.quantidade) from I_ItemPedido i where i.pedido.idClienteConta = :conta "
+            + "and i.pedido.tenant = :tenant and i.pedido.deletado = false "
+            + "and i.pedido.status <> com.cardapio.entity.StatusPedido.CANCELADO group by i.nomeProduto order by sum(i.quantidade) desc")
+    List<Object[]> favoritosDoCliente(@Param("conta") Long conta, @Param("tenant") UUID tenant, org.springframework.data.domain.Pageable limite);
+
     /** Histórico do cliente numa loja: mais recentes primeiro, com os itens. */
     @Query("select distinct p from T_Pedido p left join fetch p.itens i left join fetch i.produto "
             + "where p.idClienteConta = :conta and p.tenant = :tenant and p.deletado = false order by p.dataCriacao desc")

@@ -60,6 +60,12 @@ public class ClientePublicoController {
         return cupomService.validar(contaService.autenticar(auth), request);
     }
 
+    @GetMapping("/resumo")
+    public HistoricoClienteService.ResumoCliente resumo(@RequestHeader(value = "Authorization", required = false) String auth,
+                                                        @RequestParam String slug) {
+        return historicoService.resumo(contaService.autenticar(auth), slug);
+    }
+
     @GetMapping("/pedidos")
     public List<PedidoHistorico> pedidos(@RequestHeader(value = "Authorization", required = false) String auth,
                                          @RequestParam String slug) {

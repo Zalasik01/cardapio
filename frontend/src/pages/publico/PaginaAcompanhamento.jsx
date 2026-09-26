@@ -66,7 +66,7 @@ function AnimacaoMomento({ pedido }) {
     case 'ENTREGUE':
       return (
         <div className="pedido-anim pedido-anim--entregue" aria-hidden="true">
-          {Array.from({ length: 14 }, (_, i) => <span key={i} style={{ '--i': i }} />)}
+          {Array.from({ length: 14 }, (_, i) => <span key={i} style={{ '--i': i, '--j': i % 4 }} />)}
         </div>
       )
     default:

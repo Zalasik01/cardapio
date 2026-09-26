@@ -65,7 +65,11 @@ public class EntregadorPublicoService {
                 "orientation", "portrait",
                 "background_color", "#f4f4f4",
                 "theme_color", "#2563eb",
-                "icons", List.of(java.util.Map.of("src", "/favicon.svg", "sizes", "any", "type", "image/svg+xml", "purpose", "any")));
+                "icons", List.of(
+                        java.util.Map.of("src", "/icons/icon-192.png", "sizes", "192x192", "type", "image/png", "purpose", "any"),
+                        java.util.Map.of("src", "/icons/icon-512.png", "sizes", "512x512", "type", "image/png", "purpose", "any"),
+                        java.util.Map.of("src", "/icons/icon-maskable-512.png", "sizes", "512x512", "type", "image/png", "purpose", "maskable"),
+                        java.util.Map.of("src", "/favicon.svg", "sizes", "any", "type", "image/svg+xml", "purpose", "any")));
     }
 
     /** "Saí para entrega": leva o pedido para a situação de saída do fluxo da loja. */

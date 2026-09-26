@@ -41,6 +41,13 @@ const COLUNAS = [
     cabecalho: 'Cadastrado como',
     render: (pessoa) => [pessoa.cliente && 'Cliente', pessoa.fornecedor && 'Fornecedor'].filter(Boolean).join(', '),
   },
+  {
+    chave: 'origem',
+    cabecalho: 'Origem',
+    render: (pessoa) => (pessoa.origem === 'APP_SITE'
+      ? <span className="selo selo--info"><i className="pi pi-mobile" aria-hidden="true" /> App/site</span>
+      : <span className="texto-auxiliar">Painel</span>),
+  },
   { chave: 'telefones', cabecalho: 'Telefones', render: (pessoa) => listaTruncada(pessoa.telefones?.map(formatarTelefone)) },
   { chave: 'emails', cabecalho: 'E-mails', render: (pessoa) => listaTruncada(pessoa.emails) },
 ]

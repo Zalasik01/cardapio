@@ -269,7 +269,7 @@ public class PessoaService {
                 fisica ? null : pj.getRazaoSocial(), fisica ? null : pj.getNomeFantasia(), fisica ? null : pj.getCnpj(),
                 fisica ? null : pj.getInscricaoEstadual(), fisica ? null : pj.getInscricaoMunicipal(),
                 contatoService.endereco(pessoa.getId()), contatoService.telefones(pessoa.getId()),
-                contatoService.emails(pessoa.getId()));
+                contatoService.emails(pessoa.getId()), pessoa.getOrigem());
     }
 
     private Specification<T_Pessoa> especificacao(UUID tenant, FiltroPessoa filtro) {

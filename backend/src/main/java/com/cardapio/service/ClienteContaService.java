@@ -35,6 +35,8 @@ public class ClienteContaService {
     private final S_ClienteOtpRepository otpRepository;
     private final ProvedorOtp provedor;
     private final JwtService jwtService;
+    private final ClientePessoaService clientePessoaService;
+    private final LojaService lojaService;
 
     @Value("${app.jwt.secret}")
     private String segredo;
@@ -89,7 +91,7 @@ public class ClienteContaService {
     }
 
     @Transactional(noRollbackFor = RegraNegocioException.class)
-    public Sessao verificar(String telefoneBruto, String codigo, String nome) {
+    public Sessao verificar(String telefoneBruto, String codigo, String nome, String slug) {
         String telefone = normalizarTelefone(telefoneBruto);
         S_ClienteOtp otp = otpRepository.findFirstByTelefoneAndUsadoFalseOrderByDataCriacaoDesc(telefone)
                 .filter(o -> o.getExpiraEm().isAfter(LocalDateTime.now()))
@@ -114,6 +116,10 @@ public class ClienteContaService {
         }
         conta.setUltimoAcesso(LocalDateTime.now());
         conta = contaRepository.save(conta);
+        if (slug != null && !slug.isBlank()) {
+            // entrou pelo cardápio desta loja: já aparece em Clientes e Fornecedores dela
+            clientePessoaService.garantir(lojaService.buscarPorSlug(slug).getGuid(), conta, nome);
+        }
         return new Sessao(jwtService.gerarTokenCliente(conta.getId()), ContaResponse.of(conta));
     }
 

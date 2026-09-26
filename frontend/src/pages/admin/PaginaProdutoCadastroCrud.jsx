@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Checkbox } from 'primereact/checkbox'
+import { Calendar } from 'primereact/calendar'
 import { Dropdown } from 'primereact/dropdown'
+import { MultiSelect } from 'primereact/multiselect'
 import { InputNumber } from 'primereact/inputnumber'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -22,7 +24,8 @@ import CrudPagina from '../../components/crud/CrudPagina'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import ComposicaoProduto from '../../components/produto/ComposicaoProduto'
 import { CrudSkeleton } from '../../components/Skeleton'
-import { TIPOS_PRODUTO, UNIDADES_MEDIDA } from '../../utils/produto'
+import { SELOS_PRODUTO, TIPOS_PRODUTO, UNIDADES_MEDIDA } from '../../utils/produto'
+import { DIAS_SEMANA, dataParaHora, diasParaCsv, diasParaLista, horaParaData } from '../../utils/janela'
 
 const moeda = { mode: 'currency', currency: 'BRL', locale: 'pt-BR' }
 
@@ -40,6 +43,8 @@ const FORM_VAZIO = {
   tempoPreparoMinutos: null,
   precoPromocional: null,
   destaque: false,
+  disponivelDias: [], disponivelDas: null, disponivelAte: null, selos: [], alergenos: '',
+  promoDias: [], promoInicio: null, promoFim: null,
   disponivel: true,
   composicao: [],
   // ingrediente
@@ -61,6 +66,9 @@ function paraFormulario(produto) {
     tempoPreparoMinutos: produto.tempoPreparoMinutos ?? null,
     precoPromocional: produto.precoPromocional ?? null,
     destaque: !!produto.destaque,
+    disponivelDias: diasParaLista(produto.disponivelDias), disponivelDas: horaParaData(produto.disponivelDas), disponivelAte: horaParaData(produto.disponivelAte),
+    selos: produto.selos ? produto.selos.split(',') : [], alergenos: produto.alergenos ?? '',
+    promoDias: diasParaLista(produto.promoDias), promoInicio: horaParaData(produto.promoInicio), promoFim: horaParaData(produto.promoFim),
     disponivel: produto.disponivel,
     composicao: (produto.composicao ?? []).map((item) => ({ ...item, _id: `item-${item.ingredienteId}` })),
     custoUnitario: produto.custoUnitario ?? 0,
@@ -87,6 +95,9 @@ function paraRequisicao(form, tipo) {
       tempoPreparoMinutos: form.tempoPreparoMinutos,
       precoPromocional: form.precoPromocional,
       destaque: form.destaque,
+      disponivelDias: diasParaCsv(form.disponivelDias), disponivelDas: dataParaHora(form.disponivelDas), disponivelAte: dataParaHora(form.disponivelAte),
+      selos: form.selos.length ? form.selos.join(',') : null, alergenos: form.alergenos.trim() || null,
+      promoDias: diasParaCsv(form.promoDias), promoInicio: dataParaHora(form.promoInicio), promoFim: dataParaHora(form.promoFim),
       disponivel: form.disponivel,
       composicao: form.composicao.map(({ ingredienteId, quantidade }) => ({ ingredienteId, quantidade })),
     }
@@ -303,6 +314,40 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
           </Campo>
         </GradeCampos>
       </SecaoCrud>
+
+      {final && (
+        <SecaoCrud id="secao-venda" titulo="Venda e promoção">
+          <GradeCampos>
+            <Campo id="disponivelDias" rotulo="Vende nos dias" tamanho={4} ajuda="Vazio = todos os dias.">
+              <MultiSelect inputId="disponivelDias" value={form.disponivelDias} options={DIAS_SEMANA} optionLabel="rotulo" optionValue="valor"
+                           display="chip" placeholder="Todos os dias" onChange={(e) => definir('disponivelDias')(e.value)} />
+            </Campo>
+            <Campo id="disponivelDas" rotulo="Vende a partir de" tamanho={2} ajuda="Ex.: almoço 11:00.">
+              <Calendar inputId="disponivelDas" value={form.disponivelDas} timeOnly hourFormat="24" onChange={(e) => definir('disponivelDas')(e.value)} />
+            </Campo>
+            <Campo id="disponivelAte" rotulo="Vende até" tamanho={2}>
+              <Calendar inputId="disponivelAte" value={form.disponivelAte} timeOnly hourFormat="24" onChange={(e) => definir('disponivelAte')(e.value)} />
+            </Campo>
+            <Campo id="promoDias" rotulo="Promoção nos dias" tamanho={4} ajuda="Só vale com preço promocional. Vazio = todos os dias.">
+              <MultiSelect inputId="promoDias" value={form.promoDias} options={DIAS_SEMANA} optionLabel="rotulo" optionValue="valor"
+                           display="chip" placeholder="Todos os dias" onChange={(e) => definir('promoDias')(e.value)} />
+            </Campo>
+            <Campo id="promoInicio" rotulo="Promoção das" tamanho={2} ajuda="Happy hour: ex. 17:00.">
+              <Calendar inputId="promoInicio" value={form.promoInicio} timeOnly hourFormat="24" onChange={(e) => definir('promoInicio')(e.value)} />
+            </Campo>
+            <Campo id="promoFim" rotulo="Promoção até" tamanho={2}>
+              <Calendar inputId="promoFim" value={form.promoFim} timeOnly hourFormat="24" onChange={(e) => definir('promoFim')(e.value)} />
+            </Campo>
+            <Campo id="selos" rotulo="Selos" tamanho={6}>
+              <MultiSelect inputId="selos" value={form.selos} options={SELOS_PRODUTO} optionLabel="rotulo" optionValue="valor"
+                           display="chip" placeholder="Nenhum" onChange={(e) => definir('selos')(e.value)} />
+            </Campo>
+            <Campo id="alergenos" rotulo="Alérgenos" tamanho={6} ajuda="Aparece no detalhe do produto. Ex.: Contém glúten e leite.">
+              <InputText id="alergenos" maxLength={300} value={form.alergenos} onChange={(e) => definir('alergenos')(e.target.value)} />
+            </Campo>
+          </GradeCampos>
+        </SecaoCrud>
+      )}
 
       {final && (
         <ComposicaoProduto itens={form.composicao} preco={form.preco} aoAlterar={definir('composicao')} />

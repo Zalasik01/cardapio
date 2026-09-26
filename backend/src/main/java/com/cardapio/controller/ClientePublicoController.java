@@ -25,7 +25,7 @@ public class ClientePublicoController {
     public record SolicitarCodigoRequest(@NotBlank String telefone) {
     }
 
-    public record VerificarCodigoRequest(@NotBlank String telefone, @NotBlank String codigo, String nome) {
+    public record VerificarCodigoRequest(@NotBlank String telefone, @NotBlank String codigo, String nome, String slug) {
     }
 
     public record NomeRequest(@NotBlank String nome) {
@@ -38,7 +38,7 @@ public class ClientePublicoController {
 
     @PostMapping("/otp/verificar")
     public Sessao verificar(@Valid @RequestBody VerificarCodigoRequest request) {
-        return contaService.verificar(request.telefone(), request.codigo(), request.nome());
+        return contaService.verificar(request.telefone(), request.codigo(), request.nome(), request.slug());
     }
 
     @GetMapping("/eu")

@@ -47,6 +47,8 @@ function quando(iso) {
 /** Texto de apoio do selo: quando fecha/abre, ou por que está assim. */
 export function descreverSituacao(situacao) {
   if (!situacao) return ''
+  if (situacao.motivo === 'PAUSADA') return `Pedidos pausados até ${new Date(situacao.pausadoAte).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Clique para mudar.`
+  if (situacao.motivo === 'LOTADA') return 'Cozinha no limite de pedidos em preparo: novos pedidos param até liberar.'
   if (situacao.modo === 'ABERTA') return 'Aberta manualmente. Clique para mudar.'
   if (situacao.modo === 'FECHADA') return 'Fechada manualmente. Clique para mudar.'
   if (situacao.semHorarios) return 'Sem horário cadastrado: a loja é considerada sempre aberta.'

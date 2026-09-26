@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
-  alterarAtivoProdutoCadastro, buscarProdutosCadastro, excluirProdutoCadastro, listarCategoriasCadastro,
+  alterarAtivoProdutoCadastro, alterarEsgotadoProduto, buscarProdutosCadastro, excluirProdutoCadastro, listarCategoriasCadastro,
 } from '../../api/produtosCadastroApi'
 import TelaBusca from '../../components/crud/TelaBusca'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
@@ -60,6 +60,16 @@ export default function PaginaProdutosCadastro({ tipo }) {
     }]
     : []), [tipo, categorias])
 
+  async function alterarEsgotado(produto, esgotado) {
+    try {
+      await alterarEsgotadoProduto(loja.tenant, produto.id, esgotado)
+      dispatchMsgSuccess(esgotado ? 'Produto marcado como esgotado até o fim do dia' : 'Produto voltou ao cardápio')
+      setVersao((atual) => atual + 1)
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
+  }
+
   function alterarAtivo(produto, ativo) {
     const executar = async () => {
       try {
@@ -113,6 +123,9 @@ export default function PaginaProdutosCadastro({ tipo }) {
       rotuloNovo={config.novo}
       chaveAtualizacao={versao}
       acoesExtras={(produto) => [
+        ...(tipo === 'FINAL' && pode('PRODUTOS_FINAIS_ALTERAR') ? [produto.esgotadoAte && new Date(produto.esgotadoAte) > new Date()
+          ? { label: 'Voltou ao cardápio', icon: 'pi pi-replay', command: () => alterarEsgotado(produto, false) }
+          : { label: 'Esgotado hoje', icon: 'pi pi-clock', command: () => alterarEsgotado(produto, true) }] : []),
         ...(pode(`${modulo}_INATIVAR`) ? [produto.ativo
           ? { label: 'Inativar', icon: 'pi pi-ban', command: () => alterarAtivo(produto, false) }
           : { label: 'Ativar', icon: 'pi pi-check-circle', command: () => alterarAtivo(produto, true) }] : []),

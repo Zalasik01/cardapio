@@ -39,4 +39,12 @@ public class T_Pessoa extends TenantAbstract {
     private boolean cliente;
 
     private boolean fornecedor;
+
+    /** De onde veio o cadastro: PAINEL (digitado pela loja) ou APP_SITE (o cliente se cadastrou pelo cardápio online). */
+    @Column(nullable = false, length = 20)
+    @lombok.Builder.Default
+    private String origem = "PAINEL";
+
+    /** Conta do cliente no cardápio online (telefone + OTP), quando houver. */
+    private Long idClienteConta;
 }

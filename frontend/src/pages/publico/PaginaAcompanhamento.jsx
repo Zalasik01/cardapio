@@ -23,6 +23,57 @@ const MOMENTOS = {
   CANCELADO: { icone: 'fa-circle-xmark', frase: 'Este pedido foi cancelado' },
 }
 
+/**
+ * Animação de "em andamento" de cada momento do pedido, uma diferente por situação:
+ * aguardando (pontinhos), confirmado (selo pulsando), preparo (barra de tempo com brilho), a caminho (moto na estrada),
+ * entregue (confete) e cancelado (sem animação).
+ */
+function AnimacaoMomento({ pedido }) {
+  switch (pedido.categoria) {
+    case 'PENDENTE':
+      return (
+        <div className="pedido-anim pedido-anim--pendente" aria-hidden="true">
+          <span /><span /><span />
+        </div>
+      )
+    case 'CONFIRMADO':
+      return (
+        <div className="pedido-anim pedido-anim--confirmado" aria-hidden="true">
+          <span className="pedido-anim__onda" /><span className="pedido-anim__onda" /><i className="fa-solid fa-check" />
+        </div>
+      )
+    case 'EM_PREPARO': {
+      const inicio = new Date(pedido.criadoEm).getTime()
+      const fim = pedido.previsaoPreparo ? new Date(pedido.previsaoPreparo).getTime() : null
+      const pct = fim && fim > inicio ? Math.min(96, Math.max(6, ((Date.now() - inicio) / (fim - inicio)) * 100)) : null
+      return (
+        <div className="pedido-anim pedido-anim--preparo" aria-hidden="true">
+          <div className={`pedido-anim__barra${pct === null ? ' pedido-anim__barra--indeterminada' : ''}`}>
+            <span style={pct === null ? undefined : { width: `${pct}%` }} />
+          </div>
+          <span className="pedido-anim__vapor"><i /><i /><i /></span>
+        </div>
+      )
+    }
+    case 'SAIU_PARA_ENTREGA':
+      return (
+        <div className="pedido-anim pedido-anim--rota" aria-hidden="true">
+          <div className="pedido-anim__estrada" />
+          <i className="fa-solid fa-motorcycle pedido-anim__moto" />
+          <i className="fa-solid fa-house pedido-anim__casa" />
+        </div>
+      )
+    case 'ENTREGUE':
+      return (
+        <div className="pedido-anim pedido-anim--entregue" aria-hidden="true">
+          {Array.from({ length: 14 }, (_, i) => <span key={i} style={{ '--i': i }} />)}
+        </div>
+      )
+    default:
+      return null
+  }
+}
+
 /** Mapa (OpenStreetMap) com a posição do entregador; sem chave de API e sem biblioteca. */
 function MapaEntregador({ entregador }) {
   const { latitude: lat, longitude: lng } = entregador
@@ -130,13 +181,14 @@ export default function PaginaAcompanhamento() {
       </header>
 
       <div className="pedido-corpo">
-        <section className="pedido-hero" style={{ '--cor-selo': pedido.cor }} aria-live="polite">
+        <section className={`pedido-hero pedido-hero--${pedido.categoria}`} style={{ '--cor-selo': pedido.cor }} aria-live="polite">
           <span className="pedido-hero__icone" aria-hidden="true"><i className={`fa-solid ${momento.icone}`} /></span>
           <div>
             <small>Olá, {pedido.cliente}!</small>
             <h1>{pedido.cancelado ? 'Cancelado' : pedido.situacao}</h1>
             <p>{momento.frase}</p>
           </div>
+          <AnimacaoMomento pedido={pedido} />
           {ativo && !emRota && minutosRestantes !== null && (
             <div className="pedido-hero__previsao">
               <i className="fa-regular fa-clock" aria-hidden="true" />

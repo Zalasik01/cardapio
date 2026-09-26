@@ -17,6 +17,9 @@ export const buscarProdutosCadastro = (tenant, { page = 0, size = 10, ...filtros
 /** Categorias do cardápio: [{ id, nome }]. */
 export const listarCategoriasCadastro = (tenant) => http.get(`${base(tenant)}/categorias`).then((res) => res.data)
 
+/** "Acabou hoje" (volta sozinho no dia seguinte) ou "voltou" (esgotado = false). */
+export const alterarEsgotadoProduto = (tenant, id, esgotado) => http.put(`${base(tenant)}/${id}/esgotado`, { esgotado })
+
 export const obterProdutoCadastro = (tenant, id) => http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 
 export const criarProdutoCadastro = (tenant, dados) => http.post(base(tenant), dados).then((res) => res.data)

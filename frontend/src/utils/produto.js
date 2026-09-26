@@ -14,6 +14,15 @@ const SIGLAS = { UN: 'un', KG: 'kg', G: 'g', L: 'l', ML: 'ml', PORCAO: 'porção
 export const siglaUnidade = (valor) => SIGLAS[valor] ?? valor
 
 /** Textos de cada tipo de produto: usados pelas telas de busca e de cadastro. */
+/** Selos e restrições alimentares (o código é o que o servidor guarda, separado por vírgula). */
+export const SELOS_PRODUTO = [
+  { valor: 'VEGANO', rotulo: 'Vegano' },
+  { valor: 'VEGETARIANO', rotulo: 'Vegetariano' },
+  { valor: 'SEM_GLUTEN', rotulo: 'Sem glúten' },
+  { valor: 'SEM_LACTOSE', rotulo: 'Sem lactose' },
+  { valor: 'PICANTE', rotulo: 'Picante' },
+]
+
 export const TIPOS_PRODUTO = {
   FINAL: {
     tipo: 'FINAL',

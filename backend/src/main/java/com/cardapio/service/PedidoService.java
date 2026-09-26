@@ -33,6 +33,7 @@ public class PedidoService {
     private final FluxoPedidoService fluxoService;
     private final PagamentoPedidoService pagamentoService;
     private final CupomService cupomService;
+    private final ClientePessoaService clientePessoaService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -172,6 +173,10 @@ public class PedidoService {
         pedido.setIdSituacao(inicial.getId());
         pedido.setStatus(inicial.getCategoria());
         T_Pedido salvo = pedidoRepository.save(pedido);
+        if (conta != null) {
+            // primeiro pedido nesta loja: garante o cliente em Clientes e Fornecedores (com o nome digitado no pedido)
+            clientePessoaService.garantir(tenant, conta, request.nomeCliente());
+        }
         if (cupom != null) {
             cupomService.registrarUso(cupom.cupom(), salvo.getId(), conta.getId(), cupom.desconto());
         }

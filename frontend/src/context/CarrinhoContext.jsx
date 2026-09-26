@@ -54,6 +54,13 @@ export function CarrinhoProvider({ slug, children }) {
 
   function limparCarrinho() {
     setItens([])
+    // apaga já do navegador: quem limpa e sai da tela na mesma hora (checkout -> acompanhamento) desmonta o provedor
+    // antes de o efeito que grava o estado rodar, e a sacola antiga voltaria na próxima visita
+    try {
+      localStorage.removeItem(chaveCarrinho(slug))
+    } catch {
+      // sem armazenamento local: nada a apagar
+    }
   }
 
   const subtotal = useMemo(

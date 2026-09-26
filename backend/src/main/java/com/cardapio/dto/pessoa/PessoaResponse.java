@@ -33,6 +33,7 @@ public record PessoaResponse(
         String inscricaoMunicipal,
         EnderecoDto endereco,
         List<TelefoneDto> telefones,
-        List<EmailDto> emails
+        List<EmailDto> emails,
+        String origem
 ) {
 }

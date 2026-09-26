@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { atualizarLoja, buscarLoja, enviarImagemLoja } from '../../api/adminApi'
-import { obterFuncionamento, salvarFuncionamento } from '../../api/funcionamentoApi'
+import { definirLimitePedidos, obterFuncionamento, salvarFuncionamento } from '../../api/funcionamentoApi'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import CrudPagina from '../../components/crud/CrudPagina'
 import DropzoneImagem from '../../components/DropzoneImagem'
@@ -37,7 +37,7 @@ export default function PaginaLoja() {
   const tenant = loja.tenant
 
   const [form, setForm] = useState(null) // dados da loja (o servidor devolve tudo o que o PUT precisa)
-  const [funcionamento, setFuncionamento] = useState({ modo: 'AUTOMATICO', horarios: [] })
+  const [funcionamento, setFuncionamento] = useState({ modo: 'AUTOMATICO', horarios: [], limitePedidosEmPreparo: null })
   const [erro, setErro] = useState(null)
   const [salvando, setSalvando] = useState(false)
 
@@ -47,6 +47,7 @@ export default function PaginaLoja() {
         setForm(dadosLoja)
         setFuncionamento({
           modo: dadosFuncionamento.modo,
+          limitePedidosEmPreparo: dadosFuncionamento.limitePedidosEmPreparo ?? null,
           horarios: dadosFuncionamento.horarios.map((h) => ({
             diaSemana: h.diaSemana, abre: cortarSegundos(h.abre), fecha: cortarSegundos(h.fecha),
           })),
@@ -67,7 +68,8 @@ export default function PaginaLoja() {
     try {
       if (pode('MINHA_LOJA_ALTERAR')) await atualizarLoja(tenant, form)
       if (pode('MINHA_LOJA_HORARIO')) {
-        await salvarFuncionamento(tenant, funcionamento)
+        await salvarFuncionamento(tenant, { modo: funcionamento.modo, horarios: funcionamento.horarios })
+        await definirLimitePedidos(tenant, funcionamento.limitePedidosEmPreparo)
         avisarFuncionamentoAlterado() // o selo do cabeçalho consulta de novo
       }
       dispatchMsgSuccess('Dados atualizados com sucesso')
@@ -170,6 +172,13 @@ export default function PaginaLoja() {
         </p>
         <HorarioFuncionamento horarios={funcionamento.horarios}
                               aoAlterar={(horarios) => setFuncionamento((atual) => ({ ...atual, horarios }))} />
+        <GradeCampos>
+          <Campo id="limitePedidos" rotulo="Limite de pedidos em preparo" tamanho={4}
+                 ajuda="Quando a cozinha chega nesse número (pendentes + confirmados + em preparo), o cardápio para de aceitar pedidos até liberar. Vazio = sem limite.">
+            <InputNumber inputId="limitePedidos" value={funcionamento.limitePedidosEmPreparo} min={1} useGrouping={false}
+                         onValueChange={(e) => setFuncionamento((atual) => ({ ...atual, limitePedidosEmPreparo: e.value ?? null }))} />
+          </Campo>
+        </GradeCampos>
       </SecaoCrud>
     </>
   )

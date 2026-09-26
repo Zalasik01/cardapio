@@ -16,7 +16,8 @@ public record PessoaResumoResponse(
         boolean fornecedor,
         boolean ativo,
         List<String> telefones,
-        List<String> emails
+        List<String> emails,
+        String origem
 ) {
 
     public static PessoaResumoResponse of(T_Pessoa pessoa, List<String> telefones, List<String> emails) {
@@ -29,6 +30,6 @@ public record PessoaResumoResponse(
                 fisica ? pf.getNome() : pj.getRazaoSocial(),
                 fisica ? pf.getApelido() : pj.getNomeFantasia(),
                 fisica ? pf.getCpf() : pj.getCnpj(),
-                pessoa.isCliente(), pessoa.isFornecedor(), pessoa.isAtivo(), telefones, emails);
+                pessoa.isCliente(), pessoa.isFornecedor(), pessoa.isAtivo(), telefones, emails, pessoa.getOrigem());
     }
 }

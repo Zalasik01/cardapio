@@ -11,6 +11,12 @@ export const obterSituacaoLoja = (tenant) => http.get(`${base(tenant)}/situacao`
 /** Salva o modo e substitui os horários (diaSemana de 1 = segunda a 7 = domingo; horas em "HH:mm"). */
 export const salvarFuncionamento = (tenant, dados) => http.put(base(tenant), dados).then((res) => res.data)
 
+/** Pausa os pedidos por alguns minutos (cozinha cheia); minutos = null retoma. */
+export const pausarPedidos = (tenant, minutos) => http.put(`${base(tenant)}/pausa`, { minutos }).then((res) => res.data)
+
+/** Limite de pedidos em preparo (vazio = sem limite): acima disso o cardápio para de aceitar. */
+export const definirLimitePedidos = (tenant, limite) => http.put(`${base(tenant)}/limite`, { limite }).then((res) => res.data)
+
 /** Abrir/fechar agora ('ABERTA' | 'FECHADA') ou voltar ao horário ('AUTOMATICO'). */
 export const alterarModoFuncionamento = (tenant, modo) =>
   http.put(`${base(tenant)}/modo`, { modo }).then((res) => res.data)

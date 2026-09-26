@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Menu } from 'primereact/menu'
 import { Tag } from 'primereact/tag'
 import { Tooltip } from 'primereact/tooltip'
-import { alterarModoFuncionamento, obterSituacaoLoja } from '../api/funcionamentoApi'
+import { alterarModoFuncionamento, obterSituacaoLoja, pausarPedidos } from '../api/funcionamentoApi'
 import { useAuth } from '../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../store/dispatchMsg'
 import { aoFuncionamentoAlterado, avisarFuncionamentoAlterado, descreverSituacao } from '../utils/funcionamento'
@@ -37,6 +37,15 @@ export default function SeloLoja() {
     }
   }, [carregar])
 
+  async function pausar(minutos) {
+    try {
+      setSituacao(await pausarPedidos(loja.tenant, minutos))
+      avisarFuncionamentoAlterado()
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
+  }
+
   async function mudarModo(modo) {
     try {
       setSituacao(await alterarModoFuncionamento(loja.tenant, modo))
@@ -63,7 +72,7 @@ export default function SeloLoja() {
   const podeMudar = pode('MINHA_LOJA_HORARIO')
   const podeVerHorario = pode('MINHA_LOJA_LEITURA')
   const itens = [
-    ...(podeMudar ? [
+    ...(podeMudar && !situacao.motivo ? [
       aberta
         ? { label: 'Fechar agora', icon: 'pi pi-lock', command: () => mudarModo('FECHADA') }
         : { label: 'Abrir agora', icon: 'pi pi-lock-open', command: () => mudarModo('ABERTA') },
@@ -71,6 +80,8 @@ export default function SeloLoja() {
         ? [{ label: 'Voltar ao horário automático', icon: 'pi pi-clock', command: () => mudarModo('AUTOMATICO') }]
         : []),
     ] : []),
+    ...(podeMudar && situacao.motivo === 'PAUSADA' ? [{ label: 'Retomar pedidos', icon: 'pi pi-play', command: () => pausar(null) }] : []),
+    ...(podeMudar && aberta ? [15, 30, 60].map((min) => ({ label: `Pausar pedidos por ${min} min`, icon: 'pi pi-pause', command: () => pausar(min) })) : []),
     ...(podeMudar && podeVerHorario ? [{ separator: true }] : []),
     ...(podeVerHorario ? [{ label: 'Horário de funcionamento', icon: 'pi pi-calendar', command: () => navigate('/admin/loja') }] : []),
   ]
@@ -82,9 +93,9 @@ export default function SeloLoja() {
               onClick={(e) => itens.length > 0 && menu.current.toggle(e)}>
         <Tag
           className="badge-loja"
-          severity={aberta ? 'success' : 'danger'}
-          icon={aberta ? 'pi pi-lock-open' : 'pi pi-lock'}
-          value={aberta ? 'Loja aberta' : 'Loja fechada'}
+          severity={aberta ? 'success' : situacao.motivo ? 'warning' : 'danger'}
+          icon={aberta ? 'pi pi-lock-open' : situacao.motivo ? 'pi pi-pause' : 'pi pi-lock'}
+          value={aberta ? 'Loja aberta' : situacao.motivo === 'PAUSADA' ? 'Pedidos pausados' : situacao.motivo === 'LOTADA' ? 'Cozinha lotada' : 'Loja fechada'}
         />
       </button>
       {loja.slug && (

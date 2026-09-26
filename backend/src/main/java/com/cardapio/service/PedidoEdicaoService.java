@@ -114,7 +114,7 @@ public class PedidoEdicaoService {
                     throw new RegraNegocioException("Produto indisponível: " + produto.getNome());
                 }
                 item = I_ItemPedido.builder().tenant(tenant).pedido(pedido).produto(produto).nomeProduto(produto.getNome())
-                        .precoUnitario(produto.getPreco()).quantidade(novo.quantidade())
+                        .precoUnitario(produto.precoVenda()).quantidade(novo.quantidade())
                         .observacoes(vazioParaNulo(novo.observacoes())).build();
                 pedido.getItens().add(item);
                 mudancas.add("Adicionado: " + novo.quantidade() + "x " + produto.getNome());

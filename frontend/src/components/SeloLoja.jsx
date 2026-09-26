@@ -5,7 +5,7 @@ import { Tag } from 'primereact/tag'
 import { Tooltip } from 'primereact/tooltip'
 import { alterarModoFuncionamento, obterSituacaoLoja } from '../api/funcionamentoApi'
 import { useAuth } from '../context/AuthContext'
-import { dispatchMsgError } from '../store/dispatchMsg'
+import { dispatchMsgError, dispatchMsgSuccess } from '../store/dispatchMsg'
 import { aoFuncionamentoAlterado, avisarFuncionamentoAlterado, descreverSituacao } from '../utils/funcionamento'
 
 const ATUALIZA_A_CADA_MS = 60000
@@ -21,6 +21,7 @@ export default function SeloLoja() {
   const [situacao, setSituacao] = useState(null)
   const menu = useRef(null)
   const alvo = useRef(null)
+  const alvoLink = useRef(null)
 
   const carregar = useCallback(() => {
     obterSituacaoLoja(loja.tenant).then(setSituacao).catch(() => {}) // sem resposta, mantém o último estado
@@ -42,6 +43,17 @@ export default function SeloLoja() {
       avisarFuncionamentoAlterado()
     } catch (e) {
       dispatchMsgError(e.mensagem)
+    }
+  }
+
+  /** Copia o endereço do cardápio online da loja (para divulgar no WhatsApp, Instagram...). */
+  async function copiarLink() {
+    const link = `${window.location.origin}/${loja.slug}`
+    try {
+      await navigator.clipboard.writeText(link)
+      dispatchMsgSuccess(`Link do cardápio copiado: ${link}`)
+    } catch {
+      dispatchMsgError(`Não foi possível copiar. Link: ${link}`)
     }
   }
 
@@ -75,6 +87,14 @@ export default function SeloLoja() {
           value={aberta ? 'Loja aberta' : 'Loja fechada'}
         />
       </button>
+      {loja.slug && (
+        <>
+          <button ref={alvoLink} type="button" className="selo-loja__link" aria-label="Copiar link do cardápio online" onClick={copiarLink}>
+            <i className="pi pi-link" aria-hidden="true" />
+          </button>
+          <Tooltip target={alvoLink} content="Copiar link do cardápio online" position="bottom" />
+        </>
+      )}
       <Tooltip target={alvo} content={descreverSituacao(situacao)} position="bottom" />
       <Menu popup ref={menu} model={itens} />
     </>

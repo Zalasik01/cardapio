@@ -82,4 +82,22 @@ public class T_Produto extends TenantAbstract {
 
     /** Tempo de preparo em minutos (vazio = usa o da categoria ou o padrão da loja). */
     private Integer tempoPreparoMinutos;
+
+    /** Preço promocional: quando preenchido (e menor que o preço), é o que o cliente paga. */
+    @Column(precision = 12, scale = 2)
+    private BigDecimal precoPromocional;
+
+    /** Aparece no bloco de destaques do cardápio online. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean destaque = false;
+
+    public boolean emPromocao() {
+        return precoPromocional != null && precoPromocional.signum() > 0 && precoPromocional.compareTo(preco) < 0;
+    }
+
+    /** O preço que vale na venda: o promocional, se houver, senão o normal. */
+    public BigDecimal precoVenda() {
+        return emPromocao() ? precoPromocional : preco;
+    }
 }

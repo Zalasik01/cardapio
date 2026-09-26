@@ -153,3 +153,21 @@
   color: var(--cor-primaria);
   font-size: 0.75rem;
 }
+
+// botão ao lado do selo: copia o link do cardápio online
+.selo-loja__link {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  min-height: 0;
+  padding: 0;
+  margin-left: 0.35rem;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-texto-suave);
+  border: 1px solid var(--cor-borda);
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover { background: transparent; color: var(--cor-primaria); border-color: var(--cor-primaria); }
+}

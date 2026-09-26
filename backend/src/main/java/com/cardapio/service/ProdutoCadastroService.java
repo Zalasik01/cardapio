@@ -195,6 +195,11 @@ public class ProdutoCadastroService {
             produto.setPreco(r.preco());
             produto.setImagemUrl(vazioParaNulo(r.imagemUrl()));
             produto.setTempoPreparoMinutos(r.tempoPreparoMinutos());
+            if (r.precoPromocional() != null && r.precoPromocional().signum() > 0 && r.precoPromocional().compareTo(r.preco()) >= 0) {
+                throw new RegraNegocioException("O preço promocional deve ser menor que o preço de venda");
+            }
+            produto.setPrecoPromocional(r.precoPromocional() != null && r.precoPromocional().signum() > 0 ? r.precoPromocional() : null);
+            produto.setDestaque(Boolean.TRUE.equals(r.destaque()));
             produto.setDisponivel(r.disponivel() == null || r.disponivel());
             produto.setCustoUnitario(BigDecimal.ZERO);
             produto.setFornecedor(null);
@@ -203,6 +208,8 @@ public class ProdutoCadastroService {
             produto.setPreco(BigDecimal.ZERO);
             produto.setImagemUrl(null);
             produto.setTempoPreparoMinutos(null);
+            produto.setPrecoPromocional(null);
+            produto.setDestaque(false);
             produto.setDisponivel(true);
             produto.setCustoUnitario(r.custoUnitario() == null ? BigDecimal.ZERO : r.custoUnitario());
             produto.setFornecedor(r.fornecedorId() == null ? null : buscarFornecedor(tenant, r.fornecedorId()));
@@ -260,7 +267,7 @@ public class ProdutoCadastroService {
                 p.getCategoria() == null ? null : p.getCategoria().getNome(),
                 p.getPreco(), p.getImagemUrl(), p.isDisponivel(), composicao, custoEstimado, p.getCustoUnitario(),
                 p.getFornecedor() == null ? null : p.getFornecedor().getId(), nomePessoa(p.getFornecedor()),
-                p.getTempoPreparoMinutos());
+                p.getTempoPreparoMinutos(), p.getPrecoPromocional(), p.isDestaque());
     }
 
     private String nomePessoa(T_Pessoa pessoa) {

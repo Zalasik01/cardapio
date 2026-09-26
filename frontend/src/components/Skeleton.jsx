@@ -112,16 +112,19 @@ export function MenuSkeleton() {
 export function CardapioSkeleton() {
   return (
     <div aria-busy="true" aria-label="Carregando cardápio">
-      <div className="loja-topo">
-        <Skeleton largura="72px" altura="72px" raio="16px" />
-        <div className="loja-topo__skeleton">
-          <Skeleton largura="60%" altura="1.6rem" />
-          <Skeleton largura="80%" altura="0.9rem" />
-          <Skeleton largura="40%" altura="1.2rem" raio="999px" />
+      <div className="loja-capa">
+        <div className="loja-capa__fundo" />
+        <div className="loja-capa__cartao">
+          <Skeleton largura="76px" altura="76px" raio="18px" className="loja-capa__logo" />
+          <div className="loja-topo__skeleton">
+            <Skeleton largura="70%" altura="1.5rem" />
+            <Skeleton largura="50%" altura="0.9rem" />
+          </div>
+          <Skeleton largura="110px" altura="1.5rem" raio="999px" />
         </div>
       </div>
       <div className="loja-barra-busca">
-        <Skeleton altura="2.6rem" raio="999px" />
+        <Skeleton altura="2.9rem" raio="14px" />
       </div>
       <div className="loja-conteudo">
         {[0, 1].map((secao) => (
@@ -135,7 +138,7 @@ export function CardapioSkeleton() {
                     <Skeleton altura="0.8rem" />
                     <Skeleton largura="30%" altura="1rem" />
                   </span>
-                  <Skeleton largura="88px" altura="88px" raio="12px" />
+                  <Skeleton largura="104px" altura="104px" raio="14px" />
                 </div>
               ))}
             </div>

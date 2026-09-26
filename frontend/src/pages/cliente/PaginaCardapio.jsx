@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
-import { Link, useOutletContext } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { Dialog } from 'primereact/dialog'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
+import { lerPedidosAnteriores } from '../../utils/pedidosAnteriores'
 
 const semAcento = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -18,22 +19,103 @@ function textoProximaAbertura(iso) {
   return `Abre ${dia} às ${horaCurta(iso)}`
 }
 
-function CartaoProduto({ produto, aoAbrir }) {
+/** Compartilha o link do cardápio (menu nativo do celular) ou copia, quando o navegador não tem compartilhamento. */
+function BotaoCompartilhar({ nome }) {
+  const [copiado, setCopiado] = useState(false)
+
+  async function compartilhar() {
+    const url = window.location.href.split('#')[0]
+    if (navigator.share) {
+      navigator.share({ title: nome, text: `Confira o cardápio de ${nome}`, url }).catch(() => {})
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      // sem permissão de área de transferência: nada a fazer
+    }
+  }
+
   return (
-    <button type="button" className="loja-produto" onClick={() => aoAbrir(produto)}>
+    <button type="button" className="loja-compartilhar" onClick={compartilhar} aria-label="Copiar ou compartilhar o link do cardápio">
+      <i className={`fa-solid ${copiado ? 'fa-check' : 'fa-link'}`} aria-hidden="true" />
+      <span aria-live="polite">{copiado ? 'Link copiado' : 'Compartilhar'}</span>
+    </button>
+  )
+}
+
+/** Preço do produto; em promoção mostra o normal riscado e o percentual de desconto. */
+function Preco({ produto }) {
+  if (!produto.precoOriginal) return <span className="loja-produto__preco">{formatarMoeda(produto.preco)}</span>
+  const desconto = Math.round((1 - produto.preco / produto.precoOriginal) * 100)
+  return (
+    <span className="loja-produto__preco loja-produto__preco--promo">
+      {formatarMoeda(produto.preco)}
+      <s>{formatarMoeda(produto.precoOriginal)}</s>
+      <em>-{desconto}%</em>
+    </span>
+  )
+}
+
+/** Faixa horizontal de produtos (destaques, promoções, peça novamente), com setas no computador. */
+function Carrossel({ titulo, icone, produtos, aoAbrir, desabilitado }) {
+  const faixa = useRef(null)
+  if (produtos.length === 0) return null
+  const rolar = (sentido) => faixa.current?.scrollBy({ left: sentido * 280, behavior: 'smooth' })
+
+  return (
+    <section className="loja-carrossel" aria-label={titulo}>
+      <header>
+        <h2><i className={`fa-solid ${icone}`} aria-hidden="true" /> {titulo}</h2>
+        <span className="loja-carrossel__setas">
+          <button type="button" aria-label="Anterior" onClick={() => rolar(-1)}><i className="fa-solid fa-chevron-left" /></button>
+          <button type="button" aria-label="Próximo" onClick={() => rolar(1)}><i className="fa-solid fa-chevron-right" /></button>
+        </span>
+      </header>
+      <div ref={faixa} className="loja-carrossel__faixa">
+        {produtos.map((p) => (
+          <button key={p.guid} type="button" className="loja-destaque" disabled={desabilitado} onClick={() => aoAbrir(p)}
+                  aria-label={`${p.nome}, ${formatarMoeda(p.preco)}`}>
+            <span className="loja-destaque__foto">
+              {p.imagemUrl ? <img src={p.imagemUrl} alt="" loading="lazy" /> : <i className="fa-solid fa-utensils" aria-hidden="true" />}
+              {p.precoOriginal && <em className="loja-destaque__selo">-{Math.round((1 - p.preco / p.precoOriginal) * 100)}%</em>}
+            </span>
+            <strong>{p.nome}</strong>
+            <Preco produto={p} />
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CartaoProduto({ produto, noCarrinho, aoAbrir, desabilitado }) {
+  return (
+    <button type="button" className="loja-produto" onClick={() => aoAbrir(produto)} disabled={desabilitado}
+            aria-label={`${produto.nome}, ${formatarMoeda(produto.preco)}${noCarrinho ? `, ${noCarrinho} no carrinho` : ''}`}>
       <span className="loja-produto__texto">
         <strong>{produto.nome}</strong>
         {produto.descricao && <small>{produto.descricao}</small>}
-        <span className="loja-produto__preco">{formatarMoeda(produto.preco)}</span>
+        <Preco produto={produto} />
       </span>
-      {produto.imagemUrl && <img src={produto.imagemUrl} alt="" loading="lazy" />}
-      <span className="loja-produto__mais" aria-hidden="true"><i className="fa-solid fa-plus" /></span>
+      <span className="loja-produto__foto">
+        {produto.imagemUrl
+          ? <img src={produto.imagemUrl} alt="" loading="lazy" />
+          : <i className="fa-solid fa-utensils" aria-hidden="true" />}
+        {!desabilitado && (
+          <span className={`loja-produto__mais${noCarrinho ? ' loja-produto__mais--qtd' : ''}`} aria-hidden="true">
+            {noCarrinho || <i className="fa-solid fa-plus" />}
+          </span>
+        )}
+      </span>
     </button>
   )
 }
 
 /** Detalhe do produto: quantidade e observação antes de ir ao carrinho. */
-function DialogoProduto({ produto, aoFechar }) {
+function DialogoProduto({ produto, aoFechar, centralizado }) {
   const { adicionarItem } = useCarrinho()
   const [quantidade, setQuantidade] = useState(1)
   const [observacao, setObservacao] = useState('')
@@ -44,15 +126,24 @@ function DialogoProduto({ produto, aoFechar }) {
   }
 
   return (
-    <Dialog visible header={produto.nome} onHide={aoFechar} className="loja-dialogo" dismissableMask draggable={false}
-            style={{ width: 'min(30rem, 96vw)' }}>
-      {produto.imagemUrl && <img className="loja-dialogo__imagem" src={produto.imagemUrl} alt="" />}
-      {produto.descricao && <p className="loja-dialogo__descricao">{produto.descricao}</p>}
-      <label className="loja-campo">
-        Alguma observação?
-        <textarea rows={2} maxLength={200} value={observacao} onChange={(e) => setObservacao(e.target.value)}
-                  placeholder="Ex.: sem cebola, ponto da carne..." />
-      </label>
+    <Dialog visible header={null} showHeader={false} onHide={aoFechar} className="loja-dialogo" dismissableMask draggable={false}
+            position={centralizado ? 'center' : 'bottom'} style={{ width: 'min(32rem, 100vw)' }} contentClassName="loja-dialogo__conteudo">
+      <div className={`loja-dialogo__capa${produto.imagemUrl ? '' : ' loja-dialogo__capa--vazia'}`}>
+        {produto.imagemUrl ? <img src={produto.imagemUrl} alt="" /> : <i className="fa-solid fa-utensils" aria-hidden="true" />}
+        <button type="button" className="loja-dialogo__fechar" aria-label="Fechar" onClick={aoFechar}>
+          <i className="fa-solid fa-xmark" />
+        </button>
+      </div>
+      <div className="loja-dialogo__corpo">
+        <h2>{produto.nome}</h2>
+        {produto.descricao && <p className="loja-dialogo__descricao">{produto.descricao}</p>}
+        <p className="loja-dialogo__preco">{formatarMoeda(produto.preco)}</p>
+        <label className="loja-campo">
+          Alguma observação?
+          <textarea rows={2} maxLength={200} value={observacao} onChange={(e) => setObservacao(e.target.value)}
+                    placeholder="Ex.: sem cebola, ponto da carne..." />
+        </label>
+      </div>
       <div className="loja-dialogo__rodape">
         <div className="loja-quantidade">
           <button type="button" aria-label="Diminuir" disabled={quantidade <= 1} onClick={() => setQuantidade((q) => q - 1)}>
@@ -64,20 +155,106 @@ function DialogoProduto({ produto, aoFechar }) {
           </button>
         </div>
         <button type="button" className="loja-botao" onClick={adicionar}>
-          Adicionar · {formatarMoeda(produto.preco * quantidade)}
+          <span>Adicionar</span>
+          <strong>{formatarMoeda(produto.preco * quantidade)}</strong>
         </button>
       </div>
     </Dialog>
   )
 }
 
-/** Cardápio digital da loja (/:slug): cabeçalho com situação, busca, categorias e barra do carrinho. */
+/** Verdadeiro em telas largas (computador): a sacola fica fixa na lateral e o detalhe do produto abre no centro. */
+function useTelaLarga() {
+  const consulta = '(min-width: 1024px)'
+  const [larga, setLarga] = useState(() => window.matchMedia(consulta).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(consulta)
+    const aoMudar = (e) => setLarga(e.matches)
+    mq.addEventListener('change', aoMudar)
+    return () => mq.removeEventListener('change', aoMudar)
+  }, [])
+  return larga
+}
+
+/** Sacola lateral (computador): itens, quantidades, subtotal e ida ao checkout sem sair do cardápio. */
+function SacolaLateral({ slug, minimo, aberta }) {
+  const navigate = useNavigate()
+  const { itens, alterarQuantidade, subtotal } = useCarrinho()
+  const falta = minimo > 0 ? minimo - subtotal : 0
+
+  return (
+    <aside className="loja-sacola" aria-label="Sua sacola">
+      <h2><i className="fa-solid fa-bag-shopping" aria-hidden="true" /> Sua sacola</h2>
+      {itens.length === 0 ? (
+        <div className="loja-sacola__vazia">
+          <i className="fa-solid fa-basket-shopping" aria-hidden="true" />
+          <p>Sua sacola está vazia.<br />Escolha algo gostoso no cardápio.</p>
+        </div>
+      ) : (
+        <>
+          <ul className="loja-sacola__itens">
+            {itens.map((item) => (
+              <li key={`${item.produtoGuid}-${item.observacoes}`}>
+                <div>
+                  <strong>{item.nome}</strong>
+                  {item.observacoes && <small>{item.observacoes}</small>}
+                  <span>{formatarMoeda(item.preco * item.quantidade)}</span>
+                </div>
+                <div className="loja-quantidade loja-quantidade--compacta">
+                  <button type="button" aria-label={item.quantidade === 1 ? 'Remover' : 'Diminuir'}
+                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade - 1)}>
+                    <i className={`fa-solid ${item.quantidade === 1 ? 'fa-trash-can' : 'fa-minus'}`} />
+                  </button>
+                  <span>{item.quantidade}</span>
+                  <button type="button" aria-label="Aumentar"
+                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade + 1)}>
+                    <i className="fa-solid fa-plus" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="loja-sacola__subtotal"><span>Subtotal</span><strong>{formatarMoeda(subtotal)}</strong></p>
+          {falta > 0 && <small className="loja-resumo__aviso">Faltam {formatarMoeda(falta)} para o pedido mínimo.</small>}
+          <button type="button" className="loja-botao" disabled={falta > 0 || !aberta} onClick={() => navigate(`/${slug}/checkout`)}>
+            {aberta ? 'Finalizar pedido' : 'Loja fechada'}
+          </button>
+        </>
+      )}
+    </aside>
+  )
+}
+
+/** Marca o chip da categoria que está visível na tela enquanto o cliente rola o cardápio. */
+function useCategoriaAtiva(guids) {
+  const [ativa, setAtiva] = useState(guids[0] ?? null)
+  useEffect(() => {
+    if (!('IntersectionObserver' in window)) return undefined
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        const visivel = entradas.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+        if (visivel) setAtiva(visivel.target.dataset.guid)
+      },
+      { rootMargin: '-140px 0px -60% 0px' },
+    )
+    guids.forEach((g) => {
+      const el = document.getElementById(`cat-${g}`)
+      if (el) observador.observe(el)
+    })
+    return () => observador.disconnect()
+  }, [guids])
+  return [ativa, setAtiva]
+}
+
+/** Cardápio digital da loja (/:slug): capa com situação, busca, categorias e barra do carrinho. */
 export default function PaginaCardapio() {
   const { cardapio, slug } = useOutletContext()
   const { loja, aberta, proximaMudanca, categorias } = cardapio
-  const { totalItens, subtotal } = useCarrinho()
+  const { itens, totalItens, subtotal } = useCarrinho()
   const [busca, setBusca] = useState('')
   const [produto, setProduto] = useState(null)
+  const chips = useRef(null)
+  const telaLarga = useTelaLarga()
 
   const filtradas = useMemo(() => {
     const termo = semAcento(busca.trim())
@@ -87,67 +264,128 @@ export default function PaginaCardapio() {
       .filter((c) => c.produtos.length > 0)
   }, [categorias, busca])
 
-  const irPara = (guid) => document.getElementById(`cat-${guid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const quantidades = useMemo(() => itens.reduce((mapa, i) => ({ ...mapa, [i.produtoGuid]: (mapa[i.produtoGuid] ?? 0) + i.quantidade }), {}), [itens])
+  const todos = useMemo(() => categorias.flatMap((c) => c.produtos), [categorias])
+  const destaques = useMemo(() => todos.filter((p) => p.destaque && !p.precoOriginal), [todos])
+  const promocoes = useMemo(() => todos.filter((p) => p.precoOriginal), [todos])
+  const pecaNovamente = useMemo(() => {
+    const vistos = new Set()
+    lerPedidosAnteriores(slug).forEach((pedido) => pedido.produtos.forEach((g) => vistos.add(g)))
+    return todos.filter((p) => vistos.has(p.guid)).slice(0, 10)
+  }, [todos, slug])
+  const mostrarBlocos = !busca.trim()
+  const guids = useMemo(() => filtradas.map((c) => c.guid), [filtradas])
+  const [ativa, setAtiva] = useCategoriaAtiva(guids)
+
+  // mantém o chip ativo visível na faixa rolável
+  useEffect(() => {
+    chips.current?.querySelector(`[data-guid="${ativa}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [ativa])
+
+  function irPara(guid) {
+    setAtiva(guid)
+    document.getElementById(`cat-${guid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const abertura = !aberta && textoProximaAbertura(proximaMudanca)
   const minimo = Number(loja.valorMinimoPedido)
+  const endereco = [loja.enderecoBairro, loja.enderecoCidade].filter(Boolean).join(', ')
 
   return (
     <>
-      <header className="loja-topo">
-        {loja.logoUrl
-          ? <img className="loja-topo__logo" src={loja.logoUrl} alt="" />
-          : <span className="loja-topo__logo loja-topo__logo--vazio"><i className="fa-solid fa-store" /></span>}
-        <div>
-          <h1>{loja.nome}</h1>
-          {loja.descricao && <p>{loja.descricao}</p>}
-          <div className="loja-topo__infos">
-            <span className={`loja-selo ${aberta ? 'loja-selo--aberta' : 'loja-selo--fechada'}`}>{aberta ? 'Aberta agora' : 'Fechada'}</span>
-            {abertura && <span>{abertura}</span>}
-            {minimo > 0 && <span>Pedido mínimo {formatarMoeda(minimo)}</span>}
-            {loja.tempoPreparoPadraoMinutos > 0 && (
-              <span><i className="fa-regular fa-clock" aria-hidden="true" /> ~{loja.tempoPreparoPadraoMinutos} min</span>
-            )}
+      <header className="loja-capa">
+        <div className="loja-capa__fundo" aria-hidden="true" />
+        <div className="loja-capa__cartao">
+          {loja.logoUrl
+            ? <img className="loja-capa__logo" src={loja.logoUrl} alt="" />
+            : <span className="loja-capa__logo loja-capa__logo--vazio" aria-hidden="true">{loja.nome.charAt(0)}</span>}
+          <div className="loja-capa__titulo">
+            <h1>{loja.nome}</h1>
+            {loja.descricao && <p>{loja.descricao}</p>}
           </div>
+          <div className="loja-capa__status">
+            <span className={`loja-selo ${aberta ? 'loja-selo--aberta' : 'loja-selo--fechada'}`}>
+              <span className="loja-selo__ponto" aria-hidden="true" />
+              {aberta ? 'Aberta agora' : 'Fechada'}
+            </span>
+            <BotaoCompartilhar nome={loja.nome} />
+          </div>
+          <ul className="loja-capa__infos">
+            {abertura && <li><i className="fa-regular fa-calendar" aria-hidden="true" /> {abertura}</li>}
+            {loja.tempoPreparoPadraoMinutos > 0 && <li><i className="fa-regular fa-clock" aria-hidden="true" /> ~{loja.tempoPreparoPadraoMinutos} min</li>}
+            {minimo > 0 && <li><i className="fa-solid fa-bag-shopping" aria-hidden="true" /> Mínimo {formatarMoeda(minimo)}</li>}
+            {endereco && <li><i className="fa-solid fa-location-dot" aria-hidden="true" /> {endereco}</li>}
+          </ul>
         </div>
       </header>
 
+      <div className="loja-corpo">
+      <div className="loja-principal">
       <div className="loja-barra-busca">
         <label className="loja-busca">
           <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar no cardápio" aria-label="Buscar no cardápio" />
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar pratos e bebidas" aria-label="Buscar no cardápio" />
         </label>
         {!busca && categorias.length > 1 && (
-          <nav className="loja-categorias" aria-label="Categorias">
-            {categorias.map((c) => <button key={c.guid} type="button" onClick={() => irPara(c.guid)}>{c.nome}</button>)}
+          <nav ref={chips} className="loja-categorias" aria-label="Categorias">
+            {categorias.map((c) => (
+              <button key={c.guid} type="button" data-guid={c.guid} className={ativa === c.guid ? 'ativo' : ''}
+                      aria-current={ativa === c.guid ? 'true' : undefined} onClick={() => irPara(c.guid)}>
+                {c.nome}
+              </button>
+            ))}
           </nav>
         )}
       </div>
 
-      {!aberta && <p className="loja-aviso">A loja está fechada no momento. Você pode ver o cardápio, mas não é possível fazer pedidos agora.</p>}
+      {!aberta && (
+        <p className="loja-aviso" role="status">
+          <i className="fa-solid fa-store-slash" aria-hidden="true" />
+          <span>A loja está fechada agora. Dê uma olhada no cardápio e faça seu pedido quando ela abrir.</span>
+        </p>
+      )}
 
       <main className="loja-conteudo">
+        {mostrarBlocos && (
+          <>
+            <Carrossel titulo="Peça novamente" icone="fa-rotate-right" produtos={pecaNovamente} aoAbrir={setProduto} desabilitado={!aberta} />
+            <Carrossel titulo="Promoções" icone="fa-tags" produtos={promocoes} aoAbrir={setProduto} desabilitado={!aberta} />
+            <Carrossel titulo="Destaques" icone="fa-fire" produtos={destaques} aoAbrir={setProduto} desabilitado={!aberta} />
+          </>
+        )}
         {filtradas.length === 0 && (
-          <p className="loja-vazio">{busca ? 'Nenhum item encontrado para essa busca.' : 'Nenhum produto disponível no momento.'}</p>
+          <div className="loja-vazio">
+            <i className="fa-solid fa-bowl-food" aria-hidden="true" />
+            <p>{busca ? `Nada encontrado para "${busca}".` : 'Nenhum produto disponível no momento.'}</p>
+          </div>
         )}
         {filtradas.map((categoria) => (
-          <section key={categoria.guid} id={`cat-${categoria.guid}`} className="loja-secao">
-            <h2>{categoria.nome}</h2>
+          <section key={categoria.guid} id={`cat-${categoria.guid}`} data-guid={categoria.guid} className="loja-secao">
+            <h2>{categoria.nome} <small>{categoria.produtos.length}</small></h2>
             <div className="loja-produtos">
-              {categoria.produtos.map((p) => <CartaoProduto key={p.guid} produto={p} aoAbrir={aberta ? setProduto : () => {}} />)}
+              {categoria.produtos.map((p) => (
+                <CartaoProduto key={p.guid} produto={p} noCarrinho={quantidades[p.guid]} desabilitado={!aberta} aoAbrir={setProduto} />
+              ))}
             </div>
           </section>
         ))}
       </main>
+      </div>
+      {telaLarga && <SacolaLateral slug={slug} minimo={minimo} aberta={aberta} />}
+      </div>
 
-      {totalItens > 0 && (
+      {totalItens > 0 && !telaLarga && (
         <Link to={`/${slug}/carrinho`} className="loja-carrinho-barra">
-          <span className="loja-carrinho-barra__qtd">{totalItens}</span>
-          <span>Ver carrinho</span>
+          <span className="loja-carrinho-barra__icone">
+            <i className="fa-solid fa-bag-shopping" aria-hidden="true" />
+            <span className="loja-carrinho-barra__qtd">{totalItens}</span>
+          </span>
+          <span>Ver sacola</span>
           <strong>{formatarMoeda(subtotal)}</strong>
         </Link>
       )}
 
-      {produto && <DialogoProduto produto={produto} aoFechar={() => setProduto(null)} />}
+      {produto && <DialogoProduto produto={produto} centralizado={telaLarga} aoFechar={() => setProduto(null)} />}
     </>
   )
 }

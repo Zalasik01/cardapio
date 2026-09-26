@@ -116,7 +116,7 @@ public class PedidoAdminService {
     public List<ProdutoParaPedido> produtosParaPedido(UUID tenant) {
         return produtoRepository.findByTenantOrderByOrdemExibicaoAsc(tenant).stream()
                 .filter(produto -> produto.isAtivo() && produto.isDisponivel())
-                .map(produto -> new ProdutoParaPedido(produto.getGuid(), produto.getNome(), produto.getPreco(),
+                .map(produto -> new ProdutoParaPedido(produto.getGuid(), produto.getNome(), produto.precoVenda(),
                         produto.getCategoria() != null ? produto.getCategoria().getNome() : null))
                 .toList();
     }
@@ -147,6 +147,11 @@ public class PedidoAdminService {
         var destino = fluxo.proximas(pedido).stream().filter(p -> p.id().equals(request.situacaoId())).findFirst()
                 .orElseThrow(() -> new RegraNegocioException("Este pedido não pode ir para essa situação a partir de onde está"));
         StatusPedido novoStatus = destino.categoria();
+        // pedido de entrega só sai da loja (ou é dado como entregue) com um entregador responsável
+        if (pedido.getTipoEntrega() == com.cardapio.entity.TipoEntrega.ENTREGA && pedido.getIdEntregador() == null
+                && (novoStatus == StatusPedido.SAIU_PARA_ENTREGA || novoStatus == StatusPedido.ENTREGUE)) {
+            throw new RegraNegocioException("Escolha o entregador do pedido antes de movê-lo para \"" + destino.nome() + "\"");
+        }
         if (novoStatus == StatusPedido.CANCELADO) {
             // o motivo é opcional
             pedido.setMotivoCancelamento(request.motivo() == null || request.motivo().isBlank() ? null : request.motivo().trim());

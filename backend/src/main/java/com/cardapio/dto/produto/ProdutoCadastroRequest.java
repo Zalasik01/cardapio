@@ -34,7 +34,9 @@ public record ProdutoCadastroRequest(
         // ingrediente
         @PositiveOrZero BigDecimal custoUnitario,
         Long fornecedorId,
-        @jakarta.validation.constraints.Positive Integer tempoPreparoMinutos
+        @jakarta.validation.constraints.Positive Integer tempoPreparoMinutos,
+        @PositiveOrZero BigDecimal precoPromocional,
+        Boolean destaque
 ) {
 
     /** Um ingrediente da composição e a quantidade dele (na unidade do ingrediente). */

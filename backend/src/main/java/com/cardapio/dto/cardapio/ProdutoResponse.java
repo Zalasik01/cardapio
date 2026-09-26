@@ -12,6 +12,8 @@ public record ProdutoResponse(
         String nome,
         String descricao,
         BigDecimal preco,
+        BigDecimal precoOriginal,
+        boolean destaque,
         String imagemUrl,
         boolean disponivel,
         Integer ordemExibicao
@@ -19,6 +21,6 @@ public record ProdutoResponse(
     public static ProdutoResponse of(T_Produto p) {
         return new ProdutoResponse(
                 p.getGuid(), p.getCategoria().getGuid(), p.getCategoria().getNome(), p.getNome(),
-                p.getDescricao(), p.getPreco(), p.getImagemUrl(), p.isDisponivel(), p.getOrdemExibicao());
+                p.getDescricao(), p.precoVenda(), p.emPromocao() ? p.getPreco() : null, p.isDestaque(), p.getImagemUrl(), p.isDisponivel(), p.getOrdemExibicao());
     }
 }

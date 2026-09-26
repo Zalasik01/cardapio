@@ -38,6 +38,8 @@ const FORM_VAZIO = {
   preco: 0,
   imagemUrl: '',
   tempoPreparoMinutos: null,
+  precoPromocional: null,
+  destaque: false,
   disponivel: true,
   composicao: [],
   // ingrediente
@@ -57,6 +59,8 @@ function paraFormulario(produto) {
     preco: produto.preco ?? 0,
     imagemUrl: produto.imagemUrl ?? '',
     tempoPreparoMinutos: produto.tempoPreparoMinutos ?? null,
+    precoPromocional: produto.precoPromocional ?? null,
+    destaque: !!produto.destaque,
     disponivel: produto.disponivel,
     composicao: (produto.composicao ?? []).map((item) => ({ ...item, _id: `item-${item.ingredienteId}` })),
     custoUnitario: produto.custoUnitario ?? 0,
@@ -81,6 +85,8 @@ function paraRequisicao(form, tipo) {
       preco: form.preco,
       imagemUrl: form.imagemUrl,
       tempoPreparoMinutos: form.tempoPreparoMinutos,
+      precoPromocional: form.precoPromocional,
+      destaque: form.destaque,
       disponivel: form.disponivel,
       composicao: form.composicao.map(({ ingredienteId, quantidade }) => ({ ingredienteId, quantidade })),
     }
@@ -236,6 +242,17 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
                 <InputNumber inputId="preco" value={form.preco} min={0} {...moeda}
                              onValueChange={(e) => definir('preco')(e.value ?? 0)} />
               </Campo>
+              <Campo id="preco-promocional" rotulo="Preço promocional" tamanho={4}
+                     ajuda="Opcional. Aparece riscado o preço normal e vale nos novos pedidos.">
+                <InputNumber inputId="preco-promocional" value={form.precoPromocional} min={0} {...moeda}
+                             onValueChange={(e) => definir('precoPromocional')(e.value ?? null)} />
+              </Campo>
+              <div className="campo campo--4 campo--linha">
+                <span className="campo-checkbox">
+                  <Checkbox inputId="destaque" checked={form.destaque} onChange={(e) => definir('destaque')(e.checked)} />
+                  <label htmlFor="destaque">Destacar no cardápio online</label>
+                </span>
+              </div>
               <div className="campo campo--4 campo--linha">
                 <span className="campo-checkbox">
                   <Checkbox inputId="disponivel" checked={form.disponivel} onChange={(e) => definir('disponivel')(e.checked)} />

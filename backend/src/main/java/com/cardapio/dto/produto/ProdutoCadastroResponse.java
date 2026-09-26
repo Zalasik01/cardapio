@@ -26,7 +26,9 @@ public record ProdutoCadastroResponse(
         BigDecimal custoUnitario,
         Long fornecedorId,
         String fornecedorNome,
-        Integer tempoPreparoMinutos
+        Integer tempoPreparoMinutos,
+        BigDecimal precoPromocional,
+        boolean destaque
 ) {
 
     public record ItemComposicao(

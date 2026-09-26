@@ -77,7 +77,7 @@ public class PedidoService {
                 throw new RegraNegocioException("Produto indisponível: " + produto.getNome());
             }
 
-            BigDecimal totalItem = produto.getPreco().multiply(BigDecimal.valueOf(itemRequest.quantidade()))
+            BigDecimal totalItem = produto.precoVenda().multiply(BigDecimal.valueOf(itemRequest.quantidade()))
                     .setScale(2, RoundingMode.HALF_UP);
 
             I_ItemPedido item = I_ItemPedido.builder()
@@ -85,7 +85,7 @@ public class PedidoService {
                     .pedido(pedido)
                     .produto(produto)
                     .nomeProduto(produto.getNome())
-                    .precoUnitario(produto.getPreco())
+                    .precoUnitario(produto.precoVenda())
                     .quantidade(itemRequest.quantidade())
                     .totalItem(totalItem)
                     .observacoes(itemRequest.observacoes())

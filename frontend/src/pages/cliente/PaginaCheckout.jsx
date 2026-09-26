@@ -5,6 +5,7 @@ import { calcularFreteEndereco, criarPedido } from '../../api/cardapioApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
+import { guardarPedidoAnterior } from '../../utils/pedidosAnteriores'
 
 const somenteDigitos = (v) => v.replace(/\D/g, '')
 
@@ -148,6 +149,7 @@ export default function PaginaCheckout() {
         formaPagamento: form.formaPagamento,
         observacoes: form.observacoes,
       })
+      guardarPedidoAnterior(slug, itens)
       limparCarrinho()
       navigate(`/pedido/${pedido.guid}`)
     } catch (err) {

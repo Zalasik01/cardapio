@@ -15,6 +15,12 @@ public class CardapioPublicoController {
 
     private final CardapioService cardapioService;
 
+    /** Manifesto do PWA do cardápio: instalar a loja na tela inicial do celular (abre direto no cardápio dela). */
+    @GetMapping(path = "/lojas/{slug}/manifest.webmanifest", produces = "application/manifest+json")
+    public java.util.Map<String, Object> manifesto(@PathVariable String slug) {
+        return cardapioService.manifesto(slug);
+    }
+
     @GetMapping("/lojas/{slug}/cardapio")
     public CardapioResponse buscarCardapio(@PathVariable String slug) {
         return cardapioService.buscarCardapioPublico(slug);

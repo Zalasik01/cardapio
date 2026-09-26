@@ -57,4 +57,30 @@ public class CardapioService {
 
         return new CardapioResponse(LojaResponse.of(loja), situacao.aberta(), situacao.proximaMudanca(), formas, categoriasComProdutos);
     }
+
+    /** Manifesto do PWA da loja: nome, cores, ícone (logo da loja, se houver) e a página inicial dela. */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> manifesto(String slug) {
+        S_Loja loja = lojaService.buscarPorSlug(slug);
+        String inicio = "/" + loja.getSlug();
+        String nome = loja.getNome();
+        var icones = new java.util.ArrayList<java.util.Map<String, Object>>();
+        if (loja.getLogoUrl() != null && !loja.getLogoUrl().isBlank()) {
+            icones.add(java.util.Map.of("src", loja.getLogoUrl(), "sizes", "512x512", "purpose", "any"));
+        }
+        icones.add(java.util.Map.of("src", "/favicon.svg", "sizes", "any", "type", "image/svg+xml", "purpose", "any"));
+        var manifesto = new java.util.LinkedHashMap<String, Object>();
+        manifesto.put("id", inicio);
+        manifesto.put("name", nome);
+        manifesto.put("short_name", nome.length() > 12 ? nome.substring(0, 12).trim() : nome);
+        manifesto.put("description", "Cardápio e pedidos de " + nome);
+        manifesto.put("start_url", inicio);
+        manifesto.put("scope", "/");
+        manifesto.put("display", "standalone");
+        manifesto.put("orientation", "portrait");
+        manifesto.put("background_color", "#fbf7f4");
+        manifesto.put("theme_color", "#dc2626");
+        manifesto.put("icons", icones);
+        return manifesto;
+    }
 }

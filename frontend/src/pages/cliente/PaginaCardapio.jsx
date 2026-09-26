@@ -6,6 +6,7 @@ import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
 import { useCliente } from '../../context/ClienteContext'
 import { listarPedidosCliente } from '../../api/clienteApi'
+import { useInstalarApp } from '../../utils/instalarApp'
 
 const semAcento = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -115,6 +116,30 @@ function CartaoProduto({ produto, noCarrinho, aoAbrir, desabilitado }) {
         )}
       </span>
     </button>
+  )
+}
+
+/** "Instalar app": abre a instalação do navegador; no iPhone mostra o passo a passo manual. */
+function BotaoInstalar() {
+  const { podeInstalar, ehIphone, instalar } = useInstalarApp()
+  const [ajuda, setAjuda] = useState(false)
+  if (!podeInstalar) return null
+  return (
+    <>
+      <button type="button" className="loja-compartilhar" onClick={() => (ehIphone ? setAjuda(true) : instalar())}>
+        <i className="fa-solid fa-mobile-screen-button" aria-hidden="true" /> Instalar app
+      </button>
+      {ajuda && (
+        <Dialog visible header="Instalar no iPhone" onHide={() => setAjuda(false)} className="loja-dialogo" dismissableMask
+                style={{ width: 'min(24rem, 96vw)' }}>
+          <ol className="loja-passos-ios">
+            <li>Toque em <strong>Compartilhar</strong> <i className="fa-solid fa-arrow-up-from-bracket" aria-hidden="true" /> na barra do Safari.</li>
+            <li>Escolha <strong>Adicionar à Tela de Início</strong>.</li>
+            <li>Confirme em <strong>Adicionar</strong>.</li>
+          </ol>
+        </Dialog>
+      )}
+    </>
   )
 }
 
@@ -324,6 +349,7 @@ export default function PaginaCardapio() {
               {aberta ? 'Aberta agora' : 'Fechada'}
             </span>
             <BotaoCompartilhar nome={loja.nome} />
+            <BotaoInstalar />
             {cliente ? (
               <Link className="loja-compartilhar" to={`/${slug}/pedidos`}>
                 <i className="fa-solid fa-circle-user" aria-hidden="true" /> {(cliente.nome || 'Meus pedidos').split(' ')[0]}

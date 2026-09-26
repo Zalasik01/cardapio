@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { listarPedidosCliente, obterResumoCliente } from '../../api/clienteApi'
+import { obterCarteiraCliente } from '../../api/fidelidadeApi'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { useCliente } from '../../context/ClienteContext'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -24,6 +25,8 @@ export default function PaginaMeusPedidos() {
   const { adicionarItem } = useCarrinho()
   const [pedidos, setPedidos] = useState(null)
   const [resumo, setResumo] = useState(null)
+  const [carteira, setCarteira] = useState(null)
+  const [verExtrato, setVerExtrato] = useState(false)
   const [erro, setErro] = useState(null)
   const [aviso, setAviso] = useState(null)
   const [filtro, setFiltro] = useState('todos')
@@ -35,6 +38,7 @@ export default function PaginaMeusPedidos() {
     setPedidos(null)
     listarPedidosCliente(slug).then(setPedidos).catch((e) => setErro(e.mensagem))
     obterResumoCliente(slug).then(setResumo).catch(() => setResumo(null))
+    obterCarteiraCliente(slug).then(setCarteira).catch(() => setCarteira(null))
   }, [cliente, slug])
 
   const contagem = useMemo(
@@ -88,6 +92,37 @@ export default function PaginaMeusPedidos() {
             <div><strong>{resumo && resumo.totalPedidos > 0 ? formatarMoeda(resumo.ticketMedio) : '—'}</strong><small>ticket médio</small></div>
             <div><strong>{resumo?.clienteDesde ? mesAno(resumo.clienteDesde) : '—'}</strong><small>cliente desde</small></div>
           </section>
+
+          {carteira?.ativo && (
+            <section className="cliente-carteira">
+              <div>
+                <small>Seu cashback</small>
+                <strong>{formatarMoeda(carteira.saldo)}</strong>
+                {carteira.proximoVencimento && (
+                  <small>{formatarMoeda(carteira.proximoVencimento.valor)} vence em {new Date(carteira.proximoVencimento.data).toLocaleDateString('pt-BR')}</small>
+                )}
+              </div>
+              <p>Ganhe <strong>{String(carteira.percentual).replace('.00', '').replace('.', ',')}%</strong> de volta a cada pedido entregue e use no próximo
+                {Number(carteira.resgateMinimo) > 0 && ` (a partir de ${formatarMoeda(carteira.resgateMinimo)})`}.</p>
+              {carteira.extrato.length > 0 && (
+                <>
+                  <button type="button" className="loja-link" onClick={() => setVerExtrato((v) => !v)} aria-expanded={verExtrato}>
+                    {verExtrato ? 'Ocultar extrato' : 'Ver extrato'}
+                  </button>
+                  {verExtrato && (
+                    <ul className="cliente-carteira__extrato">
+                      {carteira.extrato.map((l, i) => (
+                        <li key={i}>
+                          <span>{l.tipo === 'GANHO' ? 'Cashback recebido' : l.tipo === 'RESGATE' ? 'Usado no pedido' : 'Devolvido (pedido cancelado)'}{l.pedido ? ` · #${l.pedido}` : ''}</span>
+                          <strong className={Number(l.valor) < 0 ? 'negativo' : 'positivo'}>{Number(l.valor) > 0 ? '+' : ''}{formatarMoeda(l.valor)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </section>
+          )}
 
           {resumo?.favorito && (
             <p className="cliente-favorito"><i className="fa-solid fa-heart" aria-hidden="true" /> Seu favorito: <strong>{resumo.favorito}</strong></p>

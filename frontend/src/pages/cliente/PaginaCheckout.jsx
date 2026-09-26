@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { InputNumber } from 'primereact/inputnumber'
 import { Steps } from 'primereact/steps'
+import { obterCashbackResgatavel } from '../../api/fidelidadeApi'
 import { calcularFreteEndereco, criarPedido, listarEnderecosCliente, removerEnderecoCliente, salvarEnderecoCliente, validarCupom } from '../../api/cardapioApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
 import { mascaraTelefone } from '../../utils/telefone'
@@ -39,6 +40,8 @@ export default function PaginaCheckout() {
   const [erro, setErro] = useState(null)
   const [passo, setPasso] = useState(0)
   const [salvos, setSalvos] = useState([])
+  const [cashbackDisponivel, setCashbackDisponivel] = useState(0)
+  const [usarCashback, setUsarCashback] = useState(false)
   const [salvarEndereco, setSalvarEndereco] = useState(false)
   const [apelidoEndereco, setApelidoEndereco] = useState('')
   const [enderecoEscolhido, setEnderecoEscolhido] = useState(null)
@@ -125,6 +128,17 @@ export default function PaginaCheckout() {
       setErro(err.mensagem || 'Não foi possível remover o endereço.')
     }
   }
+
+  // cashback que dá para usar neste pedido (depende do valor dos itens já com o cupom)
+  const baseCashback = Math.max(0, subtotal - Number(cupom?.desconto ?? 0))
+  useEffect(() => {
+    if (!cliente || !cardapio.cashbackPercentual) return undefined
+    let cancelado = false
+    obterCashbackResgatavel(slug, baseCashback.toFixed(2))
+      .then((v) => { if (!cancelado) { setCashbackDisponivel(Number(v)); if (Number(v) <= 0) setUsarCashback(false) } })
+      .catch(() => { if (!cancelado) setCashbackDisponivel(0) })
+    return () => { cancelado = true }
+  }, [cliente, slug, baseCashback, cardapio.cashbackPercentual])
 
   const campo = (nome, valor) => setForm((atual) => ({ ...atual, [nome]: valor }))
 
@@ -229,6 +243,7 @@ export default function PaginaCheckout() {
         formaPagamento: textoPagamento,
         observacoes: form.observacoes,
         codigoCupom: cupom?.codigo ?? null,
+        usarCashback: cashbackAplicado > 0,
       })
       if (entrega && salvarEndereco && apelidoEndereco.trim()) {
         // guardar o endereço é um extra: se falhar, o pedido já foi feito e segue normalmente
@@ -265,7 +280,8 @@ export default function PaginaCheckout() {
 
   const taxa = tipoEntrega === 'ENTREGA' && frete?.entregavel ? Number(frete.taxa || 0) : 0
   const desconto = Number(cupom?.desconto ?? 0)
-  const total = Math.max(0, subtotal - desconto + taxa)
+  const cashbackAplicado = usarCashback ? Math.min(cashbackDisponivel, Math.max(0, subtotal - desconto)) : 0
+  const total = Math.max(0, subtotal - desconto - cashbackAplicado + taxa)
   const formaEscolhida = formas.find((f) => f.nome === form.formaPagamento)
   const emDinheiro = formaEscolhida?.tipo === 'DINHEIRO'
   // o troco vai junto do texto da forma de pagamento, que a loja e o entregador já leem em todas as telas
@@ -414,6 +430,14 @@ export default function PaginaCheckout() {
           </div>
         )}
       </section>
+      {cashbackDisponivel > 0 && (
+        <section className="loja-bloco loja-cashback">
+          <label className="loja-check">
+            <input type="checkbox" checked={usarCashback} onChange={(e) => setUsarCashback(e.target.checked)} />
+            <span>Usar meu cashback: <strong>{formatarMoeda(cashbackDisponivel)}</strong> de desconto neste pedido</span>
+          </label>
+        </section>
+      )}
       <section className="loja-bloco loja-cupom">
         <h2>Cupom de desconto</h2>
         {cupom ? (
@@ -458,6 +482,7 @@ export default function PaginaCheckout() {
       <section className="loja-resumo">
         <p><span>Subtotal</span><span>{formatarMoeda(subtotal)}</span></p>
         {desconto > 0 && <p className="loja-resumo__desconto"><span>Desconto ({cupom.codigo})</span><span>-{formatarMoeda(desconto)}</span></p>}
+        {cashbackAplicado > 0 && <p className="loja-resumo__desconto"><span>Cashback</span><span>-{formatarMoeda(cashbackAplicado)}</span></p>}
         <p><span>Entrega</span><span>{tipoEntrega === 'ENTREGA' ? (frete?.entregavel ? formatarMoeda(taxa) : 'a calcular') : 'Retirada'}</span></p>
         <p className="loja-resumo__total"><span>Total</span><strong>{formatarMoeda(total)}</strong></p>
       </section>

@@ -1598,3 +1598,38 @@ body:has(.loja) { background: #fbf7f4; }
 }
 
 .loja-check { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; font-weight: 600; input { width: 1.1rem; height: 1.1rem; accent-color: var(--cor-primaria); } }
+
+/* ---------- Cashback ---------- */
+.loja-capa__cashback { background: #ecfdf5 !important; color: #047857 !important; i { color: #10b981 !important; } }
+
+.loja-cashback { background: #ecfdf5; .loja-check { align-items: flex-start; font-size: 0.95rem; } }
+
+.cliente-carteira {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: #ecfdf5;
+  color: #065f46;
+  box-shadow: var(--sombra-cartao);
+
+  > div { display: grid; strong { font-size: 1.8rem; font-weight: 800; line-height: 1.1; } small { color: #047857; } }
+  p { margin: 0; font-size: 0.88rem; }
+  .loja-link { justify-self: start; color: #047857; }
+}
+
+.cliente-carteira__extrato {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  list-style: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+
+  li { display: flex; gap: 1rem; justify-content: space-between; }
+  .positivo { color: #047857; }
+  .negativo { color: #b91c1c; }
+}

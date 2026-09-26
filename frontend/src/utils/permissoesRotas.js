@@ -13,6 +13,7 @@ const LEITURA_POR_ROTA = {
   'formas-pagamento': 'FORMAS_PAGAMENTO_LEITURA',
   cupons: 'CUPONS_LEITURA',
   avaliacoes: 'AVALIACOES_LEITURA',
+  fidelidade: 'FIDELIDADE_LEITURA',
   'fluxo-pedidos': 'FLUXO_PEDIDOS_LEITURA',
   entregadores: 'ENTREGADORES_LEITURA',
   entregas: 'ENTREGAS_LEITURA',

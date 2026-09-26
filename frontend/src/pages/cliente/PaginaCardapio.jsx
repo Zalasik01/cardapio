@@ -403,6 +403,9 @@ export default function PaginaCardapio() {
             {cardapio.avaliacaoMedia != null && (
               <li className="loja-capa__nota"><Estrelas valor={1} tamanho="0.85rem" rotulo="Nota" /> <strong>{String(cardapio.avaliacaoMedia).replace('.', ',')}</strong> ({cardapio.totalAvaliacoes})</li>
             )}
+            {cardapio.cashbackPercentual != null && (
+              <li className="loja-capa__cashback"><i className="fa-solid fa-coins" aria-hidden="true" /> {String(cardapio.cashbackPercentual).replace('.00', '').replace('.', ',')}% de cashback</li>
+            )}
             {abertura && <li><i className="fa-regular fa-calendar" aria-hidden="true" /> {abertura}</li>}
             {loja.tempoPreparoPadraoMinutos > 0 && <li><i className="fa-regular fa-clock" aria-hidden="true" /> ~{loja.tempoPreparoPadraoMinutos} min</li>}
             {minimo > 0 && <li><i className="fa-solid fa-bag-shopping" aria-hidden="true" /> Mínimo {formatarMoeda(minimo)}</li>}

@@ -50,6 +50,13 @@ public class EntregadorPublicoController {
         return ResponseEntity.noContent().build();
     }
 
+    /** O entregador aceitou notificações neste aparelho: recebe aviso de nova entrega. */
+    @PostMapping("/push")
+    public ResponseEntity<Void> assinarPush(@PathVariable UUID token, @RequestBody com.cardapio.service.PushService.Assinatura assinatura) {
+        service.assinarPush(token, assinatura);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/posicao")
     public ResponseEntity<Void> posicao(@PathVariable UUID token, @RequestBody PosicaoRequest request) {
         service.posicao(token, request.latitude(), request.longitude());

@@ -1498,3 +1498,17 @@ body:has(.loja) { background: #fbf7f4; }
 }
 
 .loja-resumo__nota { color: var(--cor-texto-suave); }
+
+/* ---------- Troco (pagamento em dinheiro) ---------- */
+.loja-troco {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  background: #fffbeb;
+
+  > p { display: flex; gap: 0.5rem; align-items: center; margin: 0; font-weight: 800; i { color: #b45309; } }
+}
+
+.loja-troco__valor { font-size: 1.3rem !important; font-weight: 800 !important; }
+.loja-campo .p-inputnumber { width: 100%; }

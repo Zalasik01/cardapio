@@ -74,6 +74,12 @@ public class AcompanhamentoService {
                 pedido.getStatus() == StatusPedido.SAIU_PARA_ENTREGA ? pedido.getCodigoEntrega() : null);
     }
 
+    @Transactional
+    public void assinarPush(UUID guid, com.cardapio.service.PushService.Assinatura assinatura, PushService push) {
+        T_Pedido pedido = buscar(guid);
+        push.assinarPedido(pedido.getTenant(), pedido.getId(), assinatura);
+    }
+
     /** Abre a conexão em tempo real do cliente para este pedido. */
     @Transactional(readOnly = true)
     public org.springframework.web.servlet.mvc.method.annotation.SseEmitter eventos(UUID guid) {

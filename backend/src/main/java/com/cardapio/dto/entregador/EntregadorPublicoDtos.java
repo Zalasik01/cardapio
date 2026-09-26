@@ -29,7 +29,8 @@ public final class EntregadorPublicoDtos {
             String situacao,
             String cor,
             boolean podeSair,
-            boolean podeEntregar
+            boolean podeEntregar,
+            boolean exigeCodigo
     ) {
     }
 

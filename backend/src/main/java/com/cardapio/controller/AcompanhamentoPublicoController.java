@@ -18,10 +18,18 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class AcompanhamentoPublicoController {
 
     private final AcompanhamentoService service;
+    private final com.cardapio.service.PushService pushService;
 
     @GetMapping
     public AcompanhamentoResponse obter(@PathVariable UUID guid) {
         return service.obter(guid);
+    }
+
+    /** O cliente aceitou notificações deste pedido: recebe um aviso a cada mudança de situação. */
+    @org.springframework.web.bind.annotation.PostMapping("/push")
+    public org.springframework.http.ResponseEntity<Void> assinar(@PathVariable UUID guid, @org.springframework.web.bind.annotation.RequestBody com.cardapio.service.PushService.Assinatura assinatura) {
+        service.assinarPush(guid, assinatura, pushService);
+        return org.springframework.http.ResponseEntity.noContent().build();
     }
 
     /** Aviso em tempo real: chega "atualizado" sempre que a situação, o entregador ou a posição mudam. */

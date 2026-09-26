@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
+import { InputNumber } from 'primereact/inputnumber'
 import { Steps } from 'primereact/steps'
 import { calcularFreteEndereco, criarPedido, validarCupom } from '../../api/cardapioApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
@@ -37,6 +38,8 @@ export default function PaginaCheckout() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState(null)
   const [passo, setPasso] = useState(0)
+  const [precisaTroco, setPrecisaTroco] = useState(null) // dinheiro: null = ainda não respondeu
+  const [trocoPara, setTrocoPara] = useState(null)
   const [codigoCupom, setCodigoCupom] = useState('')
   const [cupom, setCupom] = useState(null)
   const [validandoCupom, setValidandoCupom] = useState(false)
@@ -89,6 +92,11 @@ export default function PaginaCheckout() {
       setValidandoCupom(false)
     }
   }
+
+  useEffect(() => {
+    setPrecisaTroco(null)
+    setTrocoPara(null)
+  }, [form.formaPagamento])
 
   const campo = (nome, valor) => setForm((atual) => ({ ...atual, [nome]: valor }))
 
@@ -145,6 +153,16 @@ export default function PaginaCheckout() {
       setErro('Escolha uma forma de pagamento.')
       return
     }
+    if (passo === 2 && emDinheiro) {
+      if (precisaTroco === null) {
+        setErro('Informe se você precisa de troco.')
+        return
+      }
+      if (precisaTroco && (!trocoPara || trocoPara < total)) {
+        setErro(`O valor para o troco precisa ser maior ou igual ao total do pedido (${formatarMoeda(total)}).`)
+        return
+      }
+    }
     setPasso((p) => p + 1)
   }
 
@@ -180,7 +198,7 @@ export default function PaginaCheckout() {
         latitude: entrega ? frete?.latitude : null,
         longitude: entrega ? frete?.longitude : null,
         itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade, observacoes: i.observacoes })),
-        formaPagamento: form.formaPagamento,
+        formaPagamento: textoPagamento,
         observacoes: form.observacoes,
         codigoCupom: cupom?.codigo ?? null,
       })
@@ -213,6 +231,12 @@ export default function PaginaCheckout() {
   const taxa = tipoEntrega === 'ENTREGA' && frete?.entregavel ? Number(frete.taxa || 0) : 0
   const desconto = Number(cupom?.desconto ?? 0)
   const total = Math.max(0, subtotal - desconto + taxa)
+  const formaEscolhida = formas.find((f) => f.nome === form.formaPagamento)
+  const emDinheiro = formaEscolhida?.tipo === 'DINHEIRO'
+  // o troco vai junto do texto da forma de pagamento, que a loja e o entregador já leem em todas as telas
+  const textoPagamento = emDinheiro && precisaTroco === true && trocoPara
+    ? `${form.formaPagamento} - troco para ${formatarMoeda(trocoPara)} (levar ${formatarMoeda(trocoPara - total)})`
+    : emDinheiro && precisaTroco === false ? `${form.formaPagamento} - sem troco` : form.formaPagamento
 
   return (
     <form className="loja-pagina" onSubmit={enviar}>
@@ -306,9 +330,28 @@ export default function PaginaCheckout() {
             ))}
           </div>
         )}
-        <label className="loja-campo">Observações do pedido
-          <textarea rows={2} value={form.observacoes} onChange={(e) => campo('observacoes', e.target.value)} />
-        </label>
+        {emDinheiro && (
+          <div className="loja-troco">
+            <p><i className="fa-solid fa-coins" aria-hidden="true" /> Vai precisar de troco?</p>
+            <div className="loja-opcoes" role="radiogroup" aria-label="Precisa de troco">
+              <button type="button" role="radio" aria-checked={precisaTroco === false} className={precisaTroco === false ? 'ativo' : ''}
+                      onClick={() => { setPrecisaTroco(false); setTrocoPara(null) }}>Não preciso</button>
+              <button type="button" role="radio" aria-checked={precisaTroco === true} className={precisaTroco === true ? 'ativo' : ''}
+                      onClick={() => setPrecisaTroco(true)}>Preciso de troco</button>
+            </div>
+            {precisaTroco === true && (
+              <label className="loja-campo">Troco para quanto?
+                <InputNumber inputId="troco-para" value={trocoPara} mode="currency" currency="BRL" locale="pt-BR" min={0} placeholder="R$ 0,00"
+                             inputClassName="loja-troco__valor" onValueChange={(e) => setTrocoPara(e.value ?? null)} />
+                <small>
+                  {trocoPara && trocoPara >= total
+                    ? `Você paga ${formatarMoeda(total)} e o entregador leva ${formatarMoeda(trocoPara - total)} de troco.`
+                    : `O total do pedido é ${formatarMoeda(total)}. Informe uma nota maior ou igual a esse valor.`}
+                </small>
+              </label>
+            )}
+          </div>
+        )}
       </section>
       <section className="loja-bloco loja-cupom">
         <h2>Cupom de desconto</h2>
@@ -341,8 +384,15 @@ export default function PaginaCheckout() {
         <p className="loja-revisao__dados">
           {form.nomeCliente} · {form.telefoneCliente}<br />
           {tipoEntrega === 'ENTREGA' ? `Entrega: ${form.enderecoRua}, ${form.enderecoNumero} - ${form.enderecoBairro}` : 'Retirada na loja'}<br />
-          Pagamento: {form.formaPagamento}
+          Pagamento: {textoPagamento}
         </p>
+      </section>
+      <section className="loja-bloco">
+        <h2>Observações do pedido</h2>
+        <label className="loja-campo">
+          <textarea rows={3} maxLength={300} value={form.observacoes} placeholder="Ex.: tocar a campainha, sem cebola no lanche..."
+                    onChange={(e) => campo('observacoes', e.target.value)} />
+        </label>
       </section>
       <section className="loja-resumo">
         <p><span>Subtotal</span><span>{formatarMoeda(subtotal)}</span></p>

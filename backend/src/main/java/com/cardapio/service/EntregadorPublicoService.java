@@ -38,6 +38,7 @@ public class EntregadorPublicoService {
     private final PagamentoPedidoService pagamentoService;
     private final LojaService lojaService;
     private final ImagemService imagemService;
+    private final PushService pushService;
     private final com.cardapio.repository.T_PedidoTrilhaRepository trilhaRepository;
     private final ApplicationEventPublisher eventos;
 
@@ -85,6 +86,12 @@ public class EntregadorPublicoService {
         conferirCodigo(token, pedidoId, codigo);
         String url = foto == null || foto.isEmpty() ? null : imagemService.enviar("entregas", foto);
         mover(token, pedidoId, StatusPedido.ENTREGUE, url);
+    }
+
+    @Transactional
+    public void assinarPush(UUID token, PushService.Assinatura assinatura) {
+        T_Entregador entregador = entregadorPorToken(token);
+        pushService.assinarEntregador(entregador.getTenant(), entregador.getId(), assinatura);
     }
 
     /** Guarda a posição do celular e avisa quem acompanha os pedidos que ele está levando. */
@@ -153,7 +160,7 @@ var emRota = pedidoRepository.buscarEntregasDoEntregador(entregador.getId(), Lis
                 p.getObservacoes(), itens, p.getTotal(), pagamentos, p.getFormaPagamento(),
                 situacao != null ? situacao.nome() : null, situacao != null ? situacao.cor() : null,
                 proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.SAIU_PARA_ENTREGA),
-                proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.ENTREGUE));
+                proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.ENTREGUE), p.getCodigoEntrega() != null);
     }
 
     private T_Entregador entregadorPorToken(UUID token) {

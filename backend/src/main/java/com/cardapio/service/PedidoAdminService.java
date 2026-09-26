@@ -42,6 +42,7 @@ public class PedidoAdminService {
 
     private final T_PedidoRepository pedidoRepository;
     private final ApplicationEventPublisher eventos;
+    private final PushService pushService;
     private final PedidoService pedidoService;
     private final NotificacaoService notificacaoService;
     private final PedidoEdicaoService edicaoService;
@@ -161,6 +162,7 @@ public class PedidoAdminService {
         pedido.setStatus(novoStatus);
         pedido.setIdSituacao(destino.id());
         pedidoRepository.save(pedido);
+        pushService.situacaoDoPedido(pedido, destino.nome());
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
         return resposta(pedido);
     }
@@ -249,6 +251,7 @@ public class PedidoAdminService {
                     .orElseThrow(() -> new RegraNegocioException("Entregador não encontrado ou inativo"));
             pedido.setIdEntregador(entregador.getId());
             pedido.setRepasseEntregador(entregador.getRepassePorEntrega());
+            pushService.novaEntrega(entregador.getId(), pedido, "/entregador/" + entregador.getToken());
         }
         pedidoRepository.save(pedido);
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));

@@ -24,6 +24,19 @@ export default function LayoutCliente() {
     if (cardapio) document.title = cardapio.loja.nome
   }, [cardapio])
 
+  // identidade da loja (Loja > Site): a cor da marca vira o tema do cardápio, inclusive nos diálogos (que ficam fora da página)
+  useEffect(() => {
+    const cor = cardapio?.site?.corPrimaria
+    if (!cor) return undefined
+    const raiz = document.documentElement.style
+    raiz.setProperty('--marca', cor)
+    raiz.setProperty('--marca-escura', `color-mix(in srgb, ${cor} 78%, black)`)
+    raiz.setProperty('--marca-suave', `color-mix(in srgb, ${cor} 14%, white)`)
+    const tema = document.querySelector('meta[name="theme-color"]')
+    if (tema) tema.content = cor
+    return () => ['--marca', '--marca-escura', '--marca-suave'].forEach((v) => raiz.removeProperty(v))
+  }, [cardapio])
+
   // PWA: manifesto da loja (abre direto no cardápio dela) e service worker
   useEffect(() => {
     const link = document.createElement('link')
@@ -46,6 +59,7 @@ export default function LayoutCliente() {
       <div className="loja">
         {erro && <p className="loja__erro" role="alert">{erro}</p>}
         {!erro && !cardapio && <CardapioSkeleton />}
+        {cardapio?.site?.mensagemTopo && <p className="loja-aviso-topo" role="status">{cardapio.site.mensagemTopo}</p>}
         {cardapio && <Outlet context={{ cardapio, slug }} />}
       </div>
     </CarrinhoProvider>

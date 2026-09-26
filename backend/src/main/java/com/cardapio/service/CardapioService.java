@@ -29,6 +29,7 @@ public class CardapioService {
     private final com.cardapio.repository.T_PedidoRepository pedidoRepository;
     private final AvaliacaoService avaliacaoService;
     private final FidelidadeService fidelidadeService;
+    private final SiteLojaService siteService;
     private final T_FormaPagamentoRepository formaPagamentoRepository;
 
     @Transactional(readOnly = true)
@@ -66,7 +67,7 @@ public class CardapioService {
 
         var resumoAvaliacao = avaliacaoService.resumo(tenant);
         return new CardapioResponse(LojaResponse.of(loja), situacao.aberta(), situacao.motivo(), situacao.pausadoAte(),
-                maisVendidos, resumoAvaliacao.total() == 0 ? null : resumoAvaliacao.mediaLoja(), fidelidadeService.percentual(tenant), resumoAvaliacao.total(),
+                maisVendidos, resumoAvaliacao.total() == 0 ? null : resumoAvaliacao.mediaLoja(), siteService.publico(tenant), fidelidadeService.percentual(tenant), resumoAvaliacao.total(),
                 situacao.proximaMudanca(), formas, categoriasComProdutos);
     }
 

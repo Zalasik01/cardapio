@@ -4,9 +4,9 @@
 
 .loja,
 .loja-dialogo {
-  --cor-primaria: #dc2626;
-  --cor-primaria-escura: #b91c1c;
-  --cor-primaria-suave: #fee2e2;
+  --cor-primaria: var(--marca, #dc2626);
+  --cor-primaria-escura: var(--marca-escura, #b91c1c);
+  --cor-primaria-suave: var(--marca-suave, #fee2e2);
   --cor-destaque-quente: #a16207;
   --cor-fundo: #fbf7f4;
   --cor-superficie: #ffffff;
@@ -50,7 +50,7 @@
   margin: 0 -1rem;
   background:
     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 3px) 0 0 / 22px 22px,
-    linear-gradient(135deg, #dc2626 0%, #b91c1c 55%, #a16207 100%);
+    linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-escura) 55%, var(--cor-destaque-quente) 100%);
 }
 
 .loja-capa__cartao {
@@ -981,7 +981,7 @@
   color: #fff;
   background:
     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 3px) 0 0 / 22px 22px,
-    linear-gradient(135deg, #dc2626 0%, #b91c1c 55%, #a16207 100%);
+    linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-escura) 55%, var(--cor-destaque-quente) 100%);
 
   img, .pedido-topo__logo {
     flex: none;
@@ -1346,7 +1346,7 @@ body:has(.loja) { background: #fbf7f4; }
   padding: 1rem;
   color: #fff;
   border-radius: 20px;
-  background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 3px) 0 0 / 22px 22px, linear-gradient(135deg, #dc2626 0%, #b91c1c 55%, #a16207 100%);
+  background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 3px) 0 0 / 22px 22px, linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-escura) 55%, var(--cor-destaque-quente) 100%);
   box-shadow: var(--sombra-cartao);
 
   > div { flex: 1; min-width: 0; display: grid; small { opacity: 0.9; } strong { font-size: 1.1rem; } }
@@ -1633,3 +1633,23 @@ body:has(.loja) { background: #fbf7f4; }
   .positivo { color: #047857; }
   .negativo { color: #b91c1c; }
 }
+
+/* ---------- Site da loja: banner, aviso do topo, sobre e redes ---------- */
+.loja-aviso-topo { margin: 0; padding: 0.55rem 1rem; text-align: center; background: var(--cor-texto); color: #fff; font-size: 0.85rem; font-weight: 700; }
+.loja-capa__fundo--banner { background-size: cover !important; background-position: center !important; }
+
+.loja-rodape-site {
+  display: grid;
+  gap: 0.75rem;
+  margin: 2rem 1rem 0;
+  padding: 1.1rem;
+  background: var(--cor-superficie);
+  border-radius: 18px;
+  box-shadow: var(--sombra-cartao);
+
+  h2 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+  p { margin: 0; color: var(--cor-texto-suave); line-height: 1.55; white-space: pre-line; }
+}
+
+.loja-redes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.loja-redes a { display: inline-flex; gap: 0.45rem; align-items: center; padding: 0.45rem 0.9rem; border: 1px solid var(--cor-borda); border-radius: 999px; color: var(--cor-texto); font-size: 0.85rem; font-weight: 700; text-decoration: none; &:hover { border-color: var(--cor-primaria); color: var(--cor-primaria); } }

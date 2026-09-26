@@ -14,6 +14,7 @@ const LEITURA_POR_ROTA = {
   cupons: 'CUPONS_LEITURA',
   avaliacoes: 'AVALIACOES_LEITURA',
   fidelidade: 'FIDELIDADE_LEITURA',
+  site: 'SITE_LEITURA',
   'fluxo-pedidos': 'FLUXO_PEDIDOS_LEITURA',
   entregadores: 'ENTREGADORES_LEITURA',
   entregas: 'ENTREGAS_LEITURA',

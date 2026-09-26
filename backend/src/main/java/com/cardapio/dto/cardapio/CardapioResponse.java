@@ -14,6 +14,7 @@ public record CardapioResponse(
         LocalDateTime pausadoAte,
         List<UUID> maisVendidos,
         java.math.BigDecimal avaliacaoMedia,
+        com.cardapio.service.SiteLojaService.SiteResponse site,
         java.math.BigDecimal cashbackPercentual,
         long totalAvaliacoes,
         LocalDateTime proximaMudanca,

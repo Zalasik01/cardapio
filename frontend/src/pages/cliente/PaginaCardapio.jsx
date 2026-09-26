@@ -373,7 +373,8 @@ export default function PaginaCardapio() {
   return (
     <>
       <header className="loja-capa">
-        <div className="loja-capa__fundo" aria-hidden="true" />
+        <div className={`loja-capa__fundo${cardapio.site?.bannerUrl ? ' loja-capa__fundo--banner' : ''}`} aria-hidden="true"
+             style={cardapio.site?.bannerUrl ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.25)), url(${cardapio.site.bannerUrl})` } : undefined} />
         <div className="loja-capa__cartao">
           {loja.logoUrl
             ? <img className="loja-capa__logo" src={loja.logoUrl} alt="" />
@@ -484,6 +485,17 @@ export default function PaginaCardapio() {
       </div>
       {telaLarga && <SacolaLateral slug={slug} minimo={minimo} aberta={aberta} />}
       </div>
+
+      {(cardapio.site?.sobre || cardapio.site?.instagram || cardapio.site?.facebook || cardapio.site?.whatsapp) && (
+        <footer className="loja-rodape-site">
+          {cardapio.site.sobre && (<><h2>Sobre {loja.nome}</h2><p>{cardapio.site.sobre}</p></>)}
+          <div className="loja-redes">
+            {cardapio.site.instagram && <a href={`https://instagram.com/${cardapio.site.instagram}`} target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-instagram" aria-hidden="true" /> @{cardapio.site.instagram}</a>}
+            {cardapio.site.facebook && <a href={cardapio.site.facebook.startsWith('http') ? cardapio.site.facebook : `https://facebook.com/${cardapio.site.facebook}`} target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-facebook" aria-hidden="true" /> Facebook</a>}
+            {cardapio.site.whatsapp && <a href={`https://wa.me/55${cardapio.site.whatsapp}`} target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-whatsapp" aria-hidden="true" /> WhatsApp</a>}
+          </div>
+        </footer>
+      )}
 
       {totalItens > 0 && !telaLarga && (
         <Link to={`/${slug}/carrinho`} className="loja-carrinho-barra">

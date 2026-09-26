@@ -565,3 +565,22 @@ fieldset.crud__somente-leitura {
   th { color: var(--cor-texto-suave); font-size: 0.8rem; font-weight: 700; }
   .direita { text-align: right; }
 }
+
+// ---- Site da loja (painel) ----
+.site__cor { display: flex; gap: 0.5rem; align-items: center; input { flex: 1; min-width: 0; } }
+.site__ver { text-decoration: none; }
+
+.site__previa {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 26rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 12px;
+
+  > span { height: 4.5rem; border-radius: 10px; background: linear-gradient(135deg, var(--previa), color-mix(in srgb, var(--previa) 78%, black)); background-size: cover; background-position: center; }
+  > button { padding: 0.6rem; border: 0; border-radius: 10px; background: var(--previa); color: #fff; font-weight: 700; pointer-events: none; }
+}
+
+.site__cor { .p-colorpicker-preview { width: 2.5rem; flex: none; } input.p-inputtext { flex: 0 0 8rem; width: 8rem; } }

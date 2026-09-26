@@ -79,6 +79,7 @@ public class LojaService {
         if (request.taxaEntregaPorKm() != null) loja.setTaxaEntregaPorKm(request.taxaEntregaPorKm());
         if (request.distanciaMaximaEntregaKm() != null) loja.setDistanciaMaximaEntregaKm(request.distanciaMaximaEntregaKm());
         if (request.valorMinimoPedido() != null) loja.setValorMinimoPedido(request.valorMinimoPedido());
+        if (request.tempoPreparoPadraoMinutos() != null) loja.setTempoPreparoPadraoMinutos(request.tempoPreparoPadraoMinutos());
 
         return lojaRepository.save(loja);
     }

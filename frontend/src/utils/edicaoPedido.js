@@ -19,7 +19,12 @@ export function rascunhoDoPedido(pedido) {
     enderecoBairro: pedido.enderecoBairro ?? '',
     enderecoCidade: pedido.enderecoCidade ?? '',
     taxaEntrega: entrega ? Number(pedido.taxaEntrega) : null,
-    formasPagamento: pedido.formaPagamento ? pedido.formaPagamento.split(', ').filter(Boolean) : [],
+    // pagamento dividido; pedidos antigos só têm o texto da forma (mantido como está se o pagamento não for mexido)
+    pagamentos: (pedido.pagamentos ?? []).map((pg) => ({
+      formaId: pg.formaId, nome: pg.forma, tipo: pg.tipo, valor: Number(pg.valor),
+      valorRecebido: pg.valorRecebido != null ? Number(pg.valorRecebido) : null,
+    })),
+    formaLegada: pedido.pagamentos?.length ? null : (pedido.formaPagamento ?? null),
     descontoTipo: pedido.descontoTipo ?? 'PERCENTUAL',
     descontoValor: pedido.descontoValor != null ? Number(pedido.descontoValor) : null,
     observacoes: pedido.observacoes ?? '',

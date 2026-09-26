@@ -24,7 +24,7 @@ export default function PaginaCategoriaCrud() {
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
 
-  const [form, setForm] = useState({ ativo: true, nome: '', ordemExibicao: 0 })
+  const [form, setForm] = useState({ ativo: true, nome: '', ordemExibicao: 0, tempoPreparoMinutos: null })
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
 
@@ -43,7 +43,7 @@ export default function PaginaCategoriaCrud() {
     if (!editando) return
     setCarregando(true)
     obterCategoria(loja.tenant, id)
-      .then((categoria) => setForm({ ativo: categoria.ativo, nome: categoria.nome, ordemExibicao: categoria.ordemExibicao ?? 0 }))
+      .then((categoria) => setForm({ ativo: categoria.ativo, nome: categoria.nome, ordemExibicao: categoria.ordemExibicao ?? 0, tempoPreparoMinutos: categoria.tempoPreparoMinutos ?? null }))
       .catch((e) => dispatchMsgError(e.mensagem))
       .finally(() => setCarregando(false))
   }, [editando, id, loja.tenant])
@@ -94,6 +94,11 @@ export default function PaginaCategoriaCrud() {
         <Campo id="ordem" rotulo="Ordem no cardápio" tamanho={4} ajuda="Menor aparece primeiro.">
           <InputNumber inputId="ordem" value={form.ordemExibicao} min={0} useGrouping={false}
                        onValueChange={(e) => definir('ordemExibicao')(e.value ?? 0)} />
+        </Campo>
+        <Campo id="tempo-preparo" rotulo="Tempo de preparo (min)" tamanho={4}
+               ajuda="Vale para os produtos da categoria que não têm o próprio tempo. Vazio = padrão da loja.">
+          <InputNumber inputId="tempo-preparo" value={form.tempoPreparoMinutos} min={1} useGrouping={false}
+                       onValueChange={(e) => definir('tempoPreparoMinutos')(e.value ?? null)} />
         </Campo>
       </GradeCampos>
     </SecaoCrud>

@@ -31,6 +31,7 @@ public class PedidoService {
     private final ApplicationEventPublisher eventos;
     private final NotificacaoService notificacaoService;
     private final FluxoPedidoService fluxoService;
+    private final PagamentoPedidoService pagamentoService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -67,6 +68,7 @@ public class PedidoService {
                 .build();
 
         BigDecimal subtotal = BigDecimal.ZERO;
+        List<T_Produto> produtosDoPedido = new java.util.ArrayList<>();
         for (ItemPedidoRequest itemRequest : request.itens()) {
             T_Produto produto = produtoRepository.findByGuidAndTenant(itemRequest.produtoGuid(), tenant)
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + itemRequest.produtoGuid()));
@@ -90,6 +92,7 @@ public class PedidoService {
                     .build();
 
             pedido.getItens().add(item);
+            produtosDoPedido.add(produto);
             subtotal = subtotal.add(totalItem);
         }
 
@@ -119,18 +122,44 @@ public class PedidoService {
         pedido.setSubtotal(subtotal);
         pedido.setTaxaEntrega(taxaEntrega);
         pedido.setDesconto(desconto);
-        pedido.setTotal(subtotal.subtract(desconto).add(taxaEntrega));
+        BigDecimal base = subtotal.subtract(desconto).add(taxaEntrega);
+        // pagamento dividido (pedidos lançados pela loja): a taxa de cada forma entra no total
+        var pagamentos = pelaLoja ? pagamentoService.preparar(tenant, request.tipoEntrega(), request.pagamentos(), base)
+                : PagamentoPedidoService.Preparado.vazio();
+        pedido.setTaxaPagamentos(pagamentos.taxaTotal());
+        if (pagamentos.temPagamentos()) {
+            pedido.setFormaPagamento(pagamentos.nomes());
+        }
+        pedido.setTotal(base.add(pagamentos.taxaTotal()));
+        pedido.setTempoPreparoMinutos(tempoDePreparo(produtosDoPedido, loja));
 
         // todo pedido novo entra na situação inicial do fluxo da loja
         var inicial = fluxoService.carregar(tenant).inicial();
         pedido.setIdSituacao(inicial.getId());
         pedido.setStatus(inicial.getCategoria());
         T_Pedido salvo = pedidoRepository.save(pedido);
+        if (pagamentos.temPagamentos()) {
+            pagamentoService.persistir(salvo.getId(), tenant, pagamentos);
+        }
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "NOVO", salvo.getId()));
         if (!pelaLoja) {
             notificacaoService.pedidoNovo(salvo);
         }
         return salvo;
+    }
+
+    /** Prazo de preparo do pedido: o maior tempo entre os itens (produto, senão categoria, senão o padrão da loja). */
+    public int tempoDePreparo(java.util.Collection<T_Produto> produtos, S_Loja loja) {
+        int padrao = loja.getTempoPreparoPadraoMinutos() != null ? loja.getTempoPreparoPadraoMinutos() : 30;
+        return produtos.stream().mapToInt(p -> {
+            if (p.getTempoPreparoMinutos() != null) {
+                return p.getTempoPreparoMinutos();
+            }
+            if (p.getCategoria() != null && p.getCategoria().getTempoPreparoMinutos() != null) {
+                return p.getCategoria().getTempoPreparoMinutos();
+            }
+            return padrao;
+        }).max().orElse(padrao);
     }
 
     /** Valor do desconto (em reais) para o tipo e o valor informados; 0 quando não há desconto. */

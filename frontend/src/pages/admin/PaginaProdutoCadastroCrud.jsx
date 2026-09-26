@@ -37,6 +37,7 @@ const FORM_VAZIO = {
   categoriaId: null,
   preco: 0,
   imagemUrl: '',
+  tempoPreparoMinutos: null,
   disponivel: true,
   composicao: [],
   // ingrediente
@@ -55,6 +56,7 @@ function paraFormulario(produto) {
     categoriaId: produto.categoriaId,
     preco: produto.preco ?? 0,
     imagemUrl: produto.imagemUrl ?? '',
+    tempoPreparoMinutos: produto.tempoPreparoMinutos ?? null,
     disponivel: produto.disponivel,
     composicao: (produto.composicao ?? []).map((item) => ({ ...item, _id: `item-${item.ingredienteId}` })),
     custoUnitario: produto.custoUnitario ?? 0,
@@ -78,6 +80,7 @@ function paraRequisicao(form, tipo) {
       categoriaId: form.categoriaId,
       preco: form.preco,
       imagemUrl: form.imagemUrl,
+      tempoPreparoMinutos: form.tempoPreparoMinutos,
       disponivel: form.disponivel,
       composicao: form.composicao.map(({ ingredienteId, quantidade }) => ({ ingredienteId, quantidade })),
     }
@@ -239,6 +242,11 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
                   <label htmlFor="disponivel">Disponível no cardápio</label>
                 </span>
               </div>
+              <Campo id="tempo-preparo" rotulo="Tempo de preparo (min)" tamanho={4}
+                     ajuda="Vazio = usa o da categoria ou o padrão da loja.">
+                <InputNumber inputId="tempo-preparo" value={form.tempoPreparoMinutos} min={1} useGrouping={false}
+                             onValueChange={(e) => definir('tempoPreparoMinutos')(e.value ?? null)} />
+              </Campo>
               <Campo id="imagem" rotulo="Imagem">
                 <DropzoneImagem valor={form.imagemUrl} aoAlterar={definir('imagemUrl')}
                                 enviar={(arquivo) => enviarImagemLoja(loja.tenant, arquivo)} />

@@ -46,6 +46,8 @@ public class PedidoAdminService {
     private final NotificacaoService notificacaoService;
     private final PedidoEdicaoService edicaoService;
     private final FluxoPedidoService fluxoService;
+    private final PagamentoPedidoService pagamentoService;
+    private final com.cardapio.repository.T_PedidoPagamentoRepository pagamentoRepository;
     private final com.cardapio.repository.T_PedidoAlteracaoRepository alteracaoRepository;
     private final T_ProdutoRepository produtoRepository;
 
@@ -88,9 +90,14 @@ public class PedidoAdminService {
             alteracaoRepository.findByIdPedidoInOrderByIdDesc(idsEditados).forEach(a -> alteracoes
                     .computeIfAbsent(a.getIdPedido(), chave -> new ArrayList<>()).add(PedidoAdminResponse.Alteracao.of(a)));
         }
+        Map<Long, List<PedidoAdminResponse.Pagamento>> pagamentos = new HashMap<>();
+        if (!pedidos.isEmpty()) {
+            pagamentoRepository.findByIdPedidoInOrderByIdAsc(pedidos.stream().map(T_Pedido::getId).toList()).forEach(pg -> pagamentos
+                    .computeIfAbsent(pg.getIdPedido(), chave -> new ArrayList<>()).add(PagamentoPedidoService.resposta(pg)));
+        }
         return pedidos.stream()
                 .map(p -> PedidoAdminResponse.of(p, fluxo.info(p), fluxo.proximas(p), historico.getOrDefault(p.getTelefoneCliente(), 1L),
-                        alteracoes.getOrDefault(p.getId(), List.of())))
+                        alteracoes.getOrDefault(p.getId(), List.of()), pagamentos.getOrDefault(p.getId(), List.of())))
                 .toList();
     }
 
@@ -114,7 +121,7 @@ public class PedidoAdminService {
                 request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
                 request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
                 request.itens(), request.formaPagamento(), request.observacoes(), request.descontoTipo(), request.descontoValor(),
-                request.taxaEntrega());
+                request.taxaEntrega(), request.pagamentos());
         T_Pedido pedido = pedidoService.criar(daLoja, true);
         return resposta(pedido);
     }
@@ -156,7 +163,7 @@ public class PedidoAdminService {
                 .orElseThrow(() -> new RegraNegocioException("Cadastre um produto final ativo para simular um pedido"));
         var item = new com.cardapio.dto.pedido.ItemPedidoRequest(produto.guid(), 2, null);
         var request = new PedidoRequest(tenant, "Cliente Teste", "11999990000", com.cardapio.entity.TipoEntrega.RETIRADA,
-                null, null, null, null, null, null, null, List.of(item), "PIX", "Pedido de teste", null, null, null);
+                null, null, null, null, null, null, null, List.of(item), "PIX", "Pedido de teste", null, null, null, null);
         T_Pedido pedido = pedidoService.criar(request, true);
         notificacaoService.pedidoNovo(pedido);
         return resposta(pedido);
@@ -182,11 +189,26 @@ public class PedidoAdminService {
         PeriodoFiltro.validar(inicio, fim);
         LocalDateTime de = inicio.atStartOfDay();
         LocalDateTime ate = fim.plusDays(1).atStartOfDay();
+        Object[] prazo = pedidoRepository.resumoDePrazo(tenant, de, ate).get(0);
         return new PedidoPeriodoResumoResponse(
                 pedidoRepository.contarNoPeriodo(tenant, de, ate),
                 pedidoRepository.contarNoPeriodoPorStatus(tenant, de, ate, StatusPedido.ENTREGUE),
                 pedidoRepository.somarNoPeriodoPorStatus(tenant, de, ate, StatusPedido.ENTREGUE),
-                pedidoRepository.contarPorStatus(tenant, EM_ANDAMENTO));
+                pedidoRepository.contarPorStatus(tenant, EM_ANDAMENTO),
+                percentualNoPrazo(prazo), atrasoMedio(prazo));
+    }
+
+    private Integer percentualNoPrazo(Object[] prazo) {
+        long total = ((Number) prazo[0]).longValue();
+        return total == 0 ? null : (int) Math.round(100.0 * ((Number) prazo[1]).longValue() / total);
+    }
+
+    /** Atraso médio (em minutos) dos pedidos que passaram do prazo. */
+    private long atrasoMedio(Object[] prazo) {
+        long total = ((Number) prazo[0]).longValue();
+        long noPrazo = ((Number) prazo[1]).longValue();
+        long atrasados = total - noPrazo;
+        return atrasados <= 0 ? 0 : Math.round(((Number) prazo[2]).doubleValue() / atrasados);
     }
 
     private PedidoAdminResponse resposta(T_Pedido pedido) {
@@ -194,7 +216,8 @@ public class PedidoAdminService {
         List<PedidoAdminResponse.Alteracao> alteracoes = alteracaoRepository.findByIdPedidoOrderByIdDesc(pedido.getId()).stream()
                 .map(PedidoAdminResponse.Alteracao::of).toList();
         var fluxo = fluxoService.carregar(pedido.getTenant());
-        return PedidoAdminResponse.of(pedido, fluxo.info(pedido), fluxo.proximas(pedido), total, alteracoes);
+        var pagamentos = pagamentoService.doPedido(pedido.getId()).stream().map(PagamentoPedidoService::resposta).toList();
+        return PedidoAdminResponse.of(pedido, fluxo.info(pedido), fluxo.proximas(pedido), total, alteracoes, pagamentos);
     }
 
     private T_Pedido buscarPedido(UUID tenant, Long id) {

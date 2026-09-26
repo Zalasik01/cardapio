@@ -7,6 +7,7 @@ import com.cardapio.entity.I_ItemPedido;
 import com.cardapio.entity.StatusPedido;
 import com.cardapio.entity.T_Pedido;
 import com.cardapio.entity.T_PedidoAlteracao;
+import com.cardapio.entity.T_PedidoPagamento;
 import com.cardapio.entity.T_Produto;
 import com.cardapio.entity.TipoEntrega;
 import com.cardapio.entity.TipoProduto;
@@ -43,6 +44,8 @@ public class PedidoEdicaoService {
     private final T_ProdutoRepository produtoRepository;
     private final T_PedidoAlteracaoRepository alteracaoRepository;
     private final PedidoService pedidoService;
+    private final PagamentoPedidoService pagamentoService;
+    private final LojaService lojaService;
     private final NotificacaoService notificacaoService;
     private final ApplicationEventPublisher eventos;
 
@@ -71,7 +74,6 @@ public class PedidoEdicaoService {
         if (!Objects.equals(enderecoAntes, enderecoDepois) && (entrega || !enderecoAntes.isEmpty())) {
             mudancas.add("Endereço: " + vazioComo(enderecoAntes, "sem endereço") + " → " + vazioComo(enderecoDepois, "sem endereço"));
         }
-        comparar(mudancas, "Forma de pagamento", pedido.getFormaPagamento(), vazioParaNulo(request.formaPagamento()));
         if (!Objects.equals(vazioParaNulo(pedido.getObservacoes()), vazioParaNulo(request.observacoes()))) {
             mudancas.add("Observações do pedido alteradas");
         }
@@ -84,7 +86,6 @@ public class PedidoEdicaoService {
         pedido.setEnderecoComplemento(entrega ? vazioParaNulo(request.enderecoComplemento()) : null);
         pedido.setEnderecoBairro(entrega ? vazioParaNulo(request.enderecoBairro()) : null);
         pedido.setEnderecoCidade(entrega ? vazioParaNulo(request.enderecoCidade()) : null);
-        pedido.setFormaPagamento(vazioParaNulo(request.formaPagamento()));
         pedido.setObservacoes(vazioParaNulo(request.observacoes()));
 
         // itens: quem já estava mantém o preço de quando o pedido foi feito; itens novos usam o preço de hoje
@@ -159,7 +160,42 @@ public class PedidoEdicaoService {
         pedido.setDesconto(desconto);
         pedido.setSubtotal(subtotal);
         pedido.setTaxaEntrega(taxa);
-        pedido.setTotal(subtotal.subtract(desconto).add(taxa));
+        BigDecimal base = subtotal.subtract(desconto).add(taxa);
+
+        // pagamento (dividido): a soma das partes tem de fechar com o valor do pedido; a taxa de cada forma entra no total
+        List<T_PedidoPagamento> pagamentosAntes = pagamentoService.doPedido(pedido.getId());
+        PagamentoPedidoService.Preparado pagamentos = pagamentoService.preparar(tenant, request.tipoEntrega(), request.pagamentos(), base);
+        String pagamentoAntes = pagamentosAntes.isEmpty() ? vazioComo(pedido.getFormaPagamento(), "sem pagamento informado")
+                : pagamentoService.descrever(pagamentosAntes);
+        if (pagamentos.temPagamentos()) {
+            String pagamentoDepois = pagamentoService.descrever(pagamentos.linhas());
+            if (!pagamentoAntes.equals(pagamentoDepois)) {
+                mudancas.add("Pagamento: " + pagamentoAntes + " → " + pagamentoDepois);
+            }
+            pedido.setFormaPagamento(pagamentos.nomes());
+        } else {
+            String textoLivre = vazioParaNulo(request.formaPagamento());
+            if (!pagamentosAntes.isEmpty() && textoLivre == null) {
+                mudancas.add("Pagamento: " + pagamentoAntes + " → sem pagamento informado");
+            } else if (pagamentosAntes.isEmpty()) {
+                comparar(mudancas, "Forma de pagamento", pedido.getFormaPagamento(), textoLivre);
+            }
+            pedido.setFormaPagamento(textoLivre);
+        }
+        if (pedido.getTaxaPagamentos().compareTo(pagamentos.taxaTotal()) != 0) {
+            mudancas.add("Taxas de pagamento: " + moeda(pedido.getTaxaPagamentos()) + " → " + moeda(pagamentos.taxaTotal()));
+        }
+        pedido.setTaxaPagamentos(pagamentos.taxaTotal());
+        pedido.setTotal(base.add(pagamentos.taxaTotal()));
+
+        // prazo de preparo acompanha os itens
+        int tempoAntes = pedido.getTempoPreparoMinutos() == null ? -1 : pedido.getTempoPreparoMinutos();
+        int tempoDepois = pedidoService.tempoDePreparo(pedido.getItens().stream().map(I_ItemPedido::getProduto).toList(),
+                lojaService.buscarPorTenant(tenant));
+        if (tempoAntes >= 0 && tempoAntes != tempoDepois) {
+            mudancas.add("Prazo de preparo: " + tempoAntes + " min → " + tempoDepois + " min");
+        }
+        pedido.setTempoPreparoMinutos(tempoDepois);
 
         if (mudancas.isEmpty()) {
             throw new RegraNegocioException("Nenhuma alteração para salvar");
@@ -171,6 +207,7 @@ public class PedidoEdicaoService {
         pedido.setEditado(true);
         pedido.setDataEdicao(LocalDateTime.now().withNano(0));
         T_Pedido salvo = pedidoRepository.save(pedido);
+        pagamentoService.persistir(salvo.getId(), tenant, pagamentos);
 
         T_PedidoAlteracao alteracao = new T_PedidoAlteracao();
         alteracao.setTenant(tenant);

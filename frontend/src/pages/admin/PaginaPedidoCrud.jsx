@@ -108,7 +108,17 @@ export default function PaginaPedidoCrud() {
           <Dado rotulo="Atualizado em">{pedido.dataAtualizacao && formatarDataHora(pedido.dataAtualizacao)}</Dado>
           <Dado rotulo="Cliente">{pedido.nomeCliente}</Dado>
           <Dado rotulo="Telefone">{formatarTelefone(pedido.telefoneCliente)}</Dado>
-          <Dado rotulo="Forma de pagamento">{pedido.formaPagamento}</Dado>
+          <Dado rotulo="Forma de pagamento">
+            {pedido.pagamentos?.length > 0
+              ? pedido.pagamentos.map((pg, i) => (
+                <span key={i} className="pedido__pagamento">
+                  {pg.forma}: {formatarMoeda(pg.valor)}
+                  {Number(pg.taxa) > 0 && ` (+ taxa ${formatarMoeda(pg.taxa)})`}
+                  {pg.valorRecebido != null && ` · recebido ${formatarMoeda(pg.valorRecebido)}, troco ${formatarMoeda(pg.troco)}`}
+                </span>
+              ))
+              : pedido.formaPagamento}
+          </Dado>
           <Dado rotulo="Tipo">{rotuloTipoEntrega(pedido.tipoEntrega)}</Dado>
           {pedido.tipoEntrega === 'ENTREGA' && (
             <Dado rotulo="Endereço de entrega">
@@ -137,6 +147,7 @@ export default function PaginaPedidoCrud() {
           <span>Subtotal: <strong>{formatarMoeda(pedido.subtotal)}</strong></span>
           <span>Taxa de entrega: <strong>{formatarMoeda(pedido.taxaEntrega)}</strong></span>
           {Number(pedido.desconto) > 0 && <span>Desconto: <strong>- {formatarMoeda(pedido.desconto)}</strong></span>}
+          {Number(pedido.taxaPagamentos) > 0 && <span>Taxas de pagamento: <strong>{formatarMoeda(pedido.taxaPagamentos)}</strong></span>}
           <span className="pedido__total">Total: <strong>{formatarMoeda(pedido.total)}</strong></span>
         </div>
       </SecaoCrud>

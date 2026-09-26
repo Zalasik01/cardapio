@@ -8,10 +8,11 @@ public record CategoriaCadastroResponse(
         String nome,
         Integer ordemExibicao,
         boolean ativo,
-        long quantidadeProdutos
+        long quantidadeProdutos,
+        Integer tempoPreparoMinutos
 ) {
 
     public static CategoriaCadastroResponse of(T_Categoria c, long quantidadeProdutos) {
-        return new CategoriaCadastroResponse(c.getId(), c.getNome(), c.getOrdemExibicao(), c.isAtivo(), quantidadeProdutos);
+        return new CategoriaCadastroResponse(c.getId(), c.getNome(), c.getOrdemExibicao(), c.isAtivo(), quantidadeProdutos, c.getTempoPreparoMinutos());
     }
 }

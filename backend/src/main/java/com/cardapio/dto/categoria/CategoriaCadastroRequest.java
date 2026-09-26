@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 public record CategoriaCadastroRequest(
         @NotBlank @Size(max = 255) String nome,
         @PositiveOrZero Integer ordemExibicao,
+        @jakarta.validation.constraints.Positive Integer tempoPreparoMinutos,
         Boolean ativo
 ) {
 }

@@ -26,6 +26,7 @@ public record PedidoRequest(
         String observacoes,
         String descontoTipo,
         java.math.BigDecimal descontoValor,
-        java.math.BigDecimal taxaEntrega
+        java.math.BigDecimal taxaEntrega,
+        java.util.List<PagamentoRequest> pagamentos
 ) {
 }

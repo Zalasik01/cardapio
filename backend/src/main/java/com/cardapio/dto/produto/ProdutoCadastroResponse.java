@@ -25,7 +25,8 @@ public record ProdutoCadastroResponse(
         BigDecimal custoEstimado,
         BigDecimal custoUnitario,
         Long fornecedorId,
-        String fornecedorNome
+        String fornecedorNome,
+        Integer tempoPreparoMinutos
 ) {
 
     public record ItemComposicao(

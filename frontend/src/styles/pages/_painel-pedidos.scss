@@ -199,3 +199,21 @@
 }
 
 .painel-coluna { border-top-color: var(--cor-coluna, #bdbdbd); }
+
+// prazo de preparo no cartão (verde: folga · amarelo: apertando · vermelho: atrasado)
+.painel-cartao__prazo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  align-self: flex-start;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  &--ok { background: #dcfce7; color: #166534; }
+  &--alerta { background: #fef3c7; color: #92400e; }
+  &--atrasado { background: #fee2e2; color: #991b1b; }
+}
+
+.pedido__pagamento { display: block; }

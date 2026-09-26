@@ -77,7 +77,7 @@ export default function SinoNotificacoes() {
             {notificacoes.map((n) => (
               <li key={n.id}>
                 <button type="button" className={`sino__item${n.id > lidasAte ? ' sino__item--nova' : ''}`} onClick={() => abrir(n)}>
-                  <i className={{ PEDIDO_AGUARDANDO: 'fa-solid fa-hourglass-half', PEDIDO_EDITADO: 'fa-solid fa-pen' }[n.tipo] ?? 'fa-solid fa-receipt'} aria-hidden="true" />
+                  <i className={{ PEDIDO_AGUARDANDO: 'fa-solid fa-hourglass-half', PEDIDO_EDITADO: 'fa-solid fa-pen', PEDIDO_ATRASADO: 'fa-solid fa-triangle-exclamation' }[n.tipo] ?? 'fa-solid fa-receipt'} aria-hidden="true" />
                   <span className="sino__texto">
                     <strong>{n.titulo}</strong>
                     {n.mensagem && <small>{n.mensagem}</small>}

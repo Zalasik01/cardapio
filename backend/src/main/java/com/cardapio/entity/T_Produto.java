@@ -79,4 +79,7 @@ public class T_Produto extends TenantAbstract {
 
     @Builder.Default
     private Integer ordemExibicao = 0;
+
+    /** Tempo de preparo em minutos (vazio = usa o da categoria ou o padrão da loja). */
+    private Integer tempoPreparoMinutos;
 }

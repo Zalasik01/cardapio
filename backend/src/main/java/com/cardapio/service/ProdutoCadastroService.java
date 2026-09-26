@@ -194,6 +194,7 @@ public class ProdutoCadastroService {
             produto.setCategoria(categoria);
             produto.setPreco(r.preco());
             produto.setImagemUrl(vazioParaNulo(r.imagemUrl()));
+            produto.setTempoPreparoMinutos(r.tempoPreparoMinutos());
             produto.setDisponivel(r.disponivel() == null || r.disponivel());
             produto.setCustoUnitario(BigDecimal.ZERO);
             produto.setFornecedor(null);
@@ -201,6 +202,7 @@ public class ProdutoCadastroService {
             produto.setCategoria(null);
             produto.setPreco(BigDecimal.ZERO);
             produto.setImagemUrl(null);
+            produto.setTempoPreparoMinutos(null);
             produto.setDisponivel(true);
             produto.setCustoUnitario(r.custoUnitario() == null ? BigDecimal.ZERO : r.custoUnitario());
             produto.setFornecedor(r.fornecedorId() == null ? null : buscarFornecedor(tenant, r.fornecedorId()));
@@ -257,7 +259,8 @@ public class ProdutoCadastroService {
                 p.getCategoria() == null ? null : p.getCategoria().getId(),
                 p.getCategoria() == null ? null : p.getCategoria().getNome(),
                 p.getPreco(), p.getImagemUrl(), p.isDisponivel(), composicao, custoEstimado, p.getCustoUnitario(),
-                p.getFornecedor() == null ? null : p.getFornecedor().getId(), nomePessoa(p.getFornecedor()));
+                p.getFornecedor() == null ? null : p.getFornecedor().getId(), nomePessoa(p.getFornecedor()),
+                p.getTempoPreparoMinutos());
     }
 
     private String nomePessoa(T_Pessoa pessoa) {

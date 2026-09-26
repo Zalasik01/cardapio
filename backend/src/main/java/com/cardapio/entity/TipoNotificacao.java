@@ -7,5 +7,7 @@ public enum TipoNotificacao {
     /** Pedido pendente há tempo demais sem ser confirmado. */
     PEDIDO_AGUARDANDO,
     /** Um pedido foi editado (a cozinha precisa saber). */
-    PEDIDO_EDITADO
+    PEDIDO_EDITADO,
+    /** O prazo de preparo do pedido passou e ele ainda não saiu da cozinha. */
+    PEDIDO_ATRASADO
 }

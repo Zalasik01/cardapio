@@ -25,6 +25,7 @@ public record LojaRequest(
         @PositiveOrZero BigDecimal taxaEntregaBase,
         @PositiveOrZero BigDecimal taxaEntregaPorKm,
         Double distanciaMaximaEntregaKm,
-        @PositiveOrZero BigDecimal valorMinimoPedido
+        @PositiveOrZero BigDecimal valorMinimoPedido,
+        @jakarta.validation.constraints.Positive Integer tempoPreparoPadraoMinutos
 ) {
 }

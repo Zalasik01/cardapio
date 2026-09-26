@@ -3,7 +3,6 @@ import { Button } from 'primereact/button'
 import { AutoComplete } from 'primereact/autocomplete'
 import { Dropdown } from 'primereact/dropdown'
 import { InputNumber } from 'primereact/inputnumber'
-import { MultiSelect } from 'primereact/multiselect'
 import { InputMask } from 'primereact/inputmask'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -49,12 +48,40 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
   const tipoDesconto = rascunho.descontoTipo ?? 'PERCENTUAL' // rascunhos antigos não têm o campo
   const descontoValor = Number(rascunho.descontoValor) || 0
   const desconto = Math.min(subtotal, tipoDesconto === 'PERCENTUAL' ? (subtotal * descontoValor) / 100 : descontoValor)
-  const formasSelecionadas = rascunho.formasPagamento ?? []
-  // só aparecem as formas que valem para o tipo do pedido e para o valor dele
-  const formasDisponiveisBase = formasPagamento.filter((f) => (entrega ? f.aceitaEntrega : f.aceitaRetirada)
-    && (f.valorMinimo === null || subtotal >= Number(f.valorMinimo)))
-  // formas já gravadas no pedido que não estão mais na lista continuam aparecendo (edição de pedido antigo)
-  const opcoesFormas = [...formasDisponiveisBase, ...formasSelecionadas.filter((nome) => !formasDisponiveisBase.some((f) => f.nome === nome)).map((nome) => ({ nome }))]
+  // pagamento dividido: cada forma paga uma parte do pedido; a soma tem de fechar com o valor a pagar
+  const pagamentos = rascunho.pagamentos ?? []
+  const base = Math.max(0, Math.round((subtotal - desconto + taxa) * 100) / 100)
+  const taxaDe = (pg) => {
+    const forma = formasPagamento.find((f) => f.id === pg.formaId)
+    return forma ? (pg.valor * Number(forma.taxaPercentual)) / 100 + Number(forma.taxaFixa) : 0
+  }
+  const taxaPagamentos = Math.round(pagamentos.reduce((soma, pg) => soma + taxaDe(pg), 0) * 100) / 100
+  const somaPagamentos = pagamentos.reduce((soma, pg) => soma + (pg.valor || 0), 0)
+  const diferenca = Math.round((base - somaPagamentos) * 100) / 100
+  // só aparecem as formas que valem para o tipo do pedido e para o valor dele, e que ainda não foram usadas
+  const formasDisponiveis = formasPagamento.filter((f) => (entrega ? f.aceitaEntrega : f.aceitaRetirada)
+    && (f.valorMinimo === null || base >= Number(f.valorMinimo)) && !pagamentos.some((pg) => pg.formaId === f.id))
+  const totalFinal = base + taxaPagamentos
+
+  // com uma forma só, ela paga o pedido todo (acompanha mudanças nos itens, desconto e entrega)
+  useEffect(() => {
+    if (pagamentos.length === 1 && pagamentos[0].valor !== base) {
+      definir('pagamentos')([{ ...pagamentos[0], valor: base }])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base, pagamentos.length])
+
+  function adicionarForma(formaId) {
+    const forma = formasPagamento.find((f) => f.id === formaId)
+    if (!forma) return
+    const valor = pagamentos.length === 0 ? base : Math.max(0, diferenca)
+    definir('pagamentos')([...pagamentos, { formaId, nome: forma.nome, tipo: forma.tipo, valor, valorRecebido: null }])
+  }
+
+  const alterarPagamento = (formaId, campos) =>
+    definir('pagamentos')(pagamentos.map((pg) => (pg.formaId === formaId ? { ...pg, ...campos } : pg)))
+
+  const removerPagamento = (formaId) => definir('pagamentos')(pagamentos.filter((pg) => pg.formaId !== formaId))
 
   // a taxa depende do bairro: consulta quando o bairro muda (com uma pausa enquanto digita)
   useEffect(() => {
@@ -143,6 +170,10 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
       dispatchMsgWarn('Informe a rua e o bairro da entrega.')
       return
     }
+    if (pagamentos.length > 0 && Math.abs(diferenca) >= 0.01) {
+      dispatchMsgWarn(`A soma dos pagamentos deve ser igual ao valor do pedido (${formatarMoeda(base)}).`)
+      return
+    }
     setEnviando(true)
     try {
       const dados = {
@@ -154,7 +185,8 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
         enderecoComplemento: entrega ? rascunho.enderecoComplemento.trim() : null,
         enderecoBairro: entrega ? rascunho.enderecoBairro.trim() : null,
         enderecoCidade: entrega ? rascunho.enderecoCidade.trim() : null,
-        formaPagamento: formasSelecionadas.length ? formasSelecionadas.join(', ') : null,
+        formaPagamento: pagamentos.length ? null : (rascunho.formaLegada ?? null),
+        pagamentos: pagamentos.map((pg) => ({ formaId: pg.formaId, valor: pg.valor, valorRecebido: pg.valorRecebido })),
         taxaEntrega: entrega ? taxa : null,
         descontoTipo: desconto > 0 ? tipoDesconto : null,
         descontoValor: desconto > 0 ? descontoValor : null,
@@ -268,17 +300,45 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
                 : <InputNumber value={rascunho.descontoValor} min={0} mode="currency" currency="BRL" locale="pt-BR"
                                placeholder="R$ 0,00" onValueChange={(e) => definir('descontoValor')(e.value)} />}
             </div>
-            <MultiSelect value={formasSelecionadas} options={opcoesFormas} optionLabel="nome" optionValue="nome"
-                         placeholder="Formas de pagamento" display="chip" maxSelectedLabels={3}
-                         emptyMessage="Nenhuma forma de pagamento cadastrada"
-                         onChange={(e) => definir('formasPagamento')(e.value)} />
+            <div className="dock-janela__pagamentos">
+              <Dropdown value={null} options={formasDisponiveis} optionLabel="nome" optionValue="id"
+                        placeholder="Adicionar forma de pagamento" emptyMessage="Nenhuma forma disponível"
+                        onChange={(e) => adicionarForma(e.value)} />
+              {pagamentos.map((pg) => (
+                <div key={pg.formaId} className="dock-janela__pagamento">
+                  <span className="dock-janela__pagamento-nome">{pg.nome}</span>
+                  <InputNumber value={pg.valor} min={0} mode="currency" currency="BRL" locale="pt-BR" aria-label={`Valor em ${pg.nome}`}
+                               onValueChange={(e) => (e.value ?? 0) !== pg.valor && alterarPagamento(pg.formaId, { valor: e.value ?? 0 })} />
+                  <button type="button" className="dock-janela__remover" aria-label={`Remover ${pg.nome}`} onClick={() => removerPagamento(pg.formaId)}>
+                    <i className="fa-solid fa-xmark" aria-hidden="true" />
+                  </button>
+                  {pg.tipo === 'DINHEIRO' && (
+                    <>
+                      <InputNumber className="dock-janela__larga" value={pg.valorRecebido} min={0} mode="currency" currency="BRL" locale="pt-BR"
+                                   placeholder="Valor recebido (para o troco)"
+                                   onValueChange={(e) => alterarPagamento(pg.formaId, { valorRecebido: e.value ?? null })} />
+                      {pg.valorRecebido != null && pg.valorRecebido >= pg.valor + taxaDe(pg) && (
+                        <small className="dock-janela__frete">Troco: {formatarMoeda(pg.valorRecebido - pg.valor - taxaDe(pg))}</small>
+                      )}
+                    </>
+                  )}
+                  {taxaDe(pg) > 0 && <small className="dock-janela__preco">Taxa desta forma: {formatarMoeda(taxaDe(pg))}</small>}
+                </div>
+              ))}
+              {pagamentos.length > 0 && Math.abs(diferenca) >= 0.01 && (
+                <small className="dock-janela__frete dock-janela__frete--erro">
+                  {diferenca > 0 ? `Falta ${formatarMoeda(diferenca)} para fechar o valor do pedido` : `Passou ${formatarMoeda(-diferenca)} do valor do pedido`}
+                </small>
+              )}
+            </div>
             <InputTextarea placeholder="Observações" rows={2} autoResize value={rascunho.observacoes}
                            onChange={(e) => definir('observacoes')(e.target.value)} />
           </div>
           <footer className="dock-janela__rodape">
             <span className="dock-janela__total">
               {desconto > 0 && <small>Desconto - {formatarMoeda(desconto)}</small>}
-              Total <strong>{formatarMoeda(subtotal - desconto + taxa)}</strong>
+              {taxaPagamentos > 0 && <small>Taxas de pagamento + {formatarMoeda(taxaPagamentos)}</small>}
+              Total <strong>{formatarMoeda(totalFinal)}</strong>
             </span>
             <Button type="button" size="small" label={enviando ? 'Salvando...' : (janela.pedidoId ? 'Salvar alterações' : 'Criar pedido')} icon="pi pi-check"
                     disabled={enviando} onClick={enviar} />

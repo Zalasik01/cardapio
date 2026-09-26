@@ -101,6 +101,22 @@ public class NotificacaoService {
         }
     }
 
+    /** A cada minuto: pedido ainda na cozinha que passou do prazo de preparo gera um aviso de atraso (uma vez só). */
+    @Scheduled(fixedDelay = 60_000)
+    @Transactional
+    public void avisarPedidosAtrasados() {
+        LocalDateTime agora = LocalDateTime.now();
+        var naCozinha = List.of(StatusPedido.PENDENTE, StatusPedido.CONFIRMADO, StatusPedido.EM_PREPARO);
+        for (T_Pedido pedido : pedidoRepository.buscarComPrazo(naCozinha)) {
+            LocalDateTime prazo = pedido.getDataCriacao().plusMinutes(pedido.getTempoPreparoMinutos());
+            if (agora.isAfter(prazo) && !repository.existsByIdPedidoAndTipo(pedido.getId(), TipoNotificacao.PEDIDO_ATRASADO)) {
+                criar(pedido, TipoNotificacao.PEDIDO_ATRASADO, "Pedido " + pedido.getId() + " atrasado",
+                        pedido.getNomeCliente() + " · prazo de " + pedido.getTempoPreparoMinutos() + " min passou há "
+                                + Duration.between(prazo, agora).toMinutes() + " min");
+            }
+        }
+    }
+
     private String moeda(T_Pedido pedido) {
         return NumberFormat.getCurrencyInstance(new Locale("pt", "BR")).format(pedido.getTotal());
     }

@@ -23,6 +23,7 @@ public record PedidoEdicaoRequest(
         String observacoes,
         String descontoTipo,
         BigDecimal descontoValor,
-        BigDecimal taxaEntrega
+        BigDecimal taxaEntrega,
+        List<PagamentoRequest> pagamentos
 ) {
 }

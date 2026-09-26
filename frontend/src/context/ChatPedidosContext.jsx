@@ -8,7 +8,7 @@ const chave = (tenant) => `pedidosEmAndamento:${tenant}`
 
 export const RASCUNHO_VAZIO = {
   nomeCliente: '', telefoneCliente: '', tipoEntrega: 'RETIRADA', cep: '', enderecoRua: '', enderecoNumero: '',
-  enderecoComplemento: '', enderecoBairro: '', enderecoCidade: '', taxaEntrega: null, formasPagamento: [], descontoTipo: 'PERCENTUAL', descontoValor: null, observacoes: '', itens: [],
+  enderecoComplemento: '', enderecoBairro: '', enderecoCidade: '', taxaEntrega: null, pagamentos: [], formaLegada: null, descontoTipo: 'PERCENTUAL', descontoValor: null, observacoes: '', itens: [],
 }
 
 function lerJanelas(tenant) {

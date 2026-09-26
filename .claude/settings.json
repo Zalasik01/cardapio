@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__meta_social_technologies__devtools_app_list"
+    ]
+  }
+}

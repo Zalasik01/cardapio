@@ -223,3 +223,35 @@ $largura-janela: 27rem;
 body:has(.crud__rodape) .dock-pedidos {
   bottom: 4.6rem;
 }
+
+.dock-janela__pagamentos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dock-janela__pagamento {
+  display: grid;
+  grid-template-columns: 1fr 8rem auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 3px;
+
+  .dock-janela__larga { grid-column: 1 / -1; }
+  small { grid-column: 1 / -1; }
+}
+
+.dock-janela__pagamento-nome { font-weight: 700; }
+
+.dock-janela__remover {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cor-erro);
+  cursor: pointer;
+  outline: none;
+}

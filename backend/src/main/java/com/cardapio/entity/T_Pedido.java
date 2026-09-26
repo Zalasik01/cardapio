@@ -87,6 +87,14 @@ public class T_Pedido extends TenantAbstract {
     @Builder.Default
     private BigDecimal taxaCancelamento = BigDecimal.ZERO;
 
+    /** Soma das taxas das formas de pagamento (já dentro do total). */
+    @Column(nullable = false)
+    @Builder.Default
+    private BigDecimal taxaPagamentos = BigDecimal.ZERO;
+
+    /** Prazo de preparo em minutos (o maior entre os itens), contado a partir da criação. Nulo em pedidos antigos. */
+    private Integer tempoPreparoMinutos;
+
     /** Situação atual no fluxo da loja (a categoria dela é o "status"). */
     private Long idSituacao;
 

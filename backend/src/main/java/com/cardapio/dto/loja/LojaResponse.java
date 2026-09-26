@@ -27,6 +27,7 @@ public record LojaResponse(
         BigDecimal taxaEntregaPorKm,
         Double distanciaMaximaEntregaKm,
         BigDecimal valorMinimoPedido,
+        Integer tempoPreparoPadraoMinutos,
         boolean ativo
 ) {
     public static LojaResponse of(S_Loja l) {
@@ -36,6 +37,6 @@ public record LojaResponse(
                 l.getEnderecoRua(), l.getEnderecoNumero(), l.getEnderecoBairro(), l.getEnderecoCidade(),
                 l.getEnderecoEstado(), l.getEnderecoCep(), l.getLatitude(), l.getLongitude(),
                 l.getTaxaEntregaBase(), l.getTaxaEntregaPorKm(), l.getDistanciaMaximaEntregaKm(),
-                l.getValorMinimoPedido(), l.isAtivo());
+                l.getValorMinimoPedido(), l.getTempoPreparoPadraoMinutos(), l.isAtivo());
     }
 }

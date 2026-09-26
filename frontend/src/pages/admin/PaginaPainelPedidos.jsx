@@ -21,6 +21,17 @@ import { ICONE_CATEGORIA, rotuloTipoEntrega } from '../../utils/pedido'
 const COLUNAS_ESQUELETO = [0, 1, 2, 3, 4]
 const ITENS_NO_CARTAO = 3
 
+const NA_COZINHA = ['PENDENTE', 'CONFIRMADO', 'EM_PREPARO']
+
+/** Prazo de preparo: minutos que restam (ou de atraso) enquanto o pedido ainda está na cozinha; senão null. */
+function prazoDoPedido(pedido, agora) {
+  if (!pedido.tempoPreparoMinutos || !NA_COZINHA.includes(pedido.situacao?.categoria)) return null
+  const restante = Math.ceil((new Date(pedido.dataCriacao).getTime() + pedido.tempoPreparoMinutos * 60000 - agora) / 60000)
+  if (restante < 0) return { rotulo: `Atrasado ${-restante} min`, classe: 'atrasado' }
+  const apertado = restante <= Math.max(3, pedido.tempoPreparoMinutos * 0.2)
+  return { rotulo: `${restante} min para o prazo`, classe: apertado ? 'alerta' : 'ok' }
+}
+
 /** "há 5 min" a partir da data de criação. */
 function tempoDecorrido(iso, agora) {
   const minutos = Math.max(0, Math.floor((agora - new Date(iso).getTime()) / 60000))
@@ -34,6 +45,7 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
   const avancos = pedido.proximasSituacoes.filter((s) => s.categoria !== 'CANCELADO')
   const podeSerCancelado = pedido.proximasSituacoes.some((s) => s.categoria === 'CANCELADO')
   const restantes = pedido.itens.length - ITENS_NO_CARTAO
+  const prazo = prazoDoPedido(pedido, agora)
 
   return (
     <article ref={refNo} {...ligacoes}
@@ -51,6 +63,11 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
         <span className="painel-cartao__tempo">{tempoDecorrido(pedido.dataCriacao, agora)}</span>
       </header>
       <strong className="painel-cartao__cliente">{pedido.nomeCliente}</strong>
+      {prazo && (
+        <span className={`painel-cartao__prazo painel-cartao__prazo--${prazo.classe}`}>
+          <i className="fa-regular fa-clock" aria-hidden="true" /> {prazo.rotulo}
+        </span>
+      )}
       <span className="painel-cartao__linha">
         <i className={pedido.tipoEntrega === 'ENTREGA' ? 'fa-solid fa-motorcycle' : 'fa-solid fa-bag-shopping'} aria-hidden="true" />{' '}
         {[rotuloTipoEntrega(pedido.tipoEntrega), pedido.tipoEntrega === 'ENTREGA' && pedido.enderecoBairro].filter(Boolean).join(' · ')}

@@ -59,6 +59,18 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
     @Query("update T_Pedido p set p.idSituacao = :situacao where p.tenant = :tenant and p.status = :categoria")
     void reatribuirPorCategoria(@Param("tenant") UUID tenant, @Param("categoria") StatusPedido categoria, @Param("situacao") Long situacao);
 
+    /** Pedidos ainda na cozinha (nas categorias dadas) com prazo de preparo definido, para o aviso de atraso. */
+    @Query("select p from T_Pedido p where p.deletado = false and p.tempoPreparoMinutos is not null and p.status in :status")
+    List<T_Pedido> buscarComPrazo(@Param("status") Collection<StatusPedido> status);
+
+    /** Pedidos entregues no período que tinham prazo: linhas [total, noPrazo, somaAtrasoMinutos]. */
+    @Query(value = "select count(*), "
+            + "count(*) filter (where data_atualizacao <= data_criacao + tempo_preparo_minutos * interval '1 minute'), "
+            + "coalesce(sum(greatest(0, extract(epoch from (data_atualizacao - (data_criacao + tempo_preparo_minutos * interval '1 minute'))) / 60)), 0) "
+            + "from t_pedido where tenant = :tenant and deletado = false and status = 'ENTREGUE' and tempo_preparo_minutos is not null "
+            + "and data_criacao >= :de and data_criacao < :ate", nativeQuery = true)
+    List<Object[]> resumoDePrazo(@Param("tenant") UUID tenant, @Param("de") LocalDateTime de, @Param("ate") LocalDateTime ate);
+
     /** Soma das quantidades dos itens de cada pedido: linhas [pedidoId, quantidade]. */
     @Query("select i.pedido.id, sum(i.quantidade) from I_ItemPedido i where i.pedido.id in :ids group by i.pedido.id")
     List<Object[]> somarItensPorPedido(@Param("ids") Collection<Long> ids);

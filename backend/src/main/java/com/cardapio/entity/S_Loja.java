@@ -96,4 +96,9 @@ public class S_Loja extends SystemAbstract {
     @Column(nullable = false)
     @Builder.Default
     private BigDecimal valorMinimoPedido = BigDecimal.ZERO;
+
+    /** Tempo de preparo padrão, em minutos, quando o produto e a categoria não definem o seu. */
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer tempoPreparoPadraoMinutos = 30;
 }

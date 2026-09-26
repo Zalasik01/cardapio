@@ -137,6 +137,11 @@ export default function PaginaLoja() {
             <InputNumber inputId="distancia-maxima" value={form.distanciaMaximaEntregaKm} min={0} maxFractionDigits={1}
                          onValueChange={(e) => definir('distanciaMaximaEntregaKm')(e.value)} />
           </Campo>
+          <Campo id="tempo-preparo" rotulo="Tempo de preparo padrão (min)" tamanho={3}
+                 ajuda="Prazo dos pedidos cujos produtos e categorias não definem o seu.">
+            <InputNumber inputId="tempo-preparo" value={form.tempoPreparoPadraoMinutos} min={1} useGrouping={false}
+                         onValueChange={(e) => definir('tempoPreparoPadraoMinutos')(e.value ?? 30)} />
+          </Campo>
           <Campo id="valor-minimo" rotulo="Valor mínimo do pedido" tamanho={3}>
             <InputNumber inputId="valor-minimo" value={form.valorMinimoPedido} min={0} {...moeda}
                          onValueChange={(e) => definir('valorMinimoPedido')(e.value ?? 0)} />

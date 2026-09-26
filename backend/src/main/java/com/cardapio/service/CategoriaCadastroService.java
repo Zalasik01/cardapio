@@ -120,6 +120,7 @@ public class CategoriaCadastroService {
 
     private void preencher(T_Categoria categoria, CategoriaCadastroRequest r) {
         categoria.setNome(r.nome().trim());
+        categoria.setTempoPreparoMinutos(r.tempoPreparoMinutos());
         categoria.setOrdemExibicao(r.ordemExibicao() != null ? r.ordemExibicao() : categoriaRepository.proximaOrdem(categoria.getTenant()));
         if (r.ativo() != null) {
             categoria.setAtivo(r.ativo());

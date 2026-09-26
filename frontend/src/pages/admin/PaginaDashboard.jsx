@@ -9,7 +9,7 @@ import { formatarMoeda } from '../../utils/formatadores'
 import { periodoParaIso } from '../../utils/periodo'
 
 const PERIODOS_PADRAO = { pedidos: { preset: 'hoje' } }
-const ESQUELETO = { cartoes: 4, blocos: 0 }
+const ESQUELETO = { cartoes: 5, blocos: 0 }
 
 /** Conteúdo de um cartão de número (ícone, rótulo, valor e apoio) com esqueleto enquanto carrega. */
 function ConteudoCartao({ rotulo, valor, apoio, icone, carregando }) {
@@ -94,6 +94,17 @@ export default function PaginaDashboard() {
       conteudo: (ctx) => (
         <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Faturamento" icone="fa-solid fa-sack-dollar"
                        valor={(r) => formatarMoeda(r.faturamento)} />
+      ),
+    },
+    {
+      id: 'no-prazo',
+      tamanho: 'cartao',
+      periodo: 'pedidos',
+      dica: `Entre os pedidos entregues no período, quantos foram entregues dentro do prazo de preparo. ${DICA_PERIODO}`,
+      conteudo: (ctx) => (
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="No prazo" icone="fa-solid fa-stopwatch"
+                       valor={(r) => (r.noPrazoPercentual == null ? '—' : `${r.noPrazoPercentual}%`)}
+                       apoio={(r) => (r.noPrazoPercentual == null ? 'Sem pedidos com prazo' : r.atrasoMedioMinutos > 0 ? `Atraso médio: ${r.atrasoMedioMinutos} min` : 'Nenhum atraso')} />
       ),
     },
   ], [])

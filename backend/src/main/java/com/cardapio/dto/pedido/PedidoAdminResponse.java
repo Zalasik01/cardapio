@@ -39,13 +39,21 @@ public record PedidoAdminResponse(
         BigDecimal descontoValor,
         boolean editado,
         LocalDateTime dataEdicao,
-        List<Alteracao> alteracoes
+        List<Alteracao> alteracoes,
+        BigDecimal taxaPagamentos,
+        Integer tempoPreparoMinutos,
+        List<Pagamento> pagamentos
 ) {
 
     public record Item(java.util.UUID produtoGuid, String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes) {
         static Item of(I_ItemPedido i) {
             return new Item(i.getProduto() != null ? i.getProduto().getGuid() : null, i.getNomeProduto(), i.getPrecoUnitario(), i.getQuantidade(), i.getTotalItem(), i.getObservacoes());
         }
+    }
+
+    /** Uma parte do pagamento: a forma, o valor, a taxa e, no dinheiro, o valor recebido e o troco. */
+    public record Pagamento(Long formaId, String forma, com.cardapio.entity.TipoFormaPagamento tipo, BigDecimal valor, BigDecimal taxa,
+                            BigDecimal valorRecebido, BigDecimal troco) {
     }
 
     /** Uma edição do pedido: quando, quem e o que mudou. */
@@ -58,7 +66,7 @@ public record PedidoAdminResponse(
     /** totalPedidosCliente: quantos pedidos (não cancelados) esse telefone já fez na loja, contando este. */
     public static PedidoAdminResponse of(T_Pedido p, FluxoDtos.SituacaoInfo situacao,
                                          List<FluxoDtos.ProximaSituacao> proximas, long totalPedidosCliente,
-                                         List<Alteracao> alteracoes) {
+                                         List<Alteracao> alteracoes, List<Pagamento> pagamentos) {
         return new PedidoAdminResponse(
                 p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), p.getTipoEntrega(), p.getEnderecoRua(),
                 p.getEnderecoNumero(), p.getEnderecoComplemento(), p.getEnderecoBairro(), p.getEnderecoCidade(),
@@ -66,6 +74,6 @@ public record PedidoAdminResponse(
                 p.getFormaPagamento(), p.getObservacoes(), p.getStatus(), situacao, proximas,
                 p.getDataCriacao(), p.getDataAtualizacao(), totalPedidosCliente,
                 p.getMotivoCancelamento(), p.getTaxaCancelamento(), p.getDescontoTipo(), p.getDescontoValor(),
-                p.isEditado(), p.getDataEdicao(), alteracoes);
+                p.isEditado(), p.getDataEdicao(), alteracoes, p.getTaxaPagamentos(), p.getTempoPreparoMinutos(), pagamentos);
     }
 }

@@ -98,8 +98,16 @@ export default function ComprovantePedido({ pedido, via, loja }) {
         <Linha rotulo="Subtotal">{formatarMoeda(pedido.subtotal)}</Linha>
         {Number(pedido.taxaEntrega) > 0 && <Linha rotulo="Taxa de entrega">{formatarMoeda(pedido.taxaEntrega)}</Linha>}
         {Number(pedido.desconto) > 0 && <Linha rotulo="Desconto">- {formatarMoeda(pedido.desconto)}</Linha>}
+        {Number(pedido.taxaPagamentos) > 0 && <Linha rotulo="Taxas de pagamento">{formatarMoeda(pedido.taxaPagamentos)}</Linha>}
         <Linha rotulo="TOTAL" forte>{formatarMoeda(pedido.total)}</Linha>
-        <Linha rotulo="Forma">{pedido.formaPagamento || 'Não informada'}</Linha>
+        {pedido.pagamentos?.length > 0 ? pedido.pagamentos.map((pg, i) => (
+          <div key={i}>
+            <Linha rotulo={pg.forma}>{formatarMoeda(Number(pg.valor) + Number(pg.taxa))}</Linha>
+            {pg.valorRecebido != null && (
+              <div className="comprovante__unit">Recebido {formatarMoeda(pg.valorRecebido)} · Troco {formatarMoeda(pg.troco)}</div>
+            )}
+          </div>
+        )) : <Linha rotulo="Forma">{pedido.formaPagamento || 'Não informada'}</Linha>}
       </section>
 
       <footer className="comprovante__rodape">

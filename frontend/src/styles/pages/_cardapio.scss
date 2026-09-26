@@ -969,3 +969,235 @@
   font-size: 0.78rem;
   font-weight: 800;
 }
+
+/* ---------- Acompanhamento do pedido (/pedido/:guid) ---------- */
+.loja.pedido { max-width: 640px; padding-bottom: 2rem; }
+
+.pedido-topo {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 1rem;
+  color: #fff;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 3px) 0 0 / 22px 22px,
+    linear-gradient(135deg, #dc2626 0%, #b91c1c 55%, #a16207 100%);
+
+  img, .pedido-topo__logo {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+  }
+
+  .pedido-topo__logo { display: grid; place-items: center; background: rgba(255, 255, 255, 0.2); font-size: 1.3rem; font-weight: 800; }
+  > div { flex: 1; min-width: 0; display: grid; strong { font-size: 1.05rem; } small { opacity: 0.9; } }
+}
+
+.pedido-topo--esqueleto { height: 80px; }
+
+.pedido-topo__voltar {
+  flex: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover { background: rgba(255, 255, 255, 0.32); color: #fff; }
+}
+
+.pedido-corpo { display: grid; gap: 0.85rem; padding: 0 1rem; margin-top: -0.75rem; }
+
+.pedido-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  padding: 1.1rem;
+  background: var(--cor-superficie);
+  border-radius: 20px;
+  box-shadow: var(--sombra-elevada);
+  border-top: 4px solid var(--cor-selo);
+
+  h1 { margin: 0; font-size: 1.6rem; font-weight: 800; line-height: 1.15; color: var(--cor-texto); }
+  small { color: var(--cor-texto-suave); }
+  p { margin: 0.2rem 0 0; color: var(--cor-texto-suave); font-size: 0.9rem; }
+}
+
+.pedido-hero__icone {
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cor-selo) 16%, white);
+  color: var(--cor-selo);
+  font-size: 1.5rem;
+}
+
+.pedido-hero__previsao {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  background: var(--cor-fundo);
+  font-size: 0.9rem;
+
+  i { color: var(--cor-destaque-quente); }
+}
+
+.pedido-cartao {
+  padding: 1.1rem;
+  background: var(--cor-superficie);
+  border-radius: 18px;
+  box-shadow: var(--sombra-cartao);
+
+  h2 { margin: 0 0 0.75rem; font-size: 1rem; font-weight: 800; }
+}
+
+.pedido-cartao--esqueleto { height: 140px; animation: loja-pulso-fundo 1.4s infinite ease-in-out; }
+
+@keyframes loja-pulso-fundo { 50% { opacity: 0.55; } }
+
+/* linha do tempo */
+.pedido-etapas {
+  position: relative;
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    position: relative;
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+    min-height: 2.6rem;
+    color: var(--cor-texto-suave);
+    font-size: 0.95rem;
+  }
+
+  // linha ligando uma bolinha à próxima
+  li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 0.7rem;
+    top: 1.85rem;
+    width: 2px;
+    height: calc(100% - 1.1rem);
+    background: var(--cor-borda);
+  }
+
+  li.feita::after { background: var(--cor-sucesso); }
+  li.feita, li.atual { color: var(--cor-texto); }
+  li.atual { font-weight: 800; }
+}
+
+.pedido-etapas__marca {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  color: #fff;
+  font-size: 0.65rem;
+  z-index: 1;
+}
+
+.pedido-etapas .feita .pedido-etapas__marca { border-color: var(--cor-sucesso); background: var(--cor-sucesso); }
+
+.pedido-etapas .atual .pedido-etapas__marca {
+  border-color: var(--cor-primaria);
+  background: var(--cor-primaria);
+  box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5);
+  animation: loja-pulso-vermelho 1.8s infinite;
+
+  &::after { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #fff; }
+}
+
+@keyframes loja-pulso-vermelho {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45); }
+  70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* entregador e mapa */
+.pedido-entregador {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0 0 0.75rem;
+
+  > span:first-child { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #f3e8ff; color: #7c3aed; }
+  > span:last-child { display: grid; small { color: var(--cor-texto-suave); } }
+}
+
+.pedido-mapa {
+  display: grid;
+  gap: 0.4rem;
+
+  iframe { width: 100%; height: 220px; border: 0; border-radius: 14px; }
+  small { color: var(--cor-texto-suave); a { color: var(--cor-primaria); font-weight: 700; } }
+}
+
+/* resumo */
+.pedido-itens {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li { display: flex; gap: 1rem; justify-content: space-between; font-size: 0.95rem; }
+  li span:last-child { color: var(--cor-texto-suave); }
+}
+
+.pedido-totais {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--cor-borda);
+
+  div { display: flex; justify-content: space-between; }
+  dt, dd { margin: 0; }
+}
+
+.pedido-totais__total { padding-top: 0.4rem; font-size: 1.15rem; font-weight: 800; }
+
+.pedido-destino {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.85rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: var(--cor-fundo);
+  font-size: 0.875rem;
+
+  i { color: var(--cor-destaque-quente); }
+}
+
+.pedido-ajuda {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+
+  > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+
+// o fundo creme vale para a janela toda, também ao lado da coluna central no computador
+body:has(.loja) { background: #fbf7f4; }

@@ -4,6 +4,7 @@ import { listarPedidosCliente } from '../../api/clienteApi'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { useCliente } from '../../context/ClienteContext'
 import { formatarMoeda } from '../../utils/formatadores'
+import { mascaraTelefone } from '../../utils/telefone'
 
 const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
@@ -56,7 +57,7 @@ export default function PaginaMeusPedidos() {
       ) : (
         <>
           <p className="loja-conta">
-            <span><i className="fa-solid fa-circle-user" aria-hidden="true" /> {cliente.nome || 'Cliente'} · {cliente.telefone}</span>
+            <span><i className="fa-solid fa-circle-user" aria-hidden="true" /> {cliente.nome || 'Cliente'} · {mascaraTelefone(cliente.telefone)}</span>
             <button type="button" className="loja-link" onClick={sair}>Sair</button>
           </p>
           {aviso && <p className="loja-aviso" role="status"><i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /><span>{aviso}</span></p>}

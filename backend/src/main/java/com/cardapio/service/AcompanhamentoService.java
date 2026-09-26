@@ -56,12 +56,12 @@ public class AcompanhamentoService {
                 ? String.join(" - ", java.util.stream.Stream.of(pedido.getEnderecoBairro(), pedido.getEnderecoCidade())
                         .filter(x -> x != null && !x.isBlank()).toList())
                 : null;
-        return new AcompanhamentoResponse(pedido.getId(), loja.getNome(), loja.getLogoUrl(), loja.getTelefone(), pedido.getTipoEntrega(),
+        return new AcompanhamentoResponse(pedido.getId(), loja.getNome(), loja.getSlug(), loja.getLogoUrl(), loja.getTelefone(), pedido.getTipoEntrega(),
                 primeiroNome(pedido.getNomeCliente()), atual != null ? atual.getNome() : pedido.getStatus().name(),
                 atual != null ? atual.getCor() : "#6b7280", pedido.getStatus(), cancelado, concluido, etapas, pedido.getDataCriacao(),
                 pedido.getTempoPreparoMinutos() == null ? null : pedido.getDataCriacao().plusMinutes(pedido.getTempoPreparoMinutos()),
-                pedido.getItens().stream().map(i -> new Item(i.getNomeProduto(), i.getQuantidade())).toList(),
-                pedido.getTotal(), destino, entregador);
+                pedido.getItens().stream().map(i -> new Item(i.getNomeProduto(), i.getQuantidade(), i.getTotalItem())).toList(),
+                pedido.getSubtotal(), pedido.getTaxaEntrega(), pedido.getTotal(), destino, entregador);
     }
 
     /** Abre a conexão em tempo real do cliente para este pedido. */

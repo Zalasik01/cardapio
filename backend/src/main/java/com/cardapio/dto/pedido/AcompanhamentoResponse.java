@@ -10,6 +10,7 @@ import java.util.List;
 public record AcompanhamentoResponse(
         Long numero,
         String loja,
+        String slug,
         String logoUrl,
         String lojaTelefone,
         TipoEntrega tipoEntrega,
@@ -23,6 +24,8 @@ public record AcompanhamentoResponse(
         LocalDateTime criadoEm,
         LocalDateTime previsaoPreparo,
         List<Item> itens,
+        BigDecimal subtotal,
+        BigDecimal taxaEntrega,
         BigDecimal total,
         String destino,
         Entregador entregador
@@ -32,7 +35,7 @@ public record AcompanhamentoResponse(
     public record Etapa(String nome, String cor, boolean concluida, boolean atual) {
     }
 
-    public record Item(String nome, int quantidade) {
+    public record Item(String nome, int quantidade, BigDecimal total) {
     }
 
     /** Aparece só enquanto o pedido está com o entregador; posição é a última enviada pelo celular dele. */

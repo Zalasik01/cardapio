@@ -255,3 +255,33 @@
   display: block;
   color: var(--cor-texto-suave);
 }
+
+// ---- comparação com a semana passada e gráfico de vendas por hora ----
+.variacao { font-weight: 700; color: var(--cor-texto-suave); }
+.variacao--sobe { color: #15803d; }
+.variacao--desce { color: #b91c1c; }
+
+.vendas-hora__resumo { margin: 0 0 0.75rem; color: var(--cor-texto-suave); font-size: 0.9rem; }
+
+.vendas-hora__barras {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 3px;
+  align-items: end;
+  height: 9rem;
+}
+
+.vendas-hora__coluna {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+
+  span { display: block; width: 100%; border-radius: 4px 4px 0 0; background: #93c5fd; transition: height 0.4s ease; }
+  small { position: absolute; bottom: -1.2rem; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: var(--cor-texto-suave); }
+  &:hover span { background: #2563eb; }
+}
+
+.vendas-hora__coluna--pico span { background: #2563eb; }
+.vendas-hora__barras { margin-bottom: 1.4rem; }

@@ -60,3 +60,7 @@ export function obterResumoPedidos(tenant, inicio, fim) {
   promessa.catch(() => cache.delete(chave))
   return promessa
 }
+
+/** Vendas por hora do dia no período: [{ hora: 0..23, pedidos, valor }] (sem os cancelados). */
+export const obterVendasPorHora = (tenant, inicio, fim) =>
+  http.get(`${base(tenant)}/vendas-por-hora`, { params: { inicio, fim } }).then((res) => res.data)

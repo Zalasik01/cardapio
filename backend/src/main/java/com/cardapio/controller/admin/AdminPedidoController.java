@@ -54,6 +54,15 @@ public class AdminPedidoController {
     }
 
     /** Números do dashboard: pedidos do período, entregues, faturamento e quantos estão em andamento. */
+    /** Vendas por hora do dia no período (gráfico do dashboard). */
+    @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'DASHBOARD_LEITURA')")
+    @GetMapping("/vendas-por-hora")
+    public java.util.List<PedidoPeriodoResumoResponse.HoraVenda> vendasPorHora(@PathVariable UUID tenant,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate inicio,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fim) {
+        return pedidoService.vendasPorHora(tenant, inicio, fim);
+    }
+
     @PreAuthorize("@perm.tem('PEDIDOS_LEITURA', 'DASHBOARD_LEITURA')")
     @GetMapping("/resumo")
     public PedidoPeriodoResumoResponse resumo(@PathVariable UUID tenant,

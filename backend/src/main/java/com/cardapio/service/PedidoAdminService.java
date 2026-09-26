@@ -210,12 +210,35 @@ public class PedidoAdminService {
         LocalDateTime de = inicio.atStartOfDay();
         LocalDateTime ate = fim.plusDays(1).atStartOfDay();
         Object[] prazo = pedidoRepository.resumoDePrazo(tenant, de, ate).get(0);
+        // comparação: período de até 7 dias é comparado com a semana anterior (mesmos dias da semana); maiores, com o período imediatamente anterior
+        long dias = java.time.temporal.ChronoUnit.DAYS.between(inicio, fim) + 1;
+        long deslocamento = dias <= 7 ? 7 : dias;
+        LocalDateTime deAnterior = de.minusDays(deslocamento);
+        LocalDateTime ateAnterior = ate.minusDays(deslocamento);
         return new PedidoPeriodoResumoResponse(
                 pedidoRepository.contarNoPeriodo(tenant, de, ate),
                 pedidoRepository.contarNoPeriodoPorStatus(tenant, de, ate, StatusPedido.ENTREGUE),
                 pedidoRepository.somarNoPeriodoPorStatus(tenant, de, ate, StatusPedido.ENTREGUE),
                 pedidoRepository.contarPorStatus(tenant, EM_ANDAMENTO),
-                percentualNoPrazo(prazo), atrasoMedio(prazo));
+                percentualNoPrazo(prazo), atrasoMedio(prazo),
+                pedidoRepository.contarNoPeriodo(tenant, deAnterior, ateAnterior),
+                pedidoRepository.contarNoPeriodoPorStatus(tenant, deAnterior, ateAnterior, StatusPedido.ENTREGUE),
+                pedidoRepository.somarNoPeriodoPorStatus(tenant, deAnterior, ateAnterior, StatusPedido.ENTREGUE));
+    }
+
+    /** Vendas por hora do dia no período (as 24 horas, mesmo as sem venda). */
+    @Transactional(readOnly = true)
+    public List<PedidoPeriodoResumoResponse.HoraVenda> vendasPorHora(UUID tenant, LocalDate inicio, LocalDate fim) {
+        PeriodoFiltro.validar(inicio, fim);
+        Map<Integer, Object[]> porHora = new HashMap<>();
+        pedidoRepository.vendasPorHora(tenant, inicio.atStartOfDay(), fim.plusDays(1).atStartOfDay()).forEach(l -> porHora.put(((Number) l[0]).intValue(), l));
+        List<PedidoPeriodoResumoResponse.HoraVenda> horas = new ArrayList<>();
+        for (int h = 0; h < 24; h++) {
+            Object[] l = porHora.get(h);
+            horas.add(new PedidoPeriodoResumoResponse.HoraVenda(h, l == null ? 0 : ((Number) l[1]).longValue(),
+                    l == null ? java.math.BigDecimal.ZERO : new java.math.BigDecimal(String.valueOf(l[2]))));
+        }
+        return horas;
     }
 
     private Integer percentualNoPrazo(Object[] prazo) {

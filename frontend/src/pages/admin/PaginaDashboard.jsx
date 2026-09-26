@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError } from '../../store/dispatchMsg'
 import { obterResumoPedidos } from '../../api/pedidosApi'
 import PainelDashboard from '../../components/dashboard/PainelDashboard'
+import VendasPorHora from '../../components/dashboard/VendasPorHora'
 import { Skeleton } from '../../components/Skeleton'
 import { formatarMoeda } from '../../utils/formatadores'
 import { periodoParaIso } from '../../utils/periodo'
@@ -51,6 +52,16 @@ function CartaoPedidos({ periodo, rotulo, icone, valor, apoio }) {
   )
 }
 
+/** "▲ 12% vs semana passada": variação do período contra o anterior (semana passada nos períodos de até 7 dias). */
+function comparar(atual, anterior) {
+  const a = Number(atual)
+  const b = Number(anterior)
+  if (!b) return a > 0 ? <span className="variacao variacao--sobe">▲ novo (sem base na semana passada)</span> : null
+  const pct = Math.round(((a - b) / b) * 100)
+  if (pct === 0) return <span className="variacao">= igual ao período anterior</span>
+  return <span className={`variacao ${pct > 0 ? 'variacao--sobe' : 'variacao--desce'}`}>{pct > 0 ? '▲' : '▼'} {Math.abs(pct)}% vs. semana passada</span>
+}
+
 const DICA_PERIODO = 'Use o menu "..." para filtrar o período: no máximo 90 dias.'
 
 /** Tela padrão do painel: resumo da loja selecionada (pedidos do período escolhido, hoje por padrão). */
@@ -64,7 +75,8 @@ export default function PaginaDashboard() {
       periodo: 'pedidos',
       dica: `Pedidos criados no período escolhido (hoje por padrão). ${DICA_PERIODO}`,
       conteudo: (ctx) => (
-        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Pedidos" icone="fa-solid fa-receipt" valor={(r) => r.total} />
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Pedidos" icone="fa-solid fa-receipt" valor={(r) => r.total}
+                       apoio={(r) => comparar(r.total, r.totalAnterior)} />
       ),
     },
     {
@@ -83,7 +95,8 @@ export default function PaginaDashboard() {
       periodo: 'pedidos',
       dica: `Pedidos entregues entre os criados no período escolhido. ${DICA_PERIODO}`,
       conteudo: (ctx) => (
-        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Entregues" icone="fa-solid fa-circle-check" valor={(r) => r.entregues} />
+        <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Entregues" icone="fa-solid fa-circle-check" valor={(r) => r.entregues}
+                       apoio={(r) => comparar(r.entregues, r.entreguesAnterior)} />
       ),
     },
     {
@@ -93,7 +106,7 @@ export default function PaginaDashboard() {
       dica: `Soma dos pedidos entregues criados no período escolhido. ${DICA_PERIODO}`,
       conteudo: (ctx) => (
         <CartaoPedidos periodo={ctx.periodo('pedidos')} rotulo="Faturamento" icone="fa-solid fa-sack-dollar"
-                       valor={(r) => formatarMoeda(r.faturamento)} />
+                       valor={(r) => formatarMoeda(r.faturamento)} apoio={(r) => comparar(r.faturamento, r.faturamentoAnterior)} />
       ),
     },
     {
@@ -106,6 +119,14 @@ export default function PaginaDashboard() {
                        valor={(r) => (r.noPrazoPercentual == null ? '—' : `${r.noPrazoPercentual}%`)}
                        apoio={(r) => (r.noPrazoPercentual == null ? 'Sem pedidos com prazo' : r.atrasoMedioMinutos > 0 ? `Atraso médio: ${r.atrasoMedioMinutos} min` : 'Nenhum atraso')} />
       ),
+    },
+    {
+      id: 'vendas-hora',
+      tamanho: 'bloco',
+      titulo: 'Vendas por hora',
+      periodo: 'pedidos',
+      dica: `Quanto foi vendido em cada hora do dia (pedidos não cancelados) no período escolhido. ${DICA_PERIODO}`,
+      conteudo: (ctx) => <VendasPorHora periodo={ctx.periodo('pedidos')} />,
     },
   ], [])
 

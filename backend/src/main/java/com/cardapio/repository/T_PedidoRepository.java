@@ -69,6 +69,12 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
             + "group by i.produto.guid order by sum(i.quantidade) desc")
     List<UUID> maisVendidos(@Param("tenant") UUID tenant, @Param("desde") LocalDateTime desde, org.springframework.data.domain.Pageable limite);
 
+    /** Vendas por hora do dia (hora, pedidos, valor) no período, sem os cancelados. */
+    @Query(value = "select cast(extract(hour from data_criacao) as int), count(*), coalesce(sum(total), 0) from t_pedido "
+            + "where tenant = :tenant and deletado = false and status <> 'CANCELADO' and data_criacao >= :de and data_criacao < :ate "
+            + "group by 1 order by 1", nativeQuery = true)
+    List<Object[]> vendasPorHora(@Param("tenant") UUID tenant, @Param("de") LocalDateTime de, @Param("ate") LocalDateTime ate);
+
     long countByTenantAndDeletadoFalseAndStatusIn(UUID tenant, Collection<StatusPedido> status);
 
     long countByIdClienteContaAndTenantAndDeletadoFalseAndStatusNot(Long idClienteConta, UUID tenant, StatusPedido status);

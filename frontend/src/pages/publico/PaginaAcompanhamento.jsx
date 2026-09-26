@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { obterAcompanhamento } from '../../api/entregadoresApi'
+import { avaliarPedido } from '../../api/avaliacoesApi'
+import Estrelas from '../../components/Estrelas'
 import MapaAcompanhamento from '../../components/MapaAcompanhamento'
 import { formatarMoeda } from '../../utils/formatadores'
 import { ativarPush, pushAtivo, pushSuportado } from '../../utils/push'
@@ -96,14 +98,71 @@ function MapaEntregador({ pedido, aoEstimar }) {
   )
 }
 
+/** Depois de entregue: o cliente dá nota à loja (e à entrega) e vê a resposta da loja, se houver. */
+function CartaoAvaliacao({ guid, pedido, aoAvaliar }) {
+  const [notaLoja, setNotaLoja] = useState(0)
+  const [notaEntrega, setNotaEntrega] = useState(0)
+  const [comentario, setComentario] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState(null)
+
+  if (pedido.avaliacao) {
+    const a = pedido.avaliacao
+    return (
+      <section className="pedido-cartao pedido-avaliacao">
+        <h2>Sua avaliação</h2>
+        <p className="pedido-avaliacao__linha"><span>Loja</span><Estrelas valor={a.notaLoja} rotulo="Nota da loja" /></p>
+        {a.notaEntrega != null && <p className="pedido-avaliacao__linha"><span>Entrega</span><Estrelas valor={a.notaEntrega} rotulo="Nota da entrega" /></p>}
+        {a.comentario && <blockquote>“{a.comentario}”</blockquote>}
+        {a.resposta && <p className="pedido-avaliacao__resposta"><strong>{pedido.loja} respondeu:</strong> {a.resposta}</p>}
+        <small>Obrigado por avaliar!</small>
+      </section>
+    )
+  }
+  if (!pedido.podeAvaliar) return null
+
+  async function enviar(e) {
+    e.preventDefault()
+    if (!notaLoja) {
+      setErro('Toque nas estrelas para dar sua nota.')
+      return
+    }
+    setEnviando(true)
+    setErro(null)
+    try {
+      await avaliarPedido(guid, { notaLoja, notaEntrega: pedido.avaliaEntrega ? notaEntrega || null : null, comentario })
+      aoAvaliar()
+    } catch (err) {
+      setErro(err.mensagem || 'Não foi possível enviar agora.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <form className="pedido-cartao pedido-avaliacao" onSubmit={enviar}>
+      <h2>Como foi seu pedido?</h2>
+      <p className="pedido-avaliacao__linha"><span>Loja</span><Estrelas valor={notaLoja} aoAlterar={setNotaLoja} tamanho="2rem" rotulo="Nota da loja" /></p>
+      {pedido.avaliaEntrega && (
+        <p className="pedido-avaliacao__linha"><span>Entrega</span><Estrelas valor={notaEntrega} aoAlterar={setNotaEntrega} tamanho="2rem" rotulo="Nota da entrega" /></p>
+      )}
+      <label className="loja-campo">Quer contar mais? <small>(opcional)</small>
+        <textarea rows={3} maxLength={500} value={comentario} onChange={(e) => setComentario(e.target.value)} placeholder="O que gostou ou o que podemos melhorar" />
+      </label>
+      {erro && <p className="loja__erro" role="alert">{erro}</p>}
+      <button type="submit" className="loja-botao" disabled={enviando}>{enviando ? 'Enviando...' : 'Enviar avaliação'}</button>
+    </form>
+  )
+}
+
 /** Linha do tempo vertical: etapas feitas com ✓, a atual pulsando e as próximas apagadas. */
-function LinhaDoTempo({ etapas }) {
+function LinhaDoTempo({ etapas, concluido }) {
   return (
     <ol className="pedido-etapas" aria-label="Etapas do pedido">
       {etapas.map((etapa) => (
-        <li key={etapa.nome} className={etapa.atual ? 'atual' : etapa.concluida ? 'feita' : ''} aria-current={etapa.atual ? 'step' : undefined}>
+        <li key={etapa.nome} className={concluido || (!etapa.atual && etapa.concluida) ? 'feita' : etapa.atual ? 'atual' : ''} aria-current={etapa.atual && !concluido ? 'step' : undefined}>
           <span className="pedido-etapas__marca" aria-hidden="true">
-            {etapa.concluida && <i className="fa-solid fa-check" />}
+            {(concluido || etapa.concluida) && <i className="fa-solid fa-check" />}
           </span>
           <span>{etapa.nome}</span>
         </li>
@@ -260,7 +319,7 @@ export default function PaginaAcompanhamento() {
         ) : (
           <section className="pedido-cartao">
             <h2>Andamento</h2>
-            <LinhaDoTempo etapas={pedido.etapas} />
+            <LinhaDoTempo etapas={pedido.etapas} concluido={pedido.concluido} />
           </section>
         )}
 
@@ -274,6 +333,8 @@ export default function PaginaAcompanhamento() {
             {pedido.entregador.latitude != null && <MapaEntregador pedido={pedido} aoEstimar={setEstimativa} />}
           </section>
         )}
+
+        <CartaoAvaliacao guid={guid} pedido={pedido} aoAvaliar={carregar} />
 
         <section className="pedido-cartao">
           <h2>Resumo</h2>

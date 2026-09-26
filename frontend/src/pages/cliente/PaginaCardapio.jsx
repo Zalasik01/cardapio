@@ -7,6 +7,7 @@ import { formatarMoeda } from '../../utils/formatadores'
 import { useCliente } from '../../context/ClienteContext'
 import { listarPedidosCliente } from '../../api/clienteApi'
 import { useInstalarApp } from '../../utils/instalarApp'
+import Estrelas from '../../components/Estrelas'
 
 const semAcento = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -399,6 +400,9 @@ export default function PaginaCardapio() {
             )}
           </div>
           <ul className="loja-capa__infos">
+            {cardapio.avaliacaoMedia != null && (
+              <li className="loja-capa__nota"><Estrelas valor={1} tamanho="0.85rem" rotulo="Nota" /> <strong>{String(cardapio.avaliacaoMedia).replace('.', ',')}</strong> ({cardapio.totalAvaliacoes})</li>
+            )}
             {abertura && <li><i className="fa-regular fa-calendar" aria-hidden="true" /> {abertura}</li>}
             {loja.tempoPreparoPadraoMinutos > 0 && <li><i className="fa-regular fa-clock" aria-hidden="true" /> ~{loja.tempoPreparoPadraoMinutos} min</li>}
             {minimo > 0 && <li><i className="fa-solid fa-bag-shopping" aria-hidden="true" /> Mínimo {formatarMoeda(minimo)}</li>}

@@ -28,6 +28,7 @@ import PaginaEntregador from './pages/publico/PaginaEntregador'
 import PaginaFluxoPedidos from './pages/admin/PaginaFluxoPedidos'
 import PaginaFormaPagamentoCrud from './pages/admin/PaginaFormaPagamentoCrud'
 import PaginaCupons from './pages/admin/PaginaCupons'
+import PaginaAvaliacoes from './pages/admin/PaginaAvaliacoes'
 import PaginaCupomCrud from './pages/admin/PaginaCupomCrud'
 import PaginaFormasPagamento from './pages/admin/PaginaFormasPagamento'
 import PaginaPainelPedidos from './pages/admin/PaginaPainelPedidos'
@@ -115,6 +116,7 @@ export default function App() {
             <Route path="formas-pagamento/novo" element={<PaginaFormaPagamentoCrud key="novo" />} />
             <Route path="formas-pagamento/:id" element={<PaginaFormaPagamentoCrud key="editar" />} />
             <Route path="cupons" element={<PaginaCupons />} />
+            <Route path="avaliacoes" element={<PaginaAvaliacoes />} />
             <Route path="cupons/novo" element={<PaginaCupomCrud key="novo" />} />
             <Route path="cupons/:id" element={<PaginaCupomCrud key="editar" />} />
             <Route path="zonas-entrega" element={<PaginaZonasEntrega />} />

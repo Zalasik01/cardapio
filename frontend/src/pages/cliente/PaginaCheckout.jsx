@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { InputNumber } from 'primereact/inputnumber'
 import { Steps } from 'primereact/steps'
-import { calcularFreteEndereco, criarPedido, validarCupom } from '../../api/cardapioApi'
+import { calcularFreteEndereco, criarPedido, listarEnderecosCliente, removerEnderecoCliente, salvarEnderecoCliente, validarCupom } from '../../api/cardapioApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
 import { mascaraTelefone } from '../../utils/telefone'
 import { useCarrinho } from '../../context/CarrinhoContext'
@@ -38,6 +38,10 @@ export default function PaginaCheckout() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState(null)
   const [passo, setPasso] = useState(0)
+  const [salvos, setSalvos] = useState([])
+  const [salvarEndereco, setSalvarEndereco] = useState(false)
+  const [apelidoEndereco, setApelidoEndereco] = useState('')
+  const [enderecoEscolhido, setEnderecoEscolhido] = useState(null)
   const [precisaTroco, setPrecisaTroco] = useState(null) // dinheiro: null = ainda não respondeu
   const [trocoPara, setTrocoPara] = useState(null)
   const [codigoCupom, setCodigoCupom] = useState('')
@@ -97,6 +101,30 @@ export default function PaginaCheckout() {
     setPrecisaTroco(null)
     setTrocoPara(null)
   }, [form.formaPagamento])
+
+  useEffect(() => {
+    if (cliente) listarEnderecosCliente().then(setSalvos).catch(() => setSalvos([]))
+  }, [cliente])
+
+  function usarEndereco(e) {
+    setEnderecoEscolhido(e.id)
+    setSalvarEndereco(false)
+    setForm((atual) => ({
+      ...atual, cep: e.cep ?? '', enderecoRua: e.rua, enderecoNumero: e.numero, enderecoComplemento: e.complemento ?? '',
+      enderecoBairro: e.bairro, enderecoCidade: e.cidade ?? '',
+    }))
+    consultarFrete({ rua: e.rua, bairro: e.bairro, cidade: e.cidade, latitude: e.latitude, longitude: e.longitude })
+  }
+
+  async function removerSalvo(e) {
+    try {
+      await removerEnderecoCliente(e.id)
+      setSalvos((atual) => atual.filter((x) => x.id !== e.id))
+      if (enderecoEscolhido === e.id) setEnderecoEscolhido(null)
+    } catch (err) {
+      setErro(err.mensagem || 'Não foi possível remover o endereço.')
+    }
+  }
 
   const campo = (nome, valor) => setForm((atual) => ({ ...atual, [nome]: valor }))
 
@@ -202,6 +230,13 @@ export default function PaginaCheckout() {
         observacoes: form.observacoes,
         codigoCupom: cupom?.codigo ?? null,
       })
+      if (entrega && salvarEndereco && apelidoEndereco.trim()) {
+        // guardar o endereço é um extra: se falhar, o pedido já foi feito e segue normalmente
+        salvarEnderecoCliente({
+          apelido: apelidoEndereco.trim(), cep: form.cep, rua: form.enderecoRua, numero: form.enderecoNumero, complemento: form.enderecoComplemento,
+          bairro: form.enderecoBairro, cidade: form.enderecoCidade, latitude: frete?.latitude ?? null, longitude: frete?.longitude ?? null,
+        }).catch(() => {})
+      }
       limparCarrinho()
       navigate(`/pedido/${pedido.guid}`)
     } catch (err) {
@@ -276,6 +311,21 @@ export default function PaginaCheckout() {
 
         {tipoEntrega === 'ENTREGA' && (
           <>
+            {salvos.length > 0 && (
+              <div className="loja-enderecos" role="group" aria-label="Seus endereços salvos">
+                {salvos.map((e) => (
+                  <span key={e.id} className={`loja-enderecos__item${enderecoEscolhido === e.id ? ' ativo' : ''}`}>
+                    <button type="button" onClick={() => usarEndereco(e)}>
+                      <i className="fa-solid fa-location-dot" aria-hidden="true" /> <strong>{e.apelido}</strong>
+                      <small>{e.rua}, {e.numero}</small>
+                    </button>
+                    <button type="button" className="loja-enderecos__remover" aria-label={`Remover endereço ${e.apelido}`} onClick={() => removerSalvo(e)}>
+                      <i className="fa-solid fa-xmark" aria-hidden="true" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <label className="loja-campo">CEP
               <input inputMode="numeric" autoComplete="postal-code" value={form.cep} placeholder="00000-000"
                      onChange={(e) => aoDigitarCep(e.target.value)} />
@@ -302,6 +352,17 @@ export default function PaginaCheckout() {
               </label>
             </div>
             {frete?.entregavel && <p className="loja-frete">Taxa de entrega: <strong>{formatarMoeda(frete.taxa)}</strong></p>}
+            {form.enderecoRua && form.enderecoNumero && enderecoEscolhido === null && (
+              <div className="loja-salvar-endereco">
+                <label className="loja-check">
+                  <input type="checkbox" checked={salvarEndereco} onChange={(e) => setSalvarEndereco(e.target.checked)} /> Salvar este endereço para os próximos pedidos
+                </label>
+                {salvarEndereco && (
+                  <input placeholder="Nome do endereço (Casa, Trabalho...)" maxLength={40} value={apelidoEndereco}
+                         onChange={(e) => setApelidoEndereco(e.target.value)} aria-label="Nome do endereço" />
+                )}
+              </div>
+            )}
           </>
         )}
         {tipoEntrega === 'RETIRADA' && (

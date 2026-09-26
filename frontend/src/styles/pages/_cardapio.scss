@@ -1540,3 +1540,61 @@ body:has(.loja) { background: #fbf7f4; }
 .pedido-hero--SAIU_PARA_ENTREGA { --cor-selo: #ea580c; }
 .pedido-hero--ENTREGUE { --cor-selo: #15803d; }
 .pedido-hero--CANCELADO { --cor-selo: #78716c; }
+
+/* ---------- Estrelas e avaliação ---------- */
+.estrelas { display: inline-flex; gap: 0.15em; color: #d6d3d1; vertical-align: middle; }
+.estrelas__cheia { color: #f59e0b; }
+.estrelas--editavel button { padding: 0; min-height: 0; border: 0; background: transparent; color: inherit; font-size: inherit; line-height: 1; cursor: pointer; transition: transform 0.15s; &:hover { background: transparent; transform: scale(1.15); } }
+.loja-capa__nota { background: #fffbeb !important; color: #92400e !important; strong { font-weight: 800; } }
+
+.pedido-avaliacao {
+  display: grid;
+  gap: 0.75rem;
+
+  h2 { margin: 0; }
+  blockquote { margin: 0; padding: 0.6rem 0.9rem; border-left: 4px solid #f59e0b; background: var(--cor-fundo); border-radius: 0 10px 10px 0; color: var(--cor-texto); }
+  small { color: var(--cor-texto-suave); }
+}
+
+.pedido-avaliacao__linha { display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin: 0; font-weight: 700; }
+.pedido-avaliacao__resposta { margin: 0; padding: 0.7rem 0.9rem; border-radius: 12px; background: #fff1f2; font-size: 0.9rem; }
+
+/* ---------- Endereços salvos no checkout ---------- */
+.loja-enderecos { display: grid; gap: 0.5rem; }
+
+.loja-enderecos__item {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--cor-borda);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+
+  &.ativo { border-color: var(--cor-primaria); background: #fff5f5; }
+
+  button {
+    min-height: 0;
+    border: 0;
+    background: transparent;
+    color: var(--cor-texto);
+    font: inherit;
+    cursor: pointer;
+    &:hover { background: transparent; color: var(--cor-texto); }
+  }
+
+  > button:first-child { flex: 1; display: grid; grid-template-columns: auto 1fr; gap: 0 0.6rem; align-items: center; padding: 0.65rem 0.85rem; text-align: left; i { grid-row: span 2; color: var(--cor-primaria); } small { color: var(--cor-texto-suave); } }
+}
+
+.loja-enderecos__remover { padding: 0 0.9rem !important; color: var(--cor-texto-suave) !important; &:hover { color: var(--cor-primaria) !important; } }
+
+.loja-salvar-endereco {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: var(--cor-fundo);
+
+  input[type='text'], input:not([type]) { min-height: 2.6rem; padding: 0.5rem 0.75rem; border: 1px solid var(--cor-borda); border-radius: 10px; font: inherit; }
+}
+
+.loja-check { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; font-weight: 600; input { width: 1.1rem; height: 1.1rem; accent-color: var(--cor-primaria); } }

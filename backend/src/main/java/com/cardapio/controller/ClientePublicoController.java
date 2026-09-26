@@ -21,6 +21,7 @@ public class ClientePublicoController {
     private final ClienteContaService contaService;
     private final HistoricoClienteService historicoService;
     private final com.cardapio.service.CupomService cupomService;
+    private final com.cardapio.service.ClienteEnderecoService enderecoService;
 
     public record SolicitarCodigoRequest(@NotBlank String telefone) {
     }
@@ -58,6 +59,25 @@ public class ClientePublicoController {
             @RequestHeader(value = "Authorization", required = false) String auth,
             @Valid @RequestBody com.cardapio.dto.cupom.CupomDtos.ValidarCupomRequest request) {
         return cupomService.validar(contaService.autenticar(auth), request);
+    }
+
+    @GetMapping("/enderecos")
+    public List<com.cardapio.service.ClienteEnderecoService.EnderecoResponse> enderecos(@RequestHeader(value = "Authorization", required = false) String auth) {
+        return enderecoService.listar(contaService.autenticar(auth));
+    }
+
+    @PostMapping("/enderecos")
+    public com.cardapio.service.ClienteEnderecoService.EnderecoResponse salvarEndereco(
+            @RequestHeader(value = "Authorization", required = false) String auth,
+            @RequestBody com.cardapio.service.ClienteEnderecoService.EnderecoRequest request) {
+        return enderecoService.salvar(contaService.autenticar(auth), request);
+    }
+
+    @DeleteMapping("/enderecos/{id}")
+    public org.springframework.http.ResponseEntity<Void> removerEndereco(@RequestHeader(value = "Authorization", required = false) String auth,
+                                                                         @PathVariable Long id) {
+        enderecoService.remover(contaService.autenticar(auth), id);
+        return org.springframework.http.ResponseEntity.noContent().build();
     }
 
     @GetMapping("/resumo")

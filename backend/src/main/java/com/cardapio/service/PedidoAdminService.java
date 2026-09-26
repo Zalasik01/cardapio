@@ -51,6 +51,7 @@ public class PedidoAdminService {
     private final com.cardapio.repository.T_EntregadorRepository entregadorRepository;
     private final PagamentoPedidoService pagamentoService;
     private final OpcaoService opcaoService;
+    private final EstoqueService estoqueService;
     private final com.cardapio.repository.T_PedidoPagamentoRepository pagamentoRepository;
     private final com.cardapio.repository.T_PedidoAlteracaoRepository alteracaoRepository;
     private final T_ProdutoRepository produtoRepository;
@@ -173,6 +174,7 @@ public class PedidoAdminService {
             fidelidadeService.creditarPedidoEntregue(pedido);
         } else if (novoStatus == StatusPedido.CANCELADO) {
             fidelidadeService.estornarPedidoCancelado(pedido);
+            estoqueService.estornarPedido(pedido);
         }
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
         return resposta(pedido);

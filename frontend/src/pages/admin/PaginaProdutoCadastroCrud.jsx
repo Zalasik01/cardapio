@@ -324,7 +324,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
         <SecaoCrud id="secao-venda" titulo="Venda e promoção">
           <GradeCampos>
             <Campo id="disponivelDias" rotulo="Vende nos dias" tamanho={4} ajuda="Vazio = todos os dias.">
-              <MultiSelect inputId="disponivelDias" value={form.disponivelDias} options={DIAS_SEMANA} optionLabel="rotulo" optionValue="valor"
+              <MultiSelect appendTo="self" inputId="disponivelDias" value={form.disponivelDias} options={DIAS_SEMANA} optionLabel="rotulo" optionValue="valor"
                            display="chip" placeholder="Todos os dias" onChange={(e) => definir('disponivelDias')(e.value)} />
             </Campo>
             <Campo id="disponivelDas" rotulo="Vende a partir de" tamanho={2} ajuda="Ex.: almoço 11:00.">
@@ -334,7 +334,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
               <Calendar inputId="disponivelAte" value={form.disponivelAte} timeOnly hourFormat="24" onChange={(e) => definir('disponivelAte')(e.value)} />
             </Campo>
             <Campo id="promoDias" rotulo="Promoção nos dias" tamanho={4} ajuda="Só vale com preço promocional. Vazio = todos os dias.">
-              <MultiSelect inputId="promoDias" value={form.promoDias} options={DIAS_SEMANA} optionLabel="rotulo" optionValue="valor"
+              <MultiSelect appendTo="self" inputId="promoDias" value={form.promoDias} options={DIAS_SEMANA} optionLabel="rotulo" optionValue="valor"
                            display="chip" placeholder="Todos os dias" onChange={(e) => definir('promoDias')(e.value)} />
             </Campo>
             <Campo id="promoInicio" rotulo="Promoção das" tamanho={2} ajuda="Happy hour: ex. 17:00.">
@@ -345,11 +345,11 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
             </Campo>
             <Campo id="gruposOpcao" rotulo="Adicionais e variações" tamanho={12}
                    ajuda="Grupos que o cliente escolhe neste produto (tamanho, adicionais, ponto da carne). Cadastre em Cardápio > Adicionais e variações.">
-              <MultiSelect inputId="gruposOpcao" value={form.gruposOpcaoIds} options={gruposOpcao} optionLabel="nome" optionValue="id"
+              <MultiSelect appendTo="self" inputId="gruposOpcao" value={form.gruposOpcaoIds} options={gruposOpcao} optionLabel="nome" optionValue="id"
                            display="chip" placeholder="Nenhum" emptyMessage="Nenhum grupo cadastrado" onChange={(e) => definir('gruposOpcaoIds')(e.value)} />
             </Campo>
             <Campo id="selos" rotulo="Selos" tamanho={6}>
-              <MultiSelect inputId="selos" value={form.selos} options={SELOS_PRODUTO} optionLabel="rotulo" optionValue="valor"
+              <MultiSelect appendTo="self" inputId="selos" value={form.selos} options={SELOS_PRODUTO} optionLabel="rotulo" optionValue="valor"
                            display="chip" placeholder="Nenhum" onChange={(e) => definir('selos')(e.value)} />
             </Campo>
             <Campo id="alergenos" rotulo="Alérgenos" tamanho={6} ajuda="Aparece no detalhe do produto. Ex.: Contém glúten e leite.">

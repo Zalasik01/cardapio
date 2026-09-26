@@ -15,6 +15,8 @@ const LEITURA_POR_ROTA = {
   avaliacoes: 'AVALIACOES_LEITURA',
   fidelidade: 'FIDELIDADE_LEITURA',
   site: 'SITE_LEITURA',
+  estoque: 'ESTOQUE_LEITURA',
+  divulgacao: 'DIVULGACAO_LEITURA',
   'grupos-opcao': 'GRUPOS_OPCAO_LEITURA',
   'fluxo-pedidos': 'FLUXO_PEDIDOS_LEITURA',
   entregadores: 'ENTREGADORES_LEITURA',

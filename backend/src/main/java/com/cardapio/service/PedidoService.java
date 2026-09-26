@@ -36,6 +36,7 @@ public class PedidoService {
     private final ClientePessoaService clientePessoaService;
     private final FidelidadeService fidelidadeService;
     private final OpcaoService opcaoService;
+    private final EstoqueService estoqueService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -195,6 +196,7 @@ public class PedidoService {
         pedido.setIdSituacao(inicial.getId());
         pedido.setStatus(inicial.getCategoria());
         T_Pedido salvo = pedidoRepository.save(pedido);
+        estoqueService.baixarPedido(salvo);
         if (conta != null) {
             // primeiro pedido nesta loja: garante o cliente em Clientes e Fornecedores (com o nome digitado no pedido)
             clientePessoaService.garantir(tenant, conta, request.nomeCliente());

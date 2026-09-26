@@ -31,6 +31,8 @@ import PaginaCupons from './pages/admin/PaginaCupons'
 import PaginaAvaliacoes from './pages/admin/PaginaAvaliacoes'
 import PaginaFidelidade from './pages/admin/PaginaFidelidade'
 import PaginaSite from './pages/admin/PaginaSite'
+import PaginaEstoque from './pages/admin/PaginaEstoque'
+import PaginaDivulgacao from './pages/admin/PaginaDivulgacao'
 import PaginaGruposOpcao from './pages/admin/PaginaGruposOpcao'
 import PaginaGrupoOpcaoCrud from './pages/admin/PaginaGrupoOpcaoCrud'
 import PaginaCupomCrud from './pages/admin/PaginaCupomCrud'
@@ -123,6 +125,8 @@ export default function App() {
             <Route path="avaliacoes" element={<PaginaAvaliacoes />} />
             <Route path="fidelidade" element={<PaginaFidelidade />} />
             <Route path="site" element={<PaginaSite />} />
+            <Route path="estoque" element={<PaginaEstoque />} />
+            <Route path="divulgacao" element={<PaginaDivulgacao />} />
             <Route path="grupos-opcao" element={<PaginaGruposOpcao />} />
             <Route path="grupos-opcao/novo" element={<PaginaGrupoOpcaoCrud key="novo" />} />
             <Route path="grupos-opcao/:id" element={<PaginaGrupoOpcaoCrud key="editar" />} />

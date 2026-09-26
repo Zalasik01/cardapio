@@ -763,17 +763,16 @@
 }
 
 .loja-carrossel__faixa {
-  display: flex;
-  gap: 0.75rem;
   margin: 0 -1rem;
   padding: 0.25rem 1rem 0.75rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding: 0 1rem;
-  scrollbar-width: none;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
 
-  &::-webkit-scrollbar { display: none; }
+  &:active { cursor: grabbing; }
 }
+
+.loja-carrossel__trilho { display: flex; gap: 0.75rem; touch-action: pan-y pinch-zoom; }
 
 .loja-destaque {
   flex: none;
@@ -788,8 +787,7 @@
   color: var(--cor-texto);
   background: transparent;
   border: 0;
-  cursor: pointer;
-  scroll-snap-align: start;
+  cursor: inherit;
 
   &:hover:not(:disabled) { background: transparent; color: var(--cor-texto); .loja-destaque__foto { transform: translateY(-3px); box-shadow: var(--sombra-elevada); } }
   &:disabled { cursor: default; opacity: 0.75; }
@@ -894,7 +892,7 @@
 
   .loja-produtos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .loja-carrossel__setas { display: flex; }
-  .loja-carrossel__faixa { margin: 0; padding-left: 0.25rem; padding-right: 0.25rem; scroll-padding: 0 0.25rem; }
+  .loja-carrossel__faixa { margin: 0; padding-left: 0.25rem; padding-right: 0.25rem; }
   .loja-destaque { width: 200px; }
 
   .loja-pagina { max-width: 720px; margin: 0 auto; padding-bottom: 6rem; }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
+import useEmblaCarousel from 'embla-carousel-react'
 import { Dialog } from 'primereact/dialog'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -61,20 +62,21 @@ function Preco({ produto }) {
 
 /** Faixa horizontal de produtos (destaques, promoções, peça novamente), com setas no computador. */
 function Carrossel({ titulo, icone, produtos, aoAbrir, desabilitado }) {
-  const faixa = useRef(null)
+  // Embla: arrastar com o mouse ou o dedo (com inércia), sem prender em posições fixas
+  const [faixa, carrossel] = useEmblaCarousel({ align: 'start', dragFree: true, containScroll: 'trimSnaps' })
   if (produtos.length === 0) return null
-  const rolar = (sentido) => faixa.current?.scrollBy({ left: sentido * 280, behavior: 'smooth' })
 
   return (
     <section className="loja-carrossel" aria-label={titulo}>
       <header>
         <h2><i className={`fa-solid ${icone}`} aria-hidden="true" /> {titulo}</h2>
         <span className="loja-carrossel__setas">
-          <button type="button" aria-label="Anterior" onClick={() => rolar(-1)}><i className="fa-solid fa-chevron-left" /></button>
-          <button type="button" aria-label="Próximo" onClick={() => rolar(1)}><i className="fa-solid fa-chevron-right" /></button>
+          <button type="button" aria-label="Anterior" onClick={() => carrossel?.scrollPrev()}><i className="fa-solid fa-chevron-left" /></button>
+          <button type="button" aria-label="Próximo" onClick={() => carrossel?.scrollNext()}><i className="fa-solid fa-chevron-right" /></button>
         </span>
       </header>
       <div ref={faixa} className="loja-carrossel__faixa">
+        <div className="loja-carrossel__trilho">
         {produtos.map((p) => (
           <button key={p.guid} type="button" className="loja-destaque" disabled={desabilitado} onClick={() => aoAbrir(p)}
                   aria-label={`${p.nome}, ${formatarMoeda(p.preco)}`}>
@@ -86,6 +88,7 @@ function Carrossel({ titulo, icone, produtos, aoAbrir, desabilitado }) {
             <Preco produto={p} />
           </button>
         ))}
+        </div>
       </div>
     </section>
   )

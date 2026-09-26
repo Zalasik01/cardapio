@@ -120,9 +120,15 @@ public class EntregadorPublicoService {
         var proximas = fluxo.proximas(p);
         String endereco = String.join(", ", java.util.stream.Stream.of(p.getEnderecoRua(), p.getEnderecoNumero(), p.getEnderecoComplemento())
                 .filter(x -> x != null && !x.isBlank()).toList());
+        var loja = lojaService.buscarPorTenant(p.getTenant());
+        boolean mesmaCidade = p.getEnderecoCidade() == null || p.getEnderecoCidade().equalsIgnoreCase(loja.getEnderecoCidade());
+        // sem o complemento (apto, bloco): ele atrapalha a busca no mapa
+        String destinoMapa = String.join(", ", java.util.stream.Stream.of(p.getEnderecoRua(), p.getEnderecoNumero(), p.getEnderecoBairro(),
+                        p.getEnderecoCidade() != null ? p.getEnderecoCidade() : loja.getEnderecoCidade(), mesmaCidade ? loja.getEnderecoEstado() : null, "Brasil")
+                .filter(x -> x != null && !x.isBlank()).toList());
         var itens = p.getItens().stream().map(i -> new ItemEntrega(i.getNomeProduto(), i.getQuantidade(), i.getObservacoes())).toList();
         var pagamentos = pagamentoService.doPedido(p.getId()).stream().map(PagamentoPedidoService::resposta).toList();
-        return new EntregaCelular(p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), endereco, p.getEnderecoBairro() + (p.getEnderecoCidade() != null ? " - " + p.getEnderecoCidade() : ""),
+        return new EntregaCelular(p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), endereco, p.getEnderecoBairro() + (p.getEnderecoCidade() != null ? " - " + p.getEnderecoCidade() : ""), destinoMapa,
                 p.getObservacoes(), itens, p.getTotal(), pagamentos, p.getFormaPagamento(),
                 situacao != null ? situacao.nome() : null, situacao != null ? situacao.cor() : null,
                 proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.SAIU_PARA_ENTREGA),

@@ -20,6 +20,7 @@ public final class EntregadorPublicoDtos {
             String telefone,
             String endereco,
             String bairro,
+            String destinoMapa,
             String observacoes,
             List<ItemEntrega> itens,
             BigDecimal total,

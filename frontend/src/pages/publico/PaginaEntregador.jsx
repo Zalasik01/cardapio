@@ -9,8 +9,7 @@ const ATUALIZA_A_CADA_MS = 15000
 const POSICAO_A_CADA_MS = 20000
 
 /** Rota do Google Maps até o endereço (a origem é o GPS do próprio celular). */
-const rotaPara = (entrega) => `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${
-  encodeURIComponent(`${entrega.endereco}, ${entrega.bairro}, Brasil`)}`
+const rotaPara = (entrega) => `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(entrega.destinoMapa)}`
 
 /** Registra o app instalável (PWA) desta página: o manifesto é do próprio entregador (abre direto nas entregas dele). */
 function usePwa(token) {

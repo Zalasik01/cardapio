@@ -21,7 +21,10 @@ export function rotaGoogleMaps(loja, pedido) {
     ? enderecoLoja
     : `${loja.latitude},${loja.longitude}`
   const destino = textoEndereco({
-    rua: pedido.enderecoRua, numero: pedido.enderecoNumero, bairro: pedido.enderecoBairro, cidade: pedido.enderecoCidade,
+    rua: pedido.enderecoRua, numero: pedido.enderecoNumero, bairro: pedido.enderecoBairro,
+    cidade: pedido.enderecoCidade || loja?.enderecoCidade,
+    // o pedido não guarda o estado: vale o da loja quando a cidade é a mesma
+    estado: !pedido.enderecoCidade || pedido.enderecoCidade.toLowerCase() === (loja?.enderecoCidade ?? '').toLowerCase() ? loja?.enderecoEstado : undefined,
   })
   const parametros = new URLSearchParams({ api: '1', destination: destino, travelmode: 'driving' })
   if (origem.replace(/[,\s]|Brasil/g, '')) parametros.set('origin', origem)

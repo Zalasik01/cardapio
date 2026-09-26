@@ -85,7 +85,7 @@ export default function PaginaMeusPedidos() {
                   <strong>{formatarMoeda(p.total)}</strong>
                   <span>
                     <Link className="loja-botao loja-botao--sec loja-botao--pequeno" to={`/pedido/${p.guid}`}>Acompanhar</Link>
-                    {cardapio.aberta && (
+                    {cardapio.aberta && p.concluido && (
                       <button type="button" className="loja-botao loja-botao--pequeno" onClick={() => pedirDeNovo(p)}>
                         <i className="fa-solid fa-rotate-right" aria-hidden="true" /> Pedir de novo
                       </button>

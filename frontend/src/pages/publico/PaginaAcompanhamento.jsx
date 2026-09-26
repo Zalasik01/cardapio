@@ -185,11 +185,10 @@ export default function PaginaAcompanhamento() {
 
         <section className="pedido-ajuda">
           {pedido.lojaTelefone && (
-            <>
-              <a className="loja-botao loja-botao--sec" href={`tel:${telefoneLoja}`}><i className="fa-solid fa-phone" aria-hidden="true" /> Ligar</a>
-              <a className="loja-botao loja-botao--sec" href={`https://wa.me/55${telefoneLoja}?text=${encodeURIComponent(`Olá! Sobre o pedido ${pedido.numero}`)}`}
-                 target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-whatsapp" aria-hidden="true" /> WhatsApp</a>
-            </>
+            <a className="loja-botao loja-botao--sec" target="_blank" rel="noopener noreferrer"
+               href={`https://wa.me/55${telefoneLoja}?text=${encodeURIComponent(`Olá! Quero acompanhar o pedido ${pedido.numero}: ${window.location.href}`)}`}>
+              <i className="fa-brands fa-whatsapp" aria-hidden="true" /> Acompanhar pedido pelo WhatsApp
+            </a>
           )}
           {pedido.slug && <Link className="loja-botao" to={`/${pedido.slug}/pedidos`}>Meus pedidos</Link>}
         </section>

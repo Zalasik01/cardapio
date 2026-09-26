@@ -1193,10 +1193,9 @@
 
 .pedido-ajuda {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.6rem;
 
-  > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 // o fundo creme vale para a janela toda, também ao lado da coluna central no computador

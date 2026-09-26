@@ -290,6 +290,7 @@ export default function PaginaCheckout() {
       )}
 
       {passo === 2 && (
+      <>
       <section className="loja-bloco">
         <h2>Pagamento</h2>
         {formas.length === 0 ? (
@@ -309,21 +310,6 @@ export default function PaginaCheckout() {
           <textarea rows={2} value={form.observacoes} onChange={(e) => campo('observacoes', e.target.value)} />
         </label>
       </section>
-      )}
-
-      {passo === 3 && (
-      <>
-      <section className="loja-bloco">
-        <h2>Confira seu pedido</h2>
-        <ul className="loja-revisao">
-          {itens.map((i) => <li key={`${i.produtoGuid}-${i.observacoes}`}><span>{i.quantidade}x {i.nome}</span><span>{formatarMoeda(i.preco * i.quantidade)}</span></li>)}
-        </ul>
-        <p className="loja-revisao__dados">
-          {form.nomeCliente} · {form.telefoneCliente}<br />
-          {tipoEntrega === 'ENTREGA' ? `Entrega: ${form.enderecoRua}, ${form.enderecoNumero} - ${form.enderecoBairro}` : 'Retirada na loja'}<br />
-          Pagamento: {form.formaPagamento}
-        </p>
-      </section>
       <section className="loja-bloco loja-cupom">
         <h2>Cupom de desconto</h2>
         {cupom ? (
@@ -342,6 +328,22 @@ export default function PaginaCheckout() {
         )}
         {erroCupom && <small className="loja-resumo__aviso" role="alert">{erroCupom}</small>}
       </section>
+      </>
+      )}
+
+      {passo === 3 && (
+      <>
+      <section className="loja-bloco">
+        <h2>Confira seu pedido</h2>
+        <ul className="loja-revisao">
+          {itens.map((i) => <li key={`${i.produtoGuid}-${i.observacoes}`}><span>{i.quantidade}x {i.nome}</span><span>{formatarMoeda(i.preco * i.quantidade)}</span></li>)}
+        </ul>
+        <p className="loja-revisao__dados">
+          {form.nomeCliente} · {form.telefoneCliente}<br />
+          {tipoEntrega === 'ENTREGA' ? `Entrega: ${form.enderecoRua}, ${form.enderecoNumero} - ${form.enderecoBairro}` : 'Retirada na loja'}<br />
+          Pagamento: {form.formaPagamento}
+        </p>
+      </section>
       <section className="loja-resumo">
         <p><span>Subtotal</span><span>{formatarMoeda(subtotal)}</span></p>
         {desconto > 0 && <p className="loja-resumo__desconto"><span>Desconto ({cupom.codigo})</span><span>-{formatarMoeda(desconto)}</span></p>}
@@ -357,9 +359,9 @@ export default function PaginaCheckout() {
       <footer className="loja-rodape-fixo loja-rodape-fixo--passos">
         {passo > 0 && <button type="button" className="loja-botao loja-botao--sec" onClick={voltar}>Voltar</button>}
         {passo < PASSOS.length - 1 ? (
-          <button type="button" className="loja-botao" onClick={avancar}>Continuar</button>
+          <button key="continuar" type="button" className="loja-botao" onClick={avancar}>Continuar</button>
         ) : (
-          <button type="submit" className="loja-botao" disabled={enviando || !cardapio.aberta || formas.length === 0}>
+          <button key="enviar" type="submit" className="loja-botao" disabled={enviando || !cardapio.aberta || formas.length === 0}>
             {enviando ? 'Enviando...' : `Enviar pedido · ${formatarMoeda(total)}`}
           </button>
         )}

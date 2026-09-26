@@ -82,6 +82,11 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
     List<T_Pedido> pedidosDoClienteDaLoja(@Param("tenant") UUID tenant, @Param("telefones") Collection<String> telefones,
                                           @Param("conta") Long conta, org.springframework.data.domain.Pageable limite);
 
+    /** [entregas concluídas, repasse] de um entregador desde o início de hoje. */
+    @Query(value = "select count(*), coalesce(sum(repasse_entregador), 0) from t_pedido where id_entregador = :entregador "
+            + "and deletado = false and status = 'ENTREGUE' and data_entrega >= :desde", nativeQuery = true)
+    List<Object[]> resumoDoEntregadorDesde(@Param("entregador") Long entregador, @Param("desde") LocalDateTime desde);
+
     long countByTenantAndDeletadoFalseAndStatusIn(UUID tenant, Collection<StatusPedido> status);
 
     long countByIdClienteContaAndTenantAndDeletadoFalseAndStatusNot(Long idClienteConta, UUID tenant, StatusPedido status);

@@ -30,11 +30,12 @@ public final class EntregadorPublicoDtos {
             String cor,
             boolean podeSair,
             boolean podeEntregar,
-            boolean exigeCodigo
+            boolean exigeCodigo,
+            java.time.LocalDateTime criadoEm
     ) {
     }
 
-    public record PainelEntregador(String nome, String loja, List<EntregaCelular> entregas) {
+    public record PainelEntregador(String nome, String loja, List<EntregaCelular> entregas, long entreguesHoje, BigDecimal repasseHoje) {
     }
 
     public record PosicaoRequest(Double latitude, Double longitude) {

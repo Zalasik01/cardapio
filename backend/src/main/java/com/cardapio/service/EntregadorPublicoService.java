@@ -48,7 +48,9 @@ public class EntregadorPublicoService {
         var fluxo = fluxoService.carregar(entregador.getTenant());
         List<EntregaCelular> entregas = pedidoRepository.buscarEntregasDoEntregador(entregador.getId(), ABERTOS).stream()
                 .map(p -> paraCelular(p, fluxo)).toList();
-        return new PainelEntregador(entregador.getNome(), lojaService.buscarPorTenant(entregador.getTenant()).getNome(), entregas);
+        Object[] hoje = pedidoRepository.resumoDoEntregadorDesde(entregador.getId(), LocalDateTime.now().toLocalDate().atStartOfDay()).get(0);
+        return new PainelEntregador(entregador.getNome(), lojaService.buscarPorTenant(entregador.getTenant()).getNome(), entregas,
+                ((Number) hoje[0]).longValue(), new java.math.BigDecimal(String.valueOf(hoje[1])));
     }
 
     /** Manifesto do app instalável (PWA) deste entregador: abre direto na página dele. */
@@ -160,7 +162,7 @@ var emRota = pedidoRepository.buscarEntregasDoEntregador(entregador.getId(), Lis
                 p.getObservacoes(), itens, p.getTotal(), pagamentos, p.getFormaPagamento(),
                 situacao != null ? situacao.nome() : null, situacao != null ? situacao.cor() : null,
                 proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.SAIU_PARA_ENTREGA),
-                proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.ENTREGUE), p.getCodigoEntrega() != null);
+                proximas.stream().anyMatch(x -> x.categoria() == StatusPedido.ENTREGUE), p.getCodigoEntrega() != null, p.getDataCriacao());
     }
 
     private T_Entregador entregadorPorToken(UUID token) {

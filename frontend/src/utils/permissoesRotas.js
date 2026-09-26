@@ -12,6 +12,8 @@ const LEITURA_POR_ROTA = {
   'zonas-entrega': 'ZONAS_ENTREGA_LEITURA',
   'formas-pagamento': 'FORMAS_PAGAMENTO_LEITURA',
   'fluxo-pedidos': 'FLUXO_PEDIDOS_LEITURA',
+  entregadores: 'ENTREGADORES_LEITURA',
+  entregas: 'ENTREGAS_LEITURA',
   loja: 'MINHA_LOJA_LEITURA',
 }
 

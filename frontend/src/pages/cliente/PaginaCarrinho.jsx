@@ -1,60 +1,65 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
 
+/** Carrinho do cliente: ajusta quantidades, remove itens e segue para o checkout. */
 export default function PaginaCarrinho() {
-  const { slug } = useParams()
+  const { cardapio, slug } = useOutletContext()
   const navigate = useNavigate()
-  const { itens, alterarQuantidade, removerItem, subtotal } = useCarrinho()
-
-  if (itens.length === 0) {
-    return (
-      <div className="pagina-centralizada">
-        <p>Seu carrinho esta vazio.</p>
-        <Link to={`/${slug}`}>Voltar ao cardapio</Link>
-      </div>
-    )
-  }
+  const { itens, alterarQuantidade, subtotal } = useCarrinho()
+  const minimo = Number(cardapio.loja.valorMinimoPedido)
+  const abaixoDoMinimo = minimo > 0 && subtotal < minimo
 
   return (
-    <div className="pagina-carrinho">
-      <h1>Seu carrinho</h1>
+    <div className="loja-pagina">
+      <header className="loja-pagina__topo">
+        <Link to={`/${slug}`} aria-label="Voltar ao cardápio"><i className="fa-solid fa-arrow-left" /></Link>
+        <h1>Seu carrinho</h1>
+      </header>
 
-      <ul className="lista-itens-carrinho">
-        {itens.map((item) => (
-          <li key={`${item.produtoGuid}-${item.observacoes}`} className="item-carrinho">
-            <div>
-              <strong>{item.nome}</strong>
-              {item.observacoes && <p className="item-carrinho__obs">{item.observacoes}</p>}
-              <span>{formatarMoeda(item.preco)} cada</span>
-            </div>
-            <div className="item-carrinho__acoes">
-              <input
-                type="number"
-                min="0"
-                value={item.quantidade}
-                onChange={(e) => alterarQuantidade(item.produtoGuid, item.observacoes, Number(e.target.value))}
-              />
-              <button type="button" onClick={() => removerItem(item.produtoGuid, item.observacoes)}>
-                Remover
-              </button>
-            </div>
-            <span className="item-carrinho__total">{formatarMoeda(item.preco * item.quantidade)}</span>
-          </li>
-        ))}
-      </ul>
+      {itens.length === 0 ? (
+        <div className="loja-vazio">
+          <p>Seu carrinho está vazio.</p>
+          <Link className="loja-botao" to={`/${slug}`}>Ver o cardápio</Link>
+        </div>
+      ) : (
+        <>
+          <ul className="loja-itens">
+            {itens.map((item) => (
+              <li key={`${item.produtoGuid}-${item.observacoes}`}>
+                <div>
+                  <strong>{item.nome}</strong>
+                  {item.observacoes && <small>{item.observacoes}</small>}
+                  <span>{formatarMoeda(item.preco * item.quantidade)}</span>
+                </div>
+                <div className="loja-quantidade">
+                  <button type="button" aria-label={item.quantidade === 1 ? 'Remover' : 'Diminuir'}
+                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade - 1)}>
+                    <i className={`fa-solid ${item.quantidade === 1 ? 'fa-trash-can' : 'fa-minus'}`} />
+                  </button>
+                  <span>{item.quantidade}</span>
+                  <button type="button" aria-label="Aumentar"
+                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade + 1)}>
+                    <i className="fa-solid fa-plus" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
 
-      <div className="resumo-carrinho">
-        <span>Subtotal</span>
-        <strong>{formatarMoeda(subtotal)}</strong>
-      </div>
+          <div className="loja-resumo">
+            <p><span>Subtotal</span><strong>{formatarMoeda(subtotal)}</strong></p>
+            {abaixoDoMinimo && <small className="loja-resumo__aviso">Pedido mínimo de {formatarMoeda(minimo)}: faltam {formatarMoeda(minimo - subtotal)}.</small>}
+          </div>
 
-      <div className="acoes-carrinho">
-        <Link to={`/${slug}`}>Continuar comprando</Link>
-        <button type="button" onClick={() => navigate(`/${slug}/checkout`)}>
-          Finalizar pedido
-        </button>
-      </div>
+          <footer className="loja-rodape-fixo">
+            <button type="button" className="loja-botao" disabled={abaixoDoMinimo || !cardapio.aberta}
+                    onClick={() => navigate(`/${slug}/checkout`)}>
+              {cardapio.aberta ? 'Continuar' : 'Loja fechada'}
+            </button>
+          </footer>
+        </>
+      )}
     </div>
   )
 }

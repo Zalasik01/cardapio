@@ -94,6 +94,26 @@ public class FluxoPedidoService {
             return atual == null ? null : new SituacaoInfo(atual.getId(), atual.getNome(), atual.getCor(), atual.getCategoria());
         }
 
+        /** Etapas que um pedido deste tipo percorre (situações alcançáveis a partir da inicial), na ordem do quadro. */
+        public List<T_SituacaoPedido> etapasPara(TipoEntrega tipo) {
+            java.util.Set<Long> vistos = new java.util.HashSet<>();
+            java.util.ArrayDeque<Long> fila = new java.util.ArrayDeque<>();
+            Long inicio = inicial().getId();
+            vistos.add(inicio);
+            fila.add(inicio);
+            while (!fila.isEmpty()) {
+                Long atual = fila.poll();
+                for (T_TransicaoPedido t : transicoes) {
+                    if (t.getIdDe().equals(atual) && (t.getTipoPedido() == null || t.getTipoPedido() == tipo) && vistos.add(t.getIdPara())) {
+                        fila.add(t.getIdPara());
+                    }
+                }
+            }
+            return situacoes.stream()
+                    .filter(s -> s.isAtivo() && s.getCategoria() != StatusPedido.CANCELADO && vistos.contains(s.getId()))
+                    .toList();
+        }
+
         /** Para onde o pedido pode ir agora: as transições da situação atual (para o tipo do pedido) e cancelar. */
         public List<ProximaSituacao> proximas(T_Pedido pedido) {
             T_SituacaoPedido atual = atual(pedido);

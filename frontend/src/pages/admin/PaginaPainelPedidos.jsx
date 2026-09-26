@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button } from 'primereact/button'
+import { Dropdown } from 'primereact/dropdown'
 import { Tooltip } from 'primereact/tooltip'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
@@ -9,6 +10,7 @@ import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import { atualizarStatusPedido, obterQuadroPedidos } from '../../api/pedidosApi'
+import { atribuirEntregador, listarEntregadoresAtivos } from '../../api/entregadoresApi'
 import { rascunhoDoPedido, resumoUltimaEdicao } from '../../utils/edicaoPedido'
 import BotaoRota from '../../components/pedido/BotaoRota'
 import { useNotificacoes } from '../../context/NotificacoesContext'
@@ -41,7 +43,7 @@ function tempoDecorrido(iso, agora) {
 }
 
 /** Aparência do cartão de um pedido (também usada na cópia que acompanha o mouse durante o arraste). */
-function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, aoImprimir, aoEditar, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
+function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, aoImprimir, aoEditar, entregadores, aoAtribuir, podeAlterar, podeCancelar, arrastando, refNo, ligacoes }) {
   const avancos = pedido.proximasSituacoes.filter((s) => s.categoria !== 'CANCELADO')
   const podeSerCancelado = pedido.proximasSituacoes.some((s) => s.categoria === 'CANCELADO')
   const restantes = pedido.itens.length - ITENS_NO_CARTAO
@@ -72,6 +74,13 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
         <i className={pedido.tipoEntrega === 'ENTREGA' ? 'fa-solid fa-motorcycle' : 'fa-solid fa-bag-shopping'} aria-hidden="true" />{' '}
         {[rotuloTipoEntrega(pedido.tipoEntrega), pedido.tipoEntrega === 'ENTREGA' && pedido.enderecoBairro].filter(Boolean).join(' · ')}
       </span>
+      {pedido.tipoEntrega === 'ENTREGA' && aoAtribuir && pedido.proximasSituacoes.length > 0 && (
+        <div className="painel-cartao__entregador" onPointerDown={(e) => e.stopPropagation()}>
+          <Dropdown value={pedido.entregador?.id ?? null} options={entregadores} optionLabel="nome" optionValue="id" showClear
+                    placeholder="Escolher entregador" emptyMessage="Nenhum entregador cadastrado" disabled={atualizando}
+                    onChange={(e) => aoAtribuir(pedido, e.value ?? null)} />
+        </div>
+      )}
       <ul className="painel-cartao__itens">
         {pedido.itens.slice(0, ITENS_NO_CARTAO).map((item, i) => (
           <li key={i}>{item.quantidade}x {item.nomeProduto}</li>
@@ -164,6 +173,23 @@ export default function PaginaPainelPedidos() {
   const tenant = loja.tenant
   const [pedidos, setPedidos] = useState(null)
   const fluxo = useFluxoPedidos()
+  const [entregadores, setEntregadores] = useState([])
+  const podeAtribuir = pode('PAINEL_PEDIDOS_ALTERAR_STATUS')
+
+  useEffect(() => {
+    if (podeAtribuir) listarEntregadoresAtivos(tenant).then(setEntregadores).catch(() => setEntregadores([]))
+  }, [podeAtribuir, tenant])
+
+  async function atribuir(pedido, entregadorId) {
+    try {
+      const atualizado = await atribuirEntregador(tenant, pedido.id, entregadorId)
+      setPedidos((lista) => lista.map((p) => (p.id === atualizado.id ? atualizado : p)))
+      dispatchMsgSuccess(entregadorId ? `Pedido ${pedido.id}: entregador ${atualizado.entregador.nome}` : `Pedido ${pedido.id}: entregador removido`)
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+      carregar()
+    }
+  }
   const [atualizando, setAtualizando] = useState(null)
   const [arrastando, setArrastando] = useState(null)
   const [cancelando, setCancelando] = useState(null) // pedido em cancelamento (diálogo aberto)
@@ -254,7 +280,7 @@ export default function PaginaPainelPedidos() {
     return grupos
   }, [colunas, pedidos])
 
-  const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, aoImprimir: imprimir, aoEditar: pode('PAINEL_PEDIDOS_ALTERAR') ? (p) => abrirEdicao(p, rascunhoDoPedido(p)) : undefined, podeAlterar, podeCancelar }
+  const propsCartao = { agora, atualizando: atualizando !== null, aoAvancar: mudarStatus, aoCancelar: cancelar, aoImprimir: imprimir, entregadores, aoAtribuir: podeAtribuir ? atribuir : undefined, aoEditar: pode('PAINEL_PEDIDOS_ALTERAR') ? (p) => abrirEdicao(p, rascunhoDoPedido(p)) : undefined, podeAlterar, podeCancelar }
 
   return (
     <div className="pagina-admin painel-pagina">

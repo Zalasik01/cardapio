@@ -111,32 +111,37 @@ export function MenuSkeleton() {
 
 export function CardapioSkeleton() {
   return (
-    <div className="pagina-cardapio" aria-busy="true" aria-label="Carregando cardapio">
-      <div className="cabecalho-restaurante">
-        <Skeleton largura="72px" altura="72px" raio="50%" />
-        <div className="cabecalho-restaurante__skeleton">
-          <Skeleton largura="240px" altura="1.8rem" />
-          <Skeleton largura="180px" altura="0.9rem" />
+    <div aria-busy="true" aria-label="Carregando cardápio">
+      <div className="loja-topo">
+        <Skeleton largura="72px" altura="72px" raio="16px" />
+        <div className="loja-topo__skeleton">
+          <Skeleton largura="60%" altura="1.6rem" />
+          <Skeleton largura="80%" altura="0.9rem" />
+          <Skeleton largura="40%" altura="1.2rem" raio="999px" />
         </div>
       </div>
-      {[0, 1].map((secao) => (
-        <section key={secao} className="secao-categoria">
-          <Skeleton largura="160px" altura="1.4rem" />
-          <div className="grade-produtos">
-            {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="cartao-produto">
-                <Skeleton altura="140px" raio="0" />
-                <div className="cartao-produto__conteudo">
-                  <Skeleton largura="60%" altura="1.1rem" />
-                  <Skeleton altura="0.85rem" />
-                  <Skeleton largura="80%" altura="0.85rem" />
-                  <Skeleton largura="35%" altura="1.2rem" />
+      <div className="loja-barra-busca">
+        <Skeleton altura="2.6rem" raio="999px" />
+      </div>
+      <div className="loja-conteudo">
+        {[0, 1].map((secao) => (
+          <section key={secao} className="loja-secao">
+            <Skeleton largura="160px" altura="1.3rem" />
+            <div className="loja-produtos">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className="loja-produto loja-produto--esqueleto">
+                  <span className="loja-produto__texto">
+                    <Skeleton largura="55%" altura="1rem" />
+                    <Skeleton altura="0.8rem" />
+                    <Skeleton largura="30%" altura="1rem" />
+                  </span>
+                  <Skeleton largura="88px" altura="88px" raio="12px" />
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   )
 }

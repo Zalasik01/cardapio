@@ -97,6 +97,16 @@ public class AdminPedidoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.simularPedidoCliente(tenant));
     }
 
+    public record EntregadorRequest(Long entregadorId) {
+    }
+
+    /** Atribui o entregador do pedido (entregadorId nulo = tirar o entregador). */
+    @PreAuthorize("@perm.tem('PEDIDOS_ALTERAR_STATUS', 'PAINEL_PEDIDOS_ALTERAR_STATUS')")
+    @PutMapping("/{id}/entregador")
+    public PedidoAdminResponse atribuirEntregador(@PathVariable UUID tenant, @PathVariable Long id, @RequestBody EntregadorRequest request) {
+        return pedidoService.atribuirEntregador(tenant, id, request.entregadorId());
+    }
+
     /** Exclusão lógica do pedido. */
     @PreAuthorize("@perm.tem('PEDIDOS_EXCLUIR', 'PAINEL_PEDIDOS_EXCLUIR')")
     @DeleteMapping("/{id}")

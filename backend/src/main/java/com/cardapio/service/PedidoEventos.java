@@ -27,6 +27,10 @@ public class PedidoEventos {
 
     private final Map<UUID, List<SseEmitter>> conexoes = new ConcurrentHashMap<>();
 
+    /** Clientes acompanhando um pedido (página pública de rastreamento), por id do pedido. */
+    private final Map<Long, List<SseEmitter>> acompanhamentos = new ConcurrentHashMap<>();
+    private static final long DURACAO_ACOMPANHAMENTO_MS = 30L * 60 * 1000;
+
     /** Abre a conexão de um painel da loja. O emissor é removido quando o navegador fecha ou dá erro. */
     public SseEmitter inscrever(UUID tenant) {
         SseEmitter emissor = new SseEmitter(SEM_LIMITE);
@@ -44,9 +48,41 @@ public class PedidoEventos {
         return emissor;
     }
 
+    /** Abre a conexão de um cliente que acompanha o pedido; recebe "atualizado" quando algo muda (situação, entregador, posição). */
+    public SseEmitter inscreverAcompanhamento(Long pedidoId) {
+        SseEmitter emissor = new SseEmitter(DURACAO_ACOMPANHAMENTO_MS);
+        List<SseEmitter> lista = acompanhamentos.computeIfAbsent(pedidoId, chave -> new CopyOnWriteArrayList<>());
+        lista.add(emissor);
+        Runnable remover = () -> {
+            lista.remove(emissor);
+            if (lista.isEmpty()) {
+                acompanhamentos.remove(pedidoId, lista);
+            }
+        };
+        emissor.onCompletion(remover);
+        emissor.onTimeout(remover);
+        emissor.onError(erro -> remover.run());
+        try {
+            emissor.send(SseEmitter.event().name("conectado").data("ok"));
+        } catch (IOException e) {
+            remover.run();
+        }
+        return emissor;
+    }
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void aoMudarPedido(PedidoEvento evento) {
-        enviar(evento.tenant(), SseEmitter.event().name("pedido").data(evento));
+        // o painel só recebe mudanças de situação/novos pedidos; a posição do entregador é só do cliente que acompanha
+        if (!"POSICAO".equals(evento.tipo())) {
+            enviar(evento.tenant(), SseEmitter.event().name("pedido").data(evento));
+        }
+        for (SseEmitter emissor : acompanhamentos.getOrDefault(evento.pedidoId(), List.of())) {
+            try {
+                emissor.send(SseEmitter.event().name("atualizado").data(evento.tipo()));
+            } catch (IOException | IllegalStateException e) {
+                emissor.completeWithError(e);
+            }
+        }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -58,6 +94,13 @@ public class PedidoEventos {
     @Scheduled(fixedRate = 20_000)
     public void batimento() {
         conexoes.keySet().forEach(tenant -> enviar(tenant, SseEmitter.event().comment("batimento")));
+        acompanhamentos.values().forEach(lista -> lista.forEach(emissor -> {
+            try {
+                emissor.send(SseEmitter.event().comment("batimento"));
+            } catch (IOException | IllegalStateException e) {
+                emissor.completeWithError(e);
+            }
+        }));
     }
 
     private void enviar(UUID tenant, SseEmitter.SseEventBuilder evento) {

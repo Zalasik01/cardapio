@@ -7,6 +7,7 @@ import com.cardapio.entity.S_Loja;
 import com.cardapio.entity.T_Categoria;
 import com.cardapio.entity.T_Produto;
 import com.cardapio.repository.T_CategoriaRepository;
+import com.cardapio.repository.T_FormaPagamentoRepository;
 import com.cardapio.repository.T_ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ public class CardapioService {
     private final T_CategoriaRepository categoriaRepository;
     private final T_ProdutoRepository produtoRepository;
     private final LojaService lojaService;
+    private final FuncionamentoService funcionamentoService;
+    private final T_FormaPagamentoRepository formaPagamentoRepository;
 
     @Transactional(readOnly = true)
     public CardapioResponse buscarCardapioPublico(String slug) {
@@ -46,6 +49,12 @@ public class CardapioService {
                 .sorted(Comparator.comparing(CardapioResponse.CategoriaComProdutosResponse::nome))
                 .collect(Collectors.toList());
 
-        return new CardapioResponse(LojaResponse.of(loja), categoriasComProdutos);
+        var situacao = funcionamentoService.situacao(tenant);
+        var formas = formaPagamentoRepository.findByTenantAndAtivoTrueAndDeletadoFalseOrderByOrdemAscNomeAsc(tenant).stream()
+                .map(f -> new CardapioResponse.FormaPagamentoPublica(f.getNome(), f.getTipo().name(), f.getTaxaPercentual(),
+                        f.getTaxaFixa(), f.isAceitaEntrega(), f.isAceitaRetirada()))
+                .toList();
+
+        return new CardapioResponse(LojaResponse.of(loja), situacao.aberta(), situacao.proximaMudanca(), formas, categoriasComProdutos);
     }
 }

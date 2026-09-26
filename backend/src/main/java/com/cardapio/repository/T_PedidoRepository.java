@@ -71,6 +71,23 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
             + "and data_criacao >= :de and data_criacao < :ate", nativeQuery = true)
     List<Object[]> resumoDePrazo(@Param("tenant") UUID tenant, @Param("de") LocalDateTime de, @Param("ate") LocalDateTime ate);
 
+    /** Pedidos de entrega ainda não terminados que têm (ou não) entregador: para a visão "em rota". */
+    @Query("select p from T_Pedido p where p.tenant = :tenant and p.deletado = false and p.tipoEntrega = com.cardapio.entity.TipoEntrega.ENTREGA "
+            + "and p.status in :abertos order by p.dataCriacao")
+    List<T_Pedido> buscarEntregasAbertas(@Param("tenant") UUID tenant, @Param("abertos") Collection<StatusPedido> abertos);
+
+    /** Entregas atribuídas a um entregador e ainda em andamento (página do celular dele). */
+    @Query("select distinct p from T_Pedido p left join fetch p.itens where p.idEntregador = :entregador and p.deletado = false "
+            + "and p.status in :abertos order by p.dataCriacao")
+    List<T_Pedido> buscarEntregasDoEntregador(@Param("entregador") Long entregador, @Param("abertos") Collection<StatusPedido> abertos);
+
+    /** Repasse por entregador no período (pela data da entrega): linhas [idEntregador, entregas, repasse]. */
+    @Query(value = "select id_entregador, count(*), coalesce(sum(repasse_entregador), 0) from t_pedido "
+            + "where tenant = :tenant and deletado = false and status = 'ENTREGUE' and id_entregador is not null "
+            + "and coalesce(data_entrega, data_atualizacao) >= :de and coalesce(data_entrega, data_atualizacao) < :ate "
+            + "group by id_entregador", nativeQuery = true)
+    List<Object[]> repassePorEntregador(@Param("tenant") UUID tenant, @Param("de") LocalDateTime de, @Param("ate") LocalDateTime ate);
+
     /** Soma das quantidades dos itens de cada pedido: linhas [pedidoId, quantidade]. */
     @Query("select i.pedido.id, sum(i.quantidade) from I_ItemPedido i where i.pedido.id in :ids group by i.pedido.id")
     List<Object[]> somarItensPorPedido(@Param("ids") Collection<Long> ids);

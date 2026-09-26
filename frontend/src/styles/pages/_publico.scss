@@ -1,0 +1,156 @@
+// Páginas públicas: página do entregador (PWA) e acompanhamento do pedido pelo cliente. Pensadas para celular.
+.entregador,
+.acompanhamento {
+  max-width: 30rem;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 16px 2rem;
+  background: var(--cor-fundo);
+  font-family: 'Nunito', sans-serif;
+  color: var(--cor-texto);
+}
+
+.entregador__cabecalho,
+.acompanhamento__loja {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0 -16px 1rem;
+  padding: 0.9rem 16px;
+  background: var(--cor-primaria);
+  color: #fff;
+
+  small { display: block; opacity: 0.85; }
+  img { width: 2.6rem; height: 2.6rem; border-radius: 8px; object-fit: cover; background: #fff; }
+}
+
+.entregador__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 1.2rem;
+}
+
+.entregador__cartao,
+.acompanhamento__cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  padding: 0.9rem 1rem;
+  background: var(--cor-superficie);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  h2 { margin: 0; font-size: 1rem; }
+  p { margin: 0; }
+
+  &--esqueleto { min-height: 9rem; background: linear-gradient(90deg, #ececec, #f6f6f6, #ececec); animation: publico-pulso 1.2s ease-in-out infinite; }
+}
+
+@keyframes publico-pulso { 50% { opacity: 0.55; } }
+
+.entregador__topo { display: flex; align-items: center; justify-content: space-between; }
+.entregador__cliente { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.entregador__cliente a { color: var(--cor-primaria); font-weight: 700; text-decoration: none; }
+.entregador__endereco { font-size: 1rem; font-weight: 700; }
+.entregador__itens { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; em { color: var(--cor-texto-suave); } }
+.entregador__obs { padding: 0.4rem 0.6rem; background: #fef3c7; border-radius: 4px; font-size: 0.85rem; }
+
+.entregador__receber {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.7rem;
+  background: #f0fdf4;
+  border-radius: 4px;
+
+  span { font-size: 0.75rem; color: var(--cor-texto-suave); }
+  strong { font-size: 1.2rem; }
+  small { color: var(--cor-texto-suave); }
+}
+
+.entregador__botoes,
+.entregador__conclusao { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.entregador__conclusao { flex-direction: column; }
+
+.entregador__botao {
+  display: inline-flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.9rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--cor-primaria);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.6; }
+  &--secundario { background: #e5e7eb; color: var(--cor-texto); }
+  &--sucesso { background: #16a34a; }
+}
+
+.entregador__erro { padding: 0.6rem 0.8rem; border-radius: 6px; background: #fee2e2; color: #991b1b; }
+.entregador__vazio { padding: 2rem 1rem; text-align: center; color: var(--cor-texto-suave); }
+.entregador__gps { text-align: center; font-size: 0.8rem; color: var(--cor-texto-suave); }
+
+// acompanhamento
+.acompanhamento__situacao {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.9rem;
+  border-left: 5px solid var(--cor-selo, var(--cor-primaria));
+
+  h1 { margin: 0; font-size: 1.5rem; }
+  small { color: var(--cor-texto-suave); }
+}
+
+.acompanhamento__ponto {
+  flex: 0 0 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--cor-selo, var(--cor-primaria));
+  animation: publico-pulso 1.4s ease-in-out infinite;
+}
+
+.acompanhamento__linha {
+  margin: 0 0 0.8rem;
+  padding: 0.9rem 1rem;
+  list-style: none;
+  background: var(--cor-superficie);
+  border-radius: 6px;
+
+  li { display: flex; align-items: center; gap: 0.7rem; padding: 0.4rem 0; color: var(--cor-texto-suave); }
+}
+
+.acompanhamento__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.6rem;
+}
+
+.acompanhamento__etapa--feita { color: var(--cor-texto); .acompanhamento__marca { background: var(--cor-etapa, var(--cor-primaria)); border-color: var(--cor-etapa, var(--cor-primaria)); } }
+.acompanhamento__etapa--atual { color: var(--cor-texto); font-weight: 800; .acompanhamento__marca { border-color: var(--cor-etapa, var(--cor-primaria)); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18); } }
+
+.acompanhamento__mapa { display: flex; flex-direction: column; gap: 0.3rem; iframe { width: 100%; height: 14rem; border: 0; border-radius: 6px; } }
+.acompanhamento__itens { margin: 0; padding-left: 1.1rem; }
+.acompanhamento__total { display: flex; justify-content: space-between; font-size: 1.05rem; }
+.acompanhamento__erro,
+.acompanhamento__aviso { margin: 2rem 0; padding: 1rem; border-radius: 6px; background: #fee2e2; color: #991b1b; text-align: center; }
+
+.entregador__conclusao .entregador__botao { flex: 0 0 auto; }

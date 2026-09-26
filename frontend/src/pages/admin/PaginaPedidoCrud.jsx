@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
+import { Dropdown } from 'primereact/dropdown'
 import { Tooltip } from 'primereact/tooltip'
 import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
@@ -11,6 +12,7 @@ import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import { atualizarStatusPedido, excluirPedido, obterPedido } from '../../api/pedidosApi'
+import { atribuirEntregador, listarEntregadoresAtivos } from '../../api/entregadoresApi'
 import BotaoRota from '../../components/pedido/BotaoRota'
 import DialogoCancelarPedido from '../../components/pedido/DialogoCancelarPedido'
 import CrudPagina from '../../components/crud/CrudPagina'
@@ -46,6 +48,29 @@ export default function PaginaPedidoCrud() {
   const [pedido, setPedido] = useState(null)
   const [atualizando, setAtualizando] = useState(false)
   const [cancelando, setCancelando] = useState(false)
+  const [entregadores, setEntregadores] = useState([])
+
+  useEffect(() => {
+    if (pode('PEDIDOS_ALTERAR_STATUS')) listarEntregadoresAtivos(loja.tenant).then(setEntregadores).catch(() => setEntregadores([]))
+  }, [loja.tenant, pode])
+
+  async function trocarEntregador(entregadorId) {
+    try {
+      setPedido(await atribuirEntregador(loja.tenant, id, entregadorId))
+      dispatchMsgSuccess(entregadorId ? 'Entregador atribuído' : 'Entregador removido')
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
+  }
+
+  async function copiarLinkAcompanhamento() {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/pedido/${pedido.guid}`)
+      dispatchMsgSuccess('Link de acompanhamento copiado. Envie ao cliente.')
+    } catch {
+      dispatchMsgError('Não foi possível copiar o link.')
+    }
+  }
 
   useEffect(() => {
     definirMigalha(`Pedido ${id}`)
@@ -104,6 +129,18 @@ export default function PaginaPedidoCrud() {
             <SeloSituacao nome={pedido.situacao?.nome} cor={pedido.situacao?.cor} />
             {pedido.editado && <span className="selo selo--info selo--editado">Editado</span>}
           </Dado>
+          {pedido.tipoEntrega === 'ENTREGA' && (
+            <Dado rotulo="Entregador">
+              {pedidoAberto && pode('PEDIDOS_ALTERAR_STATUS') ? (
+                <Dropdown value={pedido.entregador?.id ?? null} options={entregadores} optionLabel="nome" optionValue="id" showClear
+                          placeholder="Escolher entregador" emptyMessage="Nenhum entregador cadastrado" onChange={(e) => trocarEntregador(e.value ?? null)} />
+              ) : pedido.entregador?.nome}
+              {pedido.repasseEntregador != null && <small> Repasse: {formatarMoeda(pedido.repasseEntregador)}</small>}
+            </Dado>
+          )}
+          {pedido.fotoEntregaUrl && (
+            <Dado rotulo="Foto da entrega"><a href={pedido.fotoEntregaUrl} target="_blank" rel="noopener noreferrer">Ver foto</a></Dado>
+          )}
           <Dado rotulo="Criado em">{formatarDataHora(pedido.dataCriacao)}</Dado>
           <Dado rotulo="Atualizado em">{pedido.dataAtualizacao && formatarDataHora(pedido.dataAtualizacao)}</Dado>
           <Dado rotulo="Cliente">{pedido.nomeCliente}</Dado>
@@ -189,6 +226,8 @@ export default function PaginaPedidoCrud() {
             <Button type="button" label="Editar" icon="pi pi-pencil" severity="secondary" outlined
                     onClick={() => abrirEdicao(pedido, rascunhoDoPedido(pedido))} />
           )}
+          <Button type="button" label="Link p/ cliente" icon="pi pi-link" severity="secondary" outlined disabled={!pedido}
+                  onClick={copiarLinkAcompanhamento} />
           <Button type="button" label="Cozinha" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}
                   onClick={() => imprimir(pedido, 'COZINHA')} />
           <Button type="button" label="Entrega" icon="pi pi-print" severity="secondary" outlined disabled={!pedido}

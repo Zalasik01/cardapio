@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import RotaProtegida from './components/RotaProtegida'
 
@@ -20,6 +20,11 @@ import PaginaZonasEntrega from './pages/admin/PaginaZonasEntrega'
 import { ChatPedidosProvider } from './context/ChatPedidosContext'
 import { ImpressaoPedidoProvider } from './context/ImpressaoPedidoContext'
 import { NotificacoesProvider } from './context/NotificacoesContext'
+import PaginaEntregadorCrud from './pages/admin/PaginaEntregadorCrud'
+import PaginaEntregadores from './pages/admin/PaginaEntregadores'
+import PaginaEntregas from './pages/admin/PaginaEntregas'
+import PaginaAcompanhamento from './pages/publico/PaginaAcompanhamento'
+import PaginaEntregador from './pages/publico/PaginaEntregador'
 import PaginaFluxoPedidos from './pages/admin/PaginaFluxoPedidos'
 import PaginaFormaPagamentoCrud from './pages/admin/PaginaFormaPagamentoCrud'
 import PaginaFormasPagamento from './pages/admin/PaginaFormasPagamento'
@@ -42,6 +47,12 @@ import PaginaPessoas from './pages/admin/PaginaPessoas'
 import PaginaPessoaCrud from './pages/admin/PaginaPessoaCrud'
 import PaginaNovoUsuario from './pages/admin/PaginaNovoUsuario'
 
+/** Links antigos /:slug/pedido/:guid levam ao acompanhamento público. */
+function RedirecionaAcompanhamento() {
+  const { pedidoGuid } = useParams()
+  return <Navigate to={`/pedido/${pedidoGuid}`} replace />
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -50,6 +61,9 @@ export default function App() {
           <Route path="/" element={<PaginaInicial />} />
 
           <Route path="/admin/login" element={<PaginaLogin />} />
+          {/* páginas públicas: o código no endereço é o acesso (sem login) */}
+          <Route path="/entregador/:token" element={<PaginaEntregador />} />
+          <Route path="/pedido/:guid" element={<PaginaAcompanhamento />} />
           <Route path="/novo-usuario/:token" element={<PaginaNovoUsuario />} />
           <Route
             path="/admin"
@@ -84,6 +98,10 @@ export default function App() {
             <Route path="ingredientes" element={<PaginaProdutosCadastro tipo="INGREDIENTE" />} />
             <Route path="ingredientes/novo" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-novo" />} />
             <Route path="ingredientes/:id" element={<PaginaProdutoCadastroCrud tipo="INGREDIENTE" key="ingrediente-editar" />} />
+            <Route path="entregadores" element={<PaginaEntregadores />} />
+            <Route path="entregadores/novo" element={<PaginaEntregadorCrud key="novo" />} />
+            <Route path="entregadores/:id" element={<PaginaEntregadorCrud key="editar" />} />
+            <Route path="entregas" element={<PaginaEntregas />} />
             <Route path="fluxo-pedidos" element={<PaginaFluxoPedidos />} />
             <Route path="painel-pedidos" element={<PaginaPainelPedidos />} />
             <Route path="pedidos" element={<PaginaPedidos />} />
@@ -104,7 +122,7 @@ export default function App() {
             <Route index element={<PaginaCardapio />} />
             <Route path="carrinho" element={<PaginaCarrinho />} />
             <Route path="checkout" element={<PaginaCheckout />} />
-            <Route path="pedido/:pedidoGuid" element={<PaginaConfirmacaoPedido />} />
+            <Route path="pedido/:pedidoGuid" element={<RedirecionaAcompanhamento />} />
           </Route>
         </Routes>
       </AuthProvider>

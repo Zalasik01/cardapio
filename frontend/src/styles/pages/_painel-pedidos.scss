@@ -217,3 +217,41 @@
 }
 
 .pedido__pagamento { display: block; }
+
+.painel-cartao__entregador {
+  .p-dropdown { width: 100%; font-size: 0.78rem; }
+  .p-dropdown-label { padding: 0.3rem 0.5rem; }
+}
+
+// Entregadores: link do celular e visão "Entregas"
+.entregador__link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.entregador__link-dados {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  .p-inputtext { width: 100%; font-size: 0.8rem; }
+}
+
+.entregador__link-botoes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.entregas__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 10px;
+}
+
+.entregas__cartao { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; &--alerta { border-left: 4px solid #f59e0b; } }
+.entregas__topo { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.entregas__lista { display: flex; flex-direction: column; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.entregas__pedido { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+.entregas__filtro { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.8rem; }
+
+.entregas__cartao > * + * { margin-top: 0.4rem; }

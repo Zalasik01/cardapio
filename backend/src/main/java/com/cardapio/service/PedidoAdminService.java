@@ -46,6 +46,7 @@ public class PedidoAdminService {
     private final NotificacaoService notificacaoService;
     private final PedidoEdicaoService edicaoService;
     private final FluxoPedidoService fluxoService;
+    private final com.cardapio.repository.T_EntregadorRepository entregadorRepository;
     private final PagamentoPedidoService pagamentoService;
     private final com.cardapio.repository.T_PedidoPagamentoRepository pagamentoRepository;
     private final com.cardapio.repository.T_PedidoAlteracaoRepository alteracaoRepository;
@@ -95,9 +96,15 @@ public class PedidoAdminService {
             pagamentoRepository.findByIdPedidoInOrderByIdAsc(pedidos.stream().map(T_Pedido::getId).toList()).forEach(pg -> pagamentos
                     .computeIfAbsent(pg.getIdPedido(), chave -> new ArrayList<>()).add(PagamentoPedidoService.resposta(pg)));
         }
+        Map<Long, com.cardapio.entity.T_Entregador> entregadores = new HashMap<>();
+        var idsEntregadores = pedidos.stream().map(T_Pedido::getIdEntregador).filter(java.util.Objects::nonNull).distinct().toList();
+        if (!idsEntregadores.isEmpty()) {
+            entregadorRepository.findByTenantAndIdIn(tenant, idsEntregadores).forEach(e -> entregadores.put(e.getId(), e));
+        }
         return pedidos.stream()
                 .map(p -> PedidoAdminResponse.of(p, fluxo.info(p), fluxo.proximas(p), historico.getOrDefault(p.getTelefoneCliente(), 1L),
-                        alteracoes.getOrDefault(p.getId(), List.of()), pagamentos.getOrDefault(p.getId(), List.of())))
+                        alteracoes.getOrDefault(p.getId(), List.of()), pagamentos.getOrDefault(p.getId(), List.of()),
+                        infoEntregador(entregadores.get(p.getIdEntregador()))))
                 .toList();
     }
 
@@ -211,13 +218,48 @@ public class PedidoAdminService {
         return atrasados <= 0 ? 0 : Math.round(((Number) prazo[2]).doubleValue() / atrasados);
     }
 
+    private PedidoAdminResponse.EntregadorInfo infoEntregador(com.cardapio.entity.T_Entregador entregador) {
+        return entregador == null ? null : new PedidoAdminResponse.EntregadorInfo(entregador.getId(), entregador.getNome());
+    }
+
+    /**
+     * Atribui (ou tira, com null) o entregador de um pedido de entrega ainda em andamento. O repasse do entregador
+     * é copiado para o pedido no momento da atribuição, então mudar o cadastro depois não altera entregas antigas.
+     */
+    @Transactional
+    public PedidoAdminResponse atribuirEntregador(UUID tenant, Long id, Long entregadorId) {
+        T_Pedido pedido = buscarPedido(tenant, id);
+        if (pedido.getTipoEntrega() != TipoEntrega.ENTREGA) {
+            throw new RegraNegocioException("Só pedidos de entrega têm entregador");
+        }
+        if (fluxoService.carregar(tenant).proximas(pedido).isEmpty()) {
+            throw new RegraNegocioException("Pedido entregue ou cancelado não muda de entregador");
+        }
+        if (entregadorId == null) {
+            pedido.setIdEntregador(null);
+            pedido.setRepasseEntregador(null);
+        } else {
+            var entregador = entregadorRepository.findByIdAndTenantAndDeletadoFalse(entregadorId, tenant)
+                    .filter(com.cardapio.entity.T_Entregador::isAtivo)
+                    .orElseThrow(() -> new RegraNegocioException("Entregador não encontrado ou inativo"));
+            pedido.setIdEntregador(entregador.getId());
+            pedido.setRepasseEntregador(entregador.getRepassePorEntrega());
+        }
+        pedidoRepository.save(pedido);
+        eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
+        return resposta(pedido);
+    }
+
     private PedidoAdminResponse resposta(T_Pedido pedido) {
         long total = pedidoRepository.contarPedidosDoTelefone(pedido.getTenant(), pedido.getTelefoneCliente());
         List<PedidoAdminResponse.Alteracao> alteracoes = alteracaoRepository.findByIdPedidoOrderByIdDesc(pedido.getId()).stream()
                 .map(PedidoAdminResponse.Alteracao::of).toList();
         var fluxo = fluxoService.carregar(pedido.getTenant());
         var pagamentos = pagamentoService.doPedido(pedido.getId()).stream().map(PagamentoPedidoService::resposta).toList();
-        return PedidoAdminResponse.of(pedido, fluxo.info(pedido), fluxo.proximas(pedido), total, alteracoes, pagamentos);
+        var entregador = pedido.getIdEntregador() == null ? null
+                : entregadorRepository.findById(pedido.getIdEntregador()).orElse(null);
+        return PedidoAdminResponse.of(pedido, fluxo.info(pedido), fluxo.proximas(pedido), total, alteracoes, pagamentos,
+                infoEntregador(entregador));
     }
 
     private T_Pedido buscarPedido(UUID tenant, Long id) {

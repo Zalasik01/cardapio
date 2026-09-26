@@ -95,6 +95,16 @@ public class T_Pedido extends TenantAbstract {
     /** Prazo de preparo em minutos (o maior entre os itens), contado a partir da criação. Nulo em pedidos antigos. */
     private Integer tempoPreparoMinutos;
 
+    /** Entregador responsável (pedidos de entrega), o repasse dele por esta entrega e a foto da entrega feita. */
+    private Long idEntregador;
+
+    private BigDecimal repasseEntregador;
+
+    private String fotoEntregaUrl;
+
+    @Column(columnDefinition = "timestamp(0)")
+    private LocalDateTime dataEntrega;
+
     /** Situação atual no fluxo da loja (a categoria dela é o "status"). */
     private Long idSituacao;
 

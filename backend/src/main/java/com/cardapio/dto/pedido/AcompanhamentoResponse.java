@@ -1,0 +1,41 @@
+package com.cardapio.dto.pedido;
+
+import com.cardapio.entity.StatusPedido;
+import com.cardapio.entity.TipoEntrega;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/** O que o cliente vê ao acompanhar o pedido (sem telefone, endereço completo nem dados internos). */
+public record AcompanhamentoResponse(
+        Long numero,
+        String loja,
+        String logoUrl,
+        String lojaTelefone,
+        TipoEntrega tipoEntrega,
+        String cliente,
+        String situacao,
+        String cor,
+        StatusPedido categoria,
+        boolean cancelado,
+        boolean concluido,
+        List<Etapa> etapas,
+        LocalDateTime criadoEm,
+        LocalDateTime previsaoPreparo,
+        List<Item> itens,
+        BigDecimal total,
+        String destino,
+        Entregador entregador
+) {
+
+    /** Uma etapa da linha do tempo; concluida vale para as já passadas e atual para a situação de agora. */
+    public record Etapa(String nome, String cor, boolean concluida, boolean atual) {
+    }
+
+    public record Item(String nome, int quantidade) {
+    }
+
+    /** Aparece só enquanto o pedido está com o entregador; posição é a última enviada pelo celular dele. */
+    public record Entregador(String nome, String veiculo, Double latitude, Double longitude, LocalDateTime posicaoEm) {
+    }
+}

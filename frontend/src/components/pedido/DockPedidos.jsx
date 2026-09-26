@@ -121,6 +121,15 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
       enderecoComplemento: cliente.complemento || '',
       enderecoBairro: cliente.bairro || '',
       enderecoCidade: cliente.cidade || '',
+      // cliente com mais de um endereço: a loja escolhe qual usar neste pedido (chips acima do CEP)
+      enderecosCliente: cliente.enderecos?.length > 1 ? cliente.enderecos : [],
+    })
+  }
+
+  function usarEnderecoDoCliente(e) {
+    atualizar(janela.id, {
+      cep: e.cep || '', enderecoRua: e.logradouro || '', enderecoNumero: e.numero || '', enderecoComplemento: e.complemento || '',
+      enderecoBairro: e.bairro || '', enderecoCidade: e.cidade || '',
     })
   }
 
@@ -242,6 +251,16 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
                           allowEmpty={false} onChange={(e) => definir('tipoEntrega')(e.value)} />
             {entrega && (
               <div className="dock-janela__grade">
+                {rascunho.enderecosCliente?.length > 1 && (
+                  <div className="dock__enderecos" role="group" aria-label="Endereços do cliente">
+                    {rascunho.enderecosCliente.map((e, i) => (
+                      <button key={i} type="button" className={e.logradouro === rascunho.enderecoRua && e.numero === rascunho.enderecoNumero ? 'ativo' : ''}
+                              onClick={() => usarEnderecoDoCliente(e)}>
+                        <i className="pi pi-map-marker" aria-hidden="true" /> {e.apelido || (e.principal ? 'Principal' : e.logradouro)}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <InputMask placeholder="CEP" mask="99999-999" autoClear={false} value={rascunho.cep ?? ''}
                            onChange={(e) => definir('cep')(e.target.value ?? '')}
                            onComplete={(e) => preencherPorCep(e.value)} />

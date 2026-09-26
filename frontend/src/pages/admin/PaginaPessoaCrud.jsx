@@ -18,6 +18,7 @@ import CrudPagina from '../../components/crud/CrudPagina'
 import CampoAtivo from '../../components/crud/CampoAtivo'
 import HistoricoCliente from '../../components/pessoa/HistoricoCliente'
 import Endereco from '../../components/crud/Endereco'
+import EnderecosAdicionais from '../../components/crud/EnderecosAdicionais'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
 import DialogoCpfExistente from '../../components/crud/DialogoCpfExistente'
@@ -25,7 +26,7 @@ import Contatos from '../../components/crud/Contatos'
 import { CrudSkeleton } from '../../components/Skeleton'
 import { dataParaIso, formatarCnpj, formatarCpf, isoParaData, soDigitos } from '../../utils/formatadores'
 import {
-  emailsParaFormulario, emailsParaRequisicao, ENDERECO_VAZIO, enderecoParaFormulario, enderecoParaRequisicao,
+  emailsParaFormulario, emailsParaRequisicao, ENDERECO_VAZIO, enderecoParaFormulario, enderecoParaRequisicao, idLocal,
   ESTADOS_CIVIS, mesclarContatosDaEmpresa, SEXOS, telefonesParaFormulario, telefonesParaRequisicao,
 } from '../../utils/pessoa'
 
@@ -34,6 +35,7 @@ const ROTA_LISTA = '/admin/pessoas'
 const ANCORAS = [
   { id: 'secao-principal', titulo: 'Principal' },
   { id: 'secao-endereco', titulo: 'Endereço' },
+  { id: 'secao-outros-enderecos', titulo: 'Outros endereços' },
   { id: 'secao-contatos', titulo: 'Contatos' },
 ]
 
@@ -59,6 +61,7 @@ const FORM_VAZIO = {
   inscricaoEstadual: '',
   inscricaoMunicipal: '',
   endereco: ENDERECO_VAZIO,
+  enderecosExtras: [],
   telefones: [],
   emails: [],
 }
@@ -83,9 +86,19 @@ function paraFormulario(pessoa) {
     cnpj: formatarCnpj(pessoa.cnpj),
     inscricaoEstadual: pessoa.inscricaoEstadual ?? '',
     inscricaoMunicipal: pessoa.inscricaoMunicipal ?? '',
-    endereco: enderecoParaFormulario(pessoa.endereco),
+    ...enderecosParaFormulario(pessoa),
     telefones: telefonesParaFormulario(pessoa.telefones),
     emails: emailsParaFormulario(pessoa.emails),
+  }
+}
+
+/** O endereço principal segue no bloco "Endereço"; os demais vão para "Outros endereços". */
+function enderecosParaFormulario(pessoa) {
+  const lista = pessoa.enderecos?.length ? pessoa.enderecos : [{ ...pessoa.endereco, principal: true }]
+  const principal = lista.find((e) => e.principal) ?? lista[0]
+  return {
+    endereco: enderecoParaFormulario(principal),
+    enderecosExtras: lista.filter((e) => e !== principal).map((e) => ({ ...enderecoParaFormulario(e), _id: idLocal() })),
   }
 }
 
@@ -110,6 +123,10 @@ function paraRequisicao(form) {
     inscricaoEstadual: form.inscricaoEstadual,
     inscricaoMunicipal: form.inscricaoMunicipal,
     endereco: enderecoParaRequisicao(form.endereco),
+    enderecos: [
+      { ...enderecoParaRequisicao(form.endereco), principal: true },
+      ...form.enderecosExtras.map(({ _id, ...e }) => ({ ...enderecoParaRequisicao(e), principal: false })),
+    ],
     telefones: telefonesParaRequisicao(form.telefones),
     emails: emailsParaRequisicao(form.emails),
   }
@@ -181,7 +198,7 @@ export default function PaginaPessoaCrud() {
       estadoCivil: e.estadoCivil,
       profissao: e.profissao ?? '',
       observacao: e.observacao ?? '',
-      endereco: enderecoParaFormulario(e.endereco),
+      ...enderecosParaFormulario(e),
       telefones: telefonesParaFormulario(e.telefones),
       emails: emailsParaFormulario(e.emails),
     }))
@@ -385,7 +402,20 @@ export default function PaginaPessoaCrud() {
         aoAbrir={() => navigate(`${ROTA_LISTA}/${cpfExistente.pessoaId}`)}
         aoCancelar={cancelarCpfExistente}
       />
-      <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} />
+      <Endereco endereco={form.endereco} aoAlterar={alterarEndereco} titulo={form.enderecosExtras.length > 0 ? 'Endereço principal' : 'Endereço'} />
+
+      <EnderecosAdicionais lista={form.enderecosExtras} aoAlterar={(lista) => definir('enderecosExtras')(lista)}
+                           somenteLeitura={!pode(editando ? 'CLIENTES_FORNECEDORES_ALTERAR' : 'CLIENTES_FORNECEDORES_INCLUIR')}
+                           aoTornarPrincipal={(i) => setForm((atual) => {
+                             const extra = atual.enderecosExtras[i]
+                             const { _id, ...novoPrincipal } = extra
+                             const antigo = { ...atual.endereco, apelido: atual.endereco.apelido || 'Principal', _id }
+                             return {
+                               ...atual,
+                               endereco: enderecoParaFormulario(novoPrincipal),
+                               enderecosExtras: atual.enderecosExtras.map((e, j) => (j === i ? antigo : e)),
+                             }
+                           })} />
       <Contatos telefones={form.telefones} emails={form.emails} aoAlterar={alterarContatos} />
     </>
   )

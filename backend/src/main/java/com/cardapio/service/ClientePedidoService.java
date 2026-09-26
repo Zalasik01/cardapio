@@ -20,7 +20,8 @@ public class ClientePedidoService {
     private final PessoaContatoService contatoService;
 
     public record ClienteParaPedido(Long id, String nome, String telefone, String cep, String logradouro, String numero,
-                                    String complemento, String bairro, String cidade) {
+                                    String complemento, String bairro, String cidade,
+                                    java.util.List<com.cardapio.dto.pessoa.EnderecoPessoaDto> enderecos) {
     }
 
     @Transactional(readOnly = true)
@@ -33,7 +34,8 @@ public class ClientePedidoService {
                     telefones.isEmpty() ? null : telefones.get(0).numero(),
                     endereco != null ? endereco.cep() : null, endereco != null ? endereco.logradouro() : null,
                     endereco != null ? endereco.numero() : null, endereco != null ? endereco.complemento() : null,
-                    endereco != null ? endereco.bairro() : null, endereco != null ? endereco.cidade() : null);
+                    endereco != null ? endereco.bairro() : null, endereco != null ? endereco.cidade() : null,
+                    contatoService.enderecos(pessoa.id()));
         }).toList();
     }
 }

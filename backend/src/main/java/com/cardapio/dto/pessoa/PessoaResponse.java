@@ -34,6 +34,7 @@ public record PessoaResponse(
         EnderecoDto endereco,
         List<TelefoneDto> telefones,
         List<EmailDto> emails,
-        String origem
+        String origem,
+        List<EnderecoPessoaDto> enderecos
 ) {
 }

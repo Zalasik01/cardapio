@@ -584,3 +584,21 @@ fieldset.crud__somente-leitura {
 }
 
 .site__cor { .p-colorpicker-preview { width: 2.5rem; flex: none; } input.p-inputtext { flex: 0 0 8rem; width: 8rem; } }
+
+// ---- Vários endereços do cliente ----
+.endereco-adicional {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.endereco-adicional__topo { display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.endereco-adicional__topo > :first-child { flex: 1; min-width: 14rem; }
+.endereco-adicional__acoes { display: flex; gap: 0.5rem; padding-top: 1.6rem; }
+
+// escolha do endereço no pedido lançado pela loja
+.dock__enderecos { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.dock__enderecos button { display: inline-flex; gap: 0.35rem; align-items: center; padding: 0.3rem 0.65rem; border: 1px solid var(--cor-borda); border-radius: 999px; background: #fff; color: var(--cor-texto); font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.dock__enderecos button.ativo { border-color: var(--cor-primaria); background: var(--cor-primaria-suave); color: var(--cor-primaria-escura); }

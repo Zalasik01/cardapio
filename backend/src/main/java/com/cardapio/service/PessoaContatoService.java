@@ -3,6 +3,7 @@ package com.cardapio.service;
 import com.cardapio.dto.funcionario.EmailDto;
 import com.cardapio.dto.funcionario.EnderecoDto;
 import com.cardapio.dto.funcionario.TelefoneDto;
+import com.cardapio.dto.pessoa.EnderecoPessoaDto;
 import com.cardapio.entity.T_Pessoa;
 import com.cardapio.entity.T_PessoaEmail;
 import com.cardapio.entity.T_PessoaEndereco;
@@ -31,8 +32,9 @@ public class PessoaContatoService {
         if (dto == null) {
             return;
         }
-        T_PessoaEndereco endereco = enderecoRepository.findByPessoaId(pessoa.getId())
-                .orElseGet(() -> T_PessoaEndereco.builder().tenant(pessoa.getTenant()).pessoa(pessoa).build());
+        // cadastro de um endereço só (funcionário, fornecedor): atualiza o principal, ou cria o primeiro
+        T_PessoaEndereco endereco = enderecoRepository.findFirstByPessoaIdOrderByPrincipalDescIdAsc(pessoa.getId())
+                .orElseGet(() -> T_PessoaEndereco.builder().tenant(pessoa.getTenant()).pessoa(pessoa).principal(true).build());
         endereco.setCep(vazioParaNulo(dto.cep()));
         endereco.setLogradouro(vazioParaNulo(dto.logradouro()));
         endereco.setNumero(vazioParaNulo(dto.numero()));
@@ -41,6 +43,43 @@ public class PessoaContatoService {
         endereco.setCidade(vazioParaNulo(dto.cidade()));
         endereco.setEstado(dto.estado() == null || dto.estado().isBlank() ? null : dto.estado().trim().toUpperCase(Locale.ROOT));
         enderecoRepository.save(endereco);
+    }
+
+    /**
+     * Vários endereços (cliente): a lista enviada substitui os anteriores. Um só é o principal (o primeiro marcado,
+     * ou o primeiro da lista); linhas totalmente vazias são ignoradas. Lista nula = não mexer.
+     */
+    @Transactional
+    public void salvarEnderecos(T_Pessoa pessoa, List<EnderecoPessoaDto> enderecos) {
+        if (enderecos == null) {
+            return;
+        }
+        List<EnderecoPessoaDto> validos = enderecos.stream().filter(e -> vazioParaNulo(e.logradouro()) != null
+                || vazioParaNulo(e.cep()) != null || vazioParaNulo(e.numero()) != null || vazioParaNulo(e.bairro()) != null).toList();
+        enderecoRepository.deleteByPessoaId(pessoa.getId());
+        enderecoRepository.flush();
+        int principal = 0;
+        for (int i = 0; i < validos.size(); i++) {
+            if (validos.get(i).principal()) {
+                principal = i;
+                break;
+            }
+        }
+        for (int i = 0; i < validos.size(); i++) {
+            EnderecoPessoaDto dto = validos.get(i);
+            enderecoRepository.save(T_PessoaEndereco.builder().tenant(pessoa.getTenant()).pessoa(pessoa).principal(i == principal)
+                    .apelido(vazioParaNulo(dto.apelido())).cep(vazioParaNulo(dto.cep())).logradouro(vazioParaNulo(dto.logradouro()))
+                    .numero(vazioParaNulo(dto.numero())).complemento(vazioParaNulo(dto.complemento())).bairro(vazioParaNulo(dto.bairro()))
+                    .cidade(vazioParaNulo(dto.cidade()))
+                    .estado(dto.estado() == null || dto.estado().isBlank() ? null : dto.estado().trim().toUpperCase(Locale.ROOT)).build());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<EnderecoPessoaDto> enderecos(Long pessoaId) {
+        return enderecoRepository.findByPessoaIdOrderByPrincipalDescIdAsc(pessoaId).stream()
+                .map(e -> new EnderecoPessoaDto(e.getApelido(), e.isPrincipal(), e.getCep(), e.getLogradouro(), e.getNumero(),
+                        e.getComplemento(), e.getBairro(), e.getCidade(), e.getEstado())).toList();
     }
 
     /** Os contatos enviados substituem os anteriores. Lista nula significa "nao mexer". */
@@ -66,7 +105,7 @@ public class PessoaContatoService {
 
     @Transactional(readOnly = true)
     public EnderecoDto endereco(Long pessoaId) {
-        return enderecoRepository.findByPessoaId(pessoaId)
+        return enderecoRepository.findFirstByPessoaIdOrderByPrincipalDescIdAsc(pessoaId)
                 .map(e -> new EnderecoDto(e.getCep(), e.getLogradouro(), e.getNumero(), e.getComplemento(),
                         e.getBairro(), e.getCidade(), e.getEstado()))
                 .orElse(new EnderecoDto(null, null, null, null, null, null, null));

@@ -47,7 +47,7 @@ public class ClientePessoaService {
         var criada = pessoaService.criar(tenant, new PessoaRequest(TipoPessoa.FISICA, true, true, false,
                 "Cadastrado automaticamente pelo app/site (conta por telefone).", nome, null, null, null, null, null, null, null,
                 null, null, null, null, null, null,
-                List.of(new TelefoneDto(TipoTelefone.CELULAR, mascarar(conta.getTelefone()), "Confirmado por código (OTP)")), null));
+                List.of(new TelefoneDto(TipoTelefone.CELULAR, mascarar(conta.getTelefone()), "Confirmado por código (OTP)")), null, null));
         T_Pessoa pessoa = pessoaRepository.findById(criada.id()).orElseThrow();
         pessoa.setOrigem(ORIGEM_APP_SITE);
         pessoa.setIdClienteConta(conta.getId());

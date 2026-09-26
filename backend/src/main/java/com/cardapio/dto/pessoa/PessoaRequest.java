@@ -43,7 +43,8 @@ public record PessoaRequest(
         @Size(max = 30) String inscricaoMunicipal,
         @Valid EnderecoDto endereco,
         @Valid List<TelefoneDto> telefones,
-        @Valid List<EmailDto> emails
+        @Valid List<EmailDto> emails,
+        @Valid List<EnderecoPessoaDto> enderecos
 ) {
 
     /** Documento em branco (campo vazio do formulario) equivale a nao informado: o @CPF/@CNPJ rejeitaria a string vazia. */

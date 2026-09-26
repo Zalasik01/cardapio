@@ -5,7 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** Endereco de uma {@link T_Pessoa} (um por pessoa). */
+/** Endereço de uma {@link T_Pessoa}: pode ter vários (um é o principal). */
 @Entity
 @Table(name = "t_pessoa_endereco")
 @AttributeOverride(name = "id", column = @Column(name = "id_pessoa_endereco"))
@@ -24,9 +24,17 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class T_PessoaEndereco extends TenantAbstract {
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_pessoa", nullable = false)
     private T_Pessoa pessoa;
+
+    /** "Casa", "Trabalho"... (opcional). */
+    @Column(length = 40)
+    private String apelido;
+
+    /** Um por pessoa: o endereço que vale quando só um é usado (cadastro, pedido). */
+    @Column(nullable = false)
+    private boolean principal;
 
     @Column(length = 9)
     private String cep;

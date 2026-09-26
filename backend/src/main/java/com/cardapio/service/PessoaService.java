@@ -136,7 +136,11 @@ public class PessoaService {
         preencherPessoa(pessoa, request);
         pessoa = pessoaRepository.save(pessoa);
 
-        contatoService.salvarEndereco(pessoa, request.endereco());
+        if (request.enderecos() != null) {
+            contatoService.salvarEnderecos(pessoa, request.enderecos());
+        } else {
+            contatoService.salvarEndereco(pessoa, request.endereco());
+        }
         contatoService.salvarContatos(pessoa, request.telefones(), request.emails());
         return montarResposta(pessoa);
     }
@@ -269,7 +273,7 @@ public class PessoaService {
                 fisica ? null : pj.getRazaoSocial(), fisica ? null : pj.getNomeFantasia(), fisica ? null : pj.getCnpj(),
                 fisica ? null : pj.getInscricaoEstadual(), fisica ? null : pj.getInscricaoMunicipal(),
                 contatoService.endereco(pessoa.getId()), contatoService.telefones(pessoa.getId()),
-                contatoService.emails(pessoa.getId()), pessoa.getOrigem());
+                contatoService.emails(pessoa.getId()), pessoa.getOrigem(), contatoService.enderecos(pessoa.getId()));
     }
 
     private Specification<T_Pessoa> especificacao(UUID tenant, FiltroPessoa filtro) {

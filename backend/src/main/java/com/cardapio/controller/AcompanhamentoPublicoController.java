@@ -19,10 +19,18 @@ public class AcompanhamentoPublicoController {
 
     private final AcompanhamentoService service;
     private final com.cardapio.service.PushService pushService;
+    private final com.cardapio.service.AvaliacaoService avaliacaoService;
 
     @GetMapping
     public AcompanhamentoResponse obter(@PathVariable UUID guid) {
         return service.obter(guid);
+    }
+
+    /** O cliente avalia o pedido entregue (sem login: o guid do pedido é o segredo). */
+    @org.springframework.web.bind.annotation.PostMapping("/avaliacao")
+    public com.cardapio.service.AvaliacaoService.AvaliacaoCliente avaliar(@PathVariable UUID guid,
+            @org.springframework.web.bind.annotation.RequestBody com.cardapio.service.AvaliacaoService.AvaliacaoRequest request) {
+        return avaliacaoService.avaliar(guid, request);
     }
 
     /** O cliente aceitou notificações deste pedido: recebe um aviso a cada mudança de situação. */

@@ -9,5 +9,7 @@ public enum TipoNotificacao {
     /** Um pedido foi editado (a cozinha precisa saber). */
     PEDIDO_EDITADO,
     /** O prazo de preparo do pedido passou e ele ainda não saiu da cozinha. */
-    PEDIDO_ATRASADO
+    PEDIDO_ATRASADO,
+    /** O cliente deu nota baixa (1 ou 2) na avaliação do pedido. */
+    AVALIACAO_BAIXA
 }

@@ -13,6 +13,8 @@ public record CardapioResponse(
         String motivoFechado,
         LocalDateTime pausadoAte,
         List<UUID> maisVendidos,
+        java.math.BigDecimal avaliacaoMedia,
+        long totalAvaliacoes,
         LocalDateTime proximaMudanca,
         List<FormaPagamentoPublica> formasPagamento,
         List<CategoriaComProdutosResponse> categorias

@@ -27,6 +27,7 @@ public class CardapioService {
     private final LojaService lojaService;
     private final FuncionamentoService funcionamentoService;
     private final com.cardapio.repository.T_PedidoRepository pedidoRepository;
+    private final AvaliacaoService avaliacaoService;
     private final T_FormaPagamentoRepository formaPagamentoRepository;
 
     @Transactional(readOnly = true)
@@ -62,8 +63,10 @@ public class CardapioService {
         List<UUID> maisVendidos = pedidoRepository.maisVendidos(tenant, agora.minusDays(30), org.springframework.data.domain.PageRequest.of(0, 12))
                 .stream().filter(noCardapio::contains).limit(8).toList();
 
+        var resumoAvaliacao = avaliacaoService.resumo(tenant);
         return new CardapioResponse(LojaResponse.of(loja), situacao.aberta(), situacao.motivo(), situacao.pausadoAte(),
-                maisVendidos, situacao.proximaMudanca(), formas, categoriasComProdutos);
+                maisVendidos, resumoAvaliacao.total() == 0 ? null : resumoAvaliacao.mediaLoja(), resumoAvaliacao.total(),
+                situacao.proximaMudanca(), formas, categoriasComProdutos);
     }
 
     /** Manifesto do PWA da loja: nome, cores, ícone (logo da loja, se houver) e a página inicial dela. */

@@ -29,6 +29,7 @@ public class AcompanhamentoService {
     private final LojaService lojaService;
     private final PedidoEventos pedidoEventos;
     private final com.cardapio.repository.T_PedidoTrilhaRepository trilhaRepository;
+    private final AvaliacaoService avaliacaoService;
 
     @Transactional
     public AcompanhamentoResponse obter(UUID guid) {
@@ -53,6 +54,7 @@ public class AcompanhamentoService {
                     .map(e -> new Entregador(primeiroNome(e.getNome()), e.getVeiculo(), e.getUltimaLatitude(), e.getUltimaLongitude(), e.getPosicaoEm()))
                     .orElse(null);
         }
+        var avaliacao = concluido ? avaliacaoService.doPedido(pedido.getId()) : null;
         List<AcompanhamentoResponse.Ponto> trilha = new ArrayList<>();
         if (pedido.getStatus() == StatusPedido.SAIU_PARA_ENTREGA) {
             var pontos = new ArrayList<>(trilhaRepository.ultimos(pedido.getId(), org.springframework.data.domain.PageRequest.of(0, 120)));
@@ -71,7 +73,9 @@ public class AcompanhamentoService {
                 pedido.getSubtotal(), pedido.getTaxaEntrega(), pedido.getTotal(), destino, entregador,
                 pedido.getLatitude(), pedido.getLongitude(), trilha,
                 // o código só aparece com o pedido a caminho: é o cliente quem o passa ao entregador
-                pedido.getStatus() == StatusPedido.SAIU_PARA_ENTREGA ? pedido.getCodigoEntrega() : null);
+                pedido.getStatus() == StatusPedido.SAIU_PARA_ENTREGA ? pedido.getCodigoEntrega() : null,
+                avaliacao, concluido && avaliacao == null,
+                pedido.getTipoEntrega() == TipoEntrega.ENTREGA && pedido.getIdEntregador() != null);
     }
 
     @Transactional

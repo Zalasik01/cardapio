@@ -75,6 +75,13 @@ public class NotificacaoService {
         criar(pedido, TipoNotificacao.PEDIDO_EDITADO, "Pedido " + pedido.getId() + " foi editado", resumo);
     }
 
+    /** Nota baixa: avisa a loja para agir (e responder) enquanto o cliente ainda lembra do pedido. */
+    public void avaliacaoBaixa(T_Pedido pedido, int notaLoja, Integer notaEntrega, String comentario) {
+        String notas = "loja " + notaLoja + "/5" + (notaEntrega != null ? ", entrega " + notaEntrega + "/5" : "");
+        criar(pedido, TipoNotificacao.AVALIACAO_BAIXA, "Nota baixa no pedido " + pedido.getId(),
+                pedido.getNomeCliente() + " avaliou: " + notas + (comentario != null ? " — \"" + comentario + "\"" : ""));
+    }
+
     private void criar(T_Pedido pedido, TipoNotificacao tipo, String titulo, String mensagem) {
         T_Notificacao notificacao = new T_Notificacao();
         notificacao.setTenant(pedido.getTenant());

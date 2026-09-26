@@ -32,7 +32,10 @@ public record AcompanhamentoResponse(
         Double destinoLatitude,
         Double destinoLongitude,
         List<Ponto> trilha,
-        String codigoEntrega
+        String codigoEntrega,
+        com.cardapio.service.AvaliacaoService.AvaliacaoCliente avaliacao,
+        boolean podeAvaliar,
+        boolean avaliaEntrega
 ) {
 
     /** Uma etapa da linha do tempo; concluida vale para as já passadas e atual para a situação de agora. */

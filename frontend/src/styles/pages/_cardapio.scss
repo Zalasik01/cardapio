@@ -1545,7 +1545,7 @@ body:has(.loja) { background: #fbf7f4; }
 .estrelas { display: inline-flex; gap: 0.15em; color: #d6d3d1; vertical-align: middle; }
 .estrelas__cheia { color: #f59e0b; }
 .estrelas--editavel button { padding: 0; min-height: 0; border: 0; background: transparent; color: inherit; font-size: inherit; line-height: 1; cursor: pointer; transition: transform 0.15s; &:hover { background: transparent; transform: scale(1.15); } }
-.loja-capa__nota { background: #fffbeb !important; color: #92400e !important; strong { font-weight: 800; } }
+.loja-capa__nota { background: #fffbeb !important; color: #92400e !important; strong { font-weight: 800; } i { color: #f59e0b !important; } }
 
 .pedido-avaliacao {
   display: grid;

@@ -87,7 +87,7 @@ export default function PaginaFidelidade() {
                              onValueChange={(e) => definir('resgateMaximoPct')(e.value ?? 50)} />
               </Campo>
             </GradeCampos>
-            <p className="texto-auxiliar">
+            <p className="texto-auxiliar" style={{ marginTop: '1.75rem' }}>
               O cashback é creditado quando o pedido é entregue e volta (com nova validade) se um pedido pago com ele for cancelado.
             </p>
           </SecaoCrud>

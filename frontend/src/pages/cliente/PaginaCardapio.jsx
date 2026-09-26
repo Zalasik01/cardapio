@@ -401,7 +401,7 @@ export default function PaginaCardapio() {
           </div>
           <ul className="loja-capa__infos">
             {cardapio.avaliacaoMedia != null && (
-              <li className="loja-capa__nota"><Estrelas valor={1} tamanho="0.85rem" rotulo="Nota" /> <strong>{String(cardapio.avaliacaoMedia).replace('.', ',')}</strong> ({cardapio.totalAvaliacoes})</li>
+              <li className="loja-capa__nota"><i className="fa-solid fa-star" aria-hidden="true" /> <strong>{String(cardapio.avaliacaoMedia).replace('.', ',')}</strong> ({cardapio.totalAvaliacoes})</li>
             )}
             {cardapio.cashbackPercentual != null && (
               <li className="loja-capa__cashback"><i className="fa-solid fa-coins" aria-hidden="true" /> {String(cardapio.cashbackPercentual).replace('.00', '').replace('.', ',')}% de cashback</li>

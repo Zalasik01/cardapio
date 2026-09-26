@@ -10,7 +10,7 @@ import { SelectButton } from 'primereact/selectbutton'
 import { Tooltip } from 'primereact/tooltip'
 import { useAuth } from '../../context/AuthContext'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
-import { calcularFrete } from '../../api/cardapioApi'
+import { calcularFreteEndereco } from '../../api/cardapioApi'
 import { buscarLoja } from '../../api/adminApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
 import {
@@ -90,12 +90,15 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
       return undefined
     }
     const espera = setTimeout(() => {
-      calcularFrete({ tenant: loja.tenant, bairro: rascunho.enderecoBairro.trim() })
+      calcularFreteEndereco({
+        tenant: loja.tenant, rua: rascunho.enderecoRua, bairro: rascunho.enderecoBairro.trim(),
+        cidade: rascunho.enderecoCidade || loja.enderecoCidade, estado: loja.enderecoEstado,
+      })
         .then(setFrete)
         .catch(() => setFrete(null))
     }, 500)
     return () => clearTimeout(espera)
-  }, [entrega, rascunho.enderecoBairro, loja.tenant])
+  }, [entrega, rascunho.enderecoBairro, rascunho.enderecoRua, rascunho.enderecoCidade, loja.tenant, loja.enderecoCidade, loja.enderecoEstado])
 
   /** Sugere clientes cadastrados enquanto o nome é digitado; quem não é cadastrado continua podendo ser digitado. */
   function sugerirClientes(evento) {

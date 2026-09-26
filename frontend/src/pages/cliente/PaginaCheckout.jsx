@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { Steps } from 'primereact/steps'
-import { calcularFrete, criarPedido } from '../../api/cardapioApi'
-import { buscarCoordenadas, buscarEnderecoPorCep } from '../../api/cepApi'
+import { calcularFreteEndereco, criarPedido } from '../../api/cardapioApi'
+import { buscarEnderecoPorCep } from '../../api/cepApi'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
 
@@ -62,11 +62,7 @@ export default function PaginaCheckout() {
     setFrete(null)
     if (!endereco.bairro) return
     try {
-      let resultado = await calcularFrete({ tenant: loja.tenant, bairro: endereco.bairro })
-      if (!resultado.entregavel && resultado.origem === 'INDISPONIVEL') {
-        const coordenadas = await buscarCoordenadas({ ...endereco, estado: endereco.estado ?? loja.enderecoEstado })
-        if (coordenadas) resultado = await calcularFrete({ tenant: loja.tenant, bairro: endereco.bairro, ...coordenadas })
-      }
+      const resultado = await calcularFreteEndereco({ tenant: loja.tenant, ...endereco, estado: endereco.estado ?? loja.enderecoEstado })
       setFrete(resultado)
       setErro(resultado.entregavel ? null : resultado.mensagem)
     } catch (e) {
@@ -146,6 +142,8 @@ export default function PaginaCheckout() {
         enderecoComplemento: entrega ? form.enderecoComplemento : null,
         enderecoBairro: entrega ? form.enderecoBairro : null,
         enderecoCidade: entrega ? form.enderecoCidade : null,
+        latitude: entrega ? frete?.latitude : null,
+        longitude: entrega ? frete?.longitude : null,
         itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade, observacoes: i.observacoes })),
         formaPagamento: form.formaPagamento,
         observacoes: form.observacoes,

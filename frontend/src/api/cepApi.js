@@ -49,8 +49,7 @@ export async function buscarCoordenadas({ rua, bairro, cidade, estado }) {
       if (!resposta.ok) continue
       const [achado] = await resposta.json()
       if (achado) return { latitude: Number(achado.lat), longitude: Number(achado.lon) }
-    } catch {
-      // tenta a próxima consulta
+    } catch (e) {
     }
   }
   return null

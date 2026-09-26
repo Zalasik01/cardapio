@@ -32,11 +32,12 @@ public class PedidoService {
     private final NotificacaoService notificacaoService;
     private final FluxoPedidoService fluxoService;
     private final PagamentoPedidoService pagamentoService;
+    private final CupomService cupomService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
     public T_Pedido criar(PedidoRequest request) {
-        return criar(request, false);
+        return criar(request, false, null);
     }
 
     /** Pedido do cliente logado: o telefone é o da conta (confirmado por OTP) e o pedido fica no histórico dela. */
@@ -45,10 +46,8 @@ public class PedidoService {
         PedidoRequest daConta = new PedidoRequest(request.tenant(), request.nomeCliente(), conta.getTelefone(),
                 request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
                 request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
-                request.itens(), request.formaPagamento(), request.observacoes(), null, null, null, null);
-        T_Pedido pedido = criar(daConta, false);
-        pedido.setIdClienteConta(conta.getId());
-        return pedidoRepository.save(pedido);
+                request.itens(), request.formaPagamento(), request.observacoes(), null, null, null, null, request.codigoCupom());
+        return criar(daConta, false, conta);
     }
 
     /**
@@ -57,6 +56,12 @@ public class PedidoService {
      */
     @Transactional
     public T_Pedido criar(PedidoRequest request, boolean pelaLoja) {
+        return criar(request, pelaLoja, null);
+    }
+
+    /** conta: cliente logado do cardápio online (vazio nos pedidos lançados pela loja); é ela que usa cupom. */
+    @Transactional
+    public T_Pedido criar(PedidoRequest request, boolean pelaLoja, com.cardapio.entity.S_ClienteConta conta) {
         S_Loja loja = lojaService.buscarPorTenant(request.tenant());
         UUID tenant = loja.getGuid();
         if (!pelaLoja && !funcionamentoService.estaAberta(loja)) {
@@ -81,6 +86,7 @@ public class PedidoService {
 
         BigDecimal subtotal = BigDecimal.ZERO;
         List<T_Produto> produtosDoPedido = new java.util.ArrayList<>();
+        List<CupomService.ItemAvaliacao> itensAvaliacao = new java.util.ArrayList<>();
         for (ItemPedidoRequest itemRequest : request.itens()) {
             T_Produto produto = produtoRepository.findByGuidAndTenant(itemRequest.produtoGuid(), tenant)
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + itemRequest.produtoGuid()));
@@ -105,6 +111,7 @@ public class PedidoService {
 
             pedido.getItens().add(item);
             produtosDoPedido.add(produto);
+            itensAvaliacao.add(new CupomService.ItemAvaliacao(produto, itemRequest.quantidade()));
             subtotal = subtotal.add(totalItem);
         }
 
@@ -130,6 +137,16 @@ public class PedidoService {
         }
 
         BigDecimal desconto = pelaLoja ? calcularDesconto(request, subtotal, pedido) : BigDecimal.ZERO;
+        CupomService.Resultado cupom = null;
+        if (!pelaLoja && conta != null && request.codigoCupom() != null && !request.codigoCupom().isBlank()) {
+            // o servidor confere o cupom de novo: o valor mostrado no checkout nunca é confiado
+            cupom = cupomService.avaliar(tenant, request.codigoCupom(), conta, request.tipoEntrega(), itensAvaliacao, taxaEntrega);
+            desconto = cupom.desconto();
+            pedido.setCodigoCupom(cupom.cupom().getCodigo());
+        }
+        if (conta != null) {
+            pedido.setIdClienteConta(conta.getId());
+        }
 
         pedido.setSubtotal(subtotal);
         pedido.setTaxaEntrega(taxaEntrega);
@@ -150,6 +167,9 @@ public class PedidoService {
         pedido.setIdSituacao(inicial.getId());
         pedido.setStatus(inicial.getCategoria());
         T_Pedido salvo = pedidoRepository.save(pedido);
+        if (cupom != null) {
+            cupomService.registrarUso(cupom.cupom(), salvo.getId(), conta.getId(), cupom.desconto());
+        }
         if (pagamentos.temPagamentos()) {
             pagamentoService.persistir(salvo.getId(), tenant, pagamentos);
         }

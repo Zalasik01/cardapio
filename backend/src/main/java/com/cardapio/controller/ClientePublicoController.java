@@ -20,6 +20,7 @@ public class ClientePublicoController {
 
     private final ClienteContaService contaService;
     private final HistoricoClienteService historicoService;
+    private final com.cardapio.service.CupomService cupomService;
 
     public record SolicitarCodigoRequest(@NotBlank String telefone) {
     }
@@ -49,6 +50,14 @@ public class ClientePublicoController {
     public ContaResponse atualizarNome(@RequestHeader(value = "Authorization", required = false) String auth,
                                        @Valid @RequestBody NomeRequest request) {
         return contaService.atualizarNome(contaService.autenticar(auth), request.nome());
+    }
+
+    /** Confere um cupom para o carrinho (o desconto final é sempre recalculado ao enviar o pedido). */
+    @PostMapping("/cupom/validar")
+    public com.cardapio.dto.cupom.CupomDtos.CupomAplicado validarCupom(
+            @RequestHeader(value = "Authorization", required = false) String auth,
+            @Valid @RequestBody com.cardapio.dto.cupom.CupomDtos.ValidarCupomRequest request) {
+        return cupomService.validar(contaService.autenticar(auth), request);
     }
 
     @GetMapping("/pedidos")

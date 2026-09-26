@@ -25,3 +25,7 @@ export async function calcularFreteEndereco({ tenant, rua, bairro, cidade, estad
   // as coordenadas seguem no resultado: o pedido precisa reenviá-las para o servidor recalcular o mesmo frete
   return { ...(await calcularFrete({ tenant, bairro, ...coordenadas })), ...coordenadas }
 }
+
+/** Confere um cupom para o carrinho (precisa estar logado); o desconto final é recalculado pelo servidor no pedido. */
+export const validarCupom = ({ tenant, codigo, tipoEntrega, taxaEntrega, itens }) =>
+  http.post('/publico/cliente/cupom/validar', { tenant, codigo, tipoEntrega, taxaEntrega, itens }).then((res) => res.data)

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { Steps } from 'primereact/steps'
-import { calcularFreteEndereco, criarPedido } from '../../api/cardapioApi'
+import { calcularFreteEndereco, criarPedido, validarCupom } from '../../api/cardapioApi'
 import { buscarEnderecoPorCep } from '../../api/cepApi'
 import { mascaraTelefone } from '../../utils/telefone'
 import { useCarrinho } from '../../context/CarrinhoContext'
@@ -37,6 +37,10 @@ export default function PaginaCheckout() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState(null)
   const [passo, setPasso] = useState(0)
+  const [codigoCupom, setCodigoCupom] = useState('')
+  const [cupom, setCupom] = useState(null)
+  const [validandoCupom, setValidandoCupom] = useState(false)
+  const [erroCupom, setErroCupom] = useState(null)
   const passoRef = useRef(null)
 
   const formas = useMemo(
@@ -62,6 +66,29 @@ export default function PaginaCheckout() {
       telefoneCliente: mascaraTelefone(cliente.telefone),
     }))
   }, [cliente, abrirLogin])
+
+  // mudou o pedido (itens, entrega ou frete): o cupom precisa ser conferido de novo
+  const taxaFrete = frete?.entregavel ? Number(frete.taxa || 0) : 0
+  useEffect(() => {
+    setCupom(null)
+  }, [itens, tipoEntrega, taxaFrete])
+
+  async function aplicarCupom() {
+    setErroCupom(null)
+    setValidandoCupom(true)
+    try {
+      const aplicado = await validarCupom({
+        tenant: loja.tenant, codigo: codigoCupom, tipoEntrega, taxaEntrega: tipoEntrega === 'ENTREGA' ? taxaFrete : 0,
+        itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade })),
+      })
+      setCupom(aplicado)
+    } catch (e) {
+      setCupom(null)
+      setErroCupom(e.mensagem)
+    } finally {
+      setValidandoCupom(false)
+    }
+  }
 
   const campo = (nome, valor) => setForm((atual) => ({ ...atual, [nome]: valor }))
 
@@ -155,6 +182,7 @@ export default function PaginaCheckout() {
         itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade, observacoes: i.observacoes })),
         formaPagamento: form.formaPagamento,
         observacoes: form.observacoes,
+        codigoCupom: cupom?.codigo ?? null,
       })
       limparCarrinho()
       navigate(`/pedido/${pedido.guid}`)
@@ -183,7 +211,8 @@ export default function PaginaCheckout() {
   }
 
   const taxa = tipoEntrega === 'ENTREGA' && frete?.entregavel ? Number(frete.taxa || 0) : 0
-  const total = subtotal + taxa
+  const desconto = Number(cupom?.desconto ?? 0)
+  const total = Math.max(0, subtotal - desconto + taxa)
 
   return (
     <form className="loja-pagina" onSubmit={enviar}>
@@ -295,8 +324,27 @@ export default function PaginaCheckout() {
           Pagamento: {form.formaPagamento}
         </p>
       </section>
+      <section className="loja-bloco loja-cupom">
+        <h2>Cupom de desconto</h2>
+        {cupom ? (
+          <p className="loja-frete">
+            <i className="fa-solid fa-ticket" aria-hidden="true" /> <strong>{cupom.codigo}</strong> aplicado: -{formatarMoeda(cupom.desconto)}{' '}
+            <button type="button" className="loja-link" onClick={() => { setCupom(null); setCodigoCupom('') }}>remover</button>
+          </p>
+        ) : (
+          <div className="loja-cupom__linha">
+            <input value={codigoCupom} onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())} placeholder="Código do cupom"
+                   aria-label="Código do cupom" autoCapitalize="characters" />
+            <button type="button" className="loja-botao loja-botao--sec" disabled={!codigoCupom.trim() || validandoCupom} onClick={aplicarCupom}>
+              {validandoCupom ? 'Conferindo...' : 'Aplicar'}
+            </button>
+          </div>
+        )}
+        {erroCupom && <small className="loja-resumo__aviso" role="alert">{erroCupom}</small>}
+      </section>
       <section className="loja-resumo">
         <p><span>Subtotal</span><span>{formatarMoeda(subtotal)}</span></p>
+        {desconto > 0 && <p className="loja-resumo__desconto"><span>Desconto ({cupom.codigo})</span><span>-{formatarMoeda(desconto)}</span></p>}
         <p><span>Entrega</span><span>{tipoEntrega === 'ENTREGA' ? (frete?.entregavel ? formatarMoeda(taxa) : 'a calcular') : 'Retirada'}</span></p>
         <p className="loja-resumo__total"><span>Total</span><strong>{formatarMoeda(total)}</strong></p>
       </section>

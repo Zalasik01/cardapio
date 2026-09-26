@@ -76,6 +76,9 @@ public class T_Pedido extends TenantAbstract {
 
     private BigDecimal descontoValor;
 
+    /** Código do cupom aplicado (o desconto dele já está em "desconto"). */
+    private String codigoCupom;
+
     @Column(nullable = false)
     @Builder.Default
     private BigDecimal desconto = BigDecimal.ZERO;

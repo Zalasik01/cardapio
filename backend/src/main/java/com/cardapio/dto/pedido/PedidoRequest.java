@@ -27,6 +27,18 @@ public record PedidoRequest(
         String descontoTipo,
         java.math.BigDecimal descontoValor,
         java.math.BigDecimal taxaEntrega,
-        java.util.List<PagamentoRequest> pagamentos
+        java.util.List<PagamentoRequest> pagamentos,
+        String codigoCupom
 ) {
+
+    /** Sem cupom (pedidos lançados pela loja e simulações). */
+    public PedidoRequest(UUID tenant, String nomeCliente, String telefoneCliente, TipoEntrega tipoEntrega, String enderecoRua,
+                         String enderecoNumero, String enderecoComplemento, String enderecoBairro, String enderecoCidade,
+                         Double latitude, Double longitude, List<ItemPedidoRequest> itens, String formaPagamento,
+                         String observacoes, String descontoTipo, java.math.BigDecimal descontoValor,
+                         java.math.BigDecimal taxaEntrega, java.util.List<PagamentoRequest> pagamentos) {
+        this(tenant, nomeCliente, telefoneCliente, tipoEntrega, enderecoRua, enderecoNumero, enderecoComplemento, enderecoBairro,
+                enderecoCidade, latitude, longitude, itens, formaPagamento, observacoes, descontoTipo, descontoValor, taxaEntrega,
+                pagamentos, null);
+    }
 }

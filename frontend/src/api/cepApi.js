@@ -34,3 +34,24 @@ export async function buscarEnderecoPorCep(cep, { signal } = {}) {
     clearTimeout(temporizador)
   }
 }
+
+/**
+ * Coordenadas aproximadas de um endereço no Nominatim (OpenStreetMap), serviço público e gratuito. Tenta do mais
+ * específico (rua + bairro) ao mais amplo (bairro, cidade). Devolve { latitude, longitude } ou null.
+ */
+export async function buscarCoordenadas({ rua, bairro, cidade, estado }) {
+  const tentativas = [[rua, bairro, cidade, estado], [bairro, cidade, estado], [cidade, estado]]
+  for (const partes of tentativas) {
+    const consulta = partes.filter(Boolean).join(', ')
+    if (!consulta || !cidade) continue
+    try {
+      const resposta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(consulta)}`)
+      if (!resposta.ok) continue
+      const [achado] = await resposta.json()
+      if (achado) return { latitude: Number(achado.lat), longitude: Number(achado.lon) }
+    } catch {
+      // tenta a próxima consulta
+    }
+  }
+  return null
+}

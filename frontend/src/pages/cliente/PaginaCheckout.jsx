@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
+import { Steps } from 'primereact/steps'
 import { calcularFrete, criarPedido } from '../../api/cardapioApi'
-import { buscarEnderecoPorCep } from '../../api/cepApi'
+import { buscarCoordenadas, buscarEnderecoPorCep } from '../../api/cepApi'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
 
@@ -19,6 +20,8 @@ function mascaraTelefone(v) {
   const corte = d.length === 11 ? 7 : 6
   return `(${d.slice(0, 2)}) ${d.slice(2, corte)}-${d.slice(corte)}`
 }
+
+const PASSOS = [{ label: 'Dados' }, { label: 'Entrega' }, { label: 'Pagamento' }, { label: 'Revisão' }]
 
 const FORM_INICIAL = {
   nomeCliente: '', telefoneCliente: '', cep: '', enderecoRua: '', enderecoNumero: '',
@@ -38,6 +41,8 @@ export default function PaginaCheckout() {
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState(null)
+  const [passo, setPasso] = useState(0)
+  const passoRef = useRef(null)
 
   const formas = useMemo(
     () => cardapio.formasPagamento.filter((f) => (tipoEntrega === 'ENTREGA' ? f.aceitaEntrega : f.aceitaRetirada)),
@@ -52,11 +57,16 @@ export default function PaginaCheckout() {
 
   const campo = (nome, valor) => setForm((atual) => ({ ...atual, [nome]: valor }))
 
-  async function consultarFrete(bairro) {
+  /** Frete pela zona do bairro; sem zona cadastrada, calcula pela distância usando as coordenadas do endereço. */
+  async function consultarFrete(endereco) {
     setFrete(null)
-    if (!bairro) return
+    if (!endereco.bairro) return
     try {
-      const resultado = await calcularFrete({ tenant: loja.tenant, bairro })
+      let resultado = await calcularFrete({ tenant: loja.tenant, bairro: endereco.bairro })
+      if (!resultado.entregavel && resultado.origem === 'INDISPONIVEL') {
+        const coordenadas = await buscarCoordenadas({ ...endereco, estado: endereco.estado ?? loja.enderecoEstado })
+        if (coordenadas) resultado = await calcularFrete({ tenant: loja.tenant, bairro: endereco.bairro, ...coordenadas })
+      }
       setFrete(resultado)
       setErro(resultado.entregavel ? null : resultado.mensagem)
     } catch (e) {
@@ -79,7 +89,7 @@ export default function PaginaCheckout() {
       setForm((atual) => ({
         ...atual, enderecoRua: endereco.logradouro, enderecoBairro: endereco.bairro, enderecoCidade: endereco.cidade,
       }))
-      await consultarFrete(endereco.bairro)
+      await consultarFrete({ rua: endereco.logradouro, bairro: endereco.bairro, cidade: endereco.cidade, estado: endereco.estado })
     } catch {
       setErro('Não foi possível buscar o CEP agora. Preencha o endereço manualmente.')
     } finally {
@@ -87,8 +97,37 @@ export default function PaginaCheckout() {
     }
   }
 
+  /** Valida os campos do passo atual (os do HTML) e a taxa de entrega antes de avançar. */
+  function avancar() {
+    setErro(null)
+    const campos = [...(passoRef.current?.querySelectorAll('input, textarea') ?? [])]
+    const invalido = campos.find((c) => !c.checkValidity())
+    if (invalido) {
+      invalido.reportValidity()
+      return
+    }
+    if (passo === 1 && tipoEntrega === 'ENTREGA' && !frete?.entregavel) {
+      setErro('Informe o CEP ou o bairro para calcularmos a taxa de entrega.')
+      return
+    }
+    if (passo === 2 && !form.formaPagamento) {
+      setErro('Escolha uma forma de pagamento.')
+      return
+    }
+    setPasso((p) => p + 1)
+  }
+
+  function voltar() {
+    setErro(null)
+    setPasso((p) => p - 1)
+  }
+
   async function enviar(e) {
     e.preventDefault()
+    if (passo < PASSOS.length - 1) {
+      avancar()
+      return
+    }
     setErro(null)
     if (tipoEntrega === 'ENTREGA' && !frete?.entregavel) {
       setErro('Informe o CEP ou o bairro para calcularmos a taxa de entrega.')
@@ -132,6 +171,10 @@ export default function PaginaCheckout() {
         <h1>Finalizar pedido</h1>
       </header>
 
+      <Steps model={PASSOS} activeIndex={passo} readOnly className="loja-passos" />
+
+      <div ref={passoRef}>
+      {passo === 0 && (
       <section className="loja-bloco">
         <h2>Seus dados</h2>
         <label className="loja-campo">Nome
@@ -142,7 +185,9 @@ export default function PaginaCheckout() {
                  onChange={(e) => campo('telefoneCliente', mascaraTelefone(e.target.value))} />
         </label>
       </section>
+      )}
 
+      {passo === 1 && (
       <section className="loja-bloco">
         <h2>Como quer receber?</h2>
         <div className="loja-opcoes" role="radiogroup" aria-label="Tipo de entrega">
@@ -177,7 +222,7 @@ export default function PaginaCheckout() {
             <div className="loja-linha">
               <label className="loja-campo">Bairro
                 <input required value={form.enderecoBairro} onChange={(e) => campo('enderecoBairro', e.target.value)}
-                       onBlur={(e) => e.target.value && consultarFrete(e.target.value)} />
+                       onBlur={(e) => e.target.value && consultarFrete({ rua: form.enderecoRua, bairro: e.target.value, cidade: form.enderecoCidade })} />
               </label>
               <label className="loja-campo">Cidade
                 <input value={form.enderecoCidade} onChange={(e) => campo('enderecoCidade', e.target.value)} />
@@ -193,7 +238,9 @@ export default function PaginaCheckout() {
           </p>
         )}
       </section>
+      )}
 
+      {passo === 2 && (
       <section className="loja-bloco">
         <h2>Pagamento</h2>
         {formas.length === 0 ? (
@@ -213,19 +260,41 @@ export default function PaginaCheckout() {
           <textarea rows={2} value={form.observacoes} onChange={(e) => campo('observacoes', e.target.value)} />
         </label>
       </section>
+      )}
 
+      {passo === 3 && (
+      <>
+      <section className="loja-bloco">
+        <h2>Confira seu pedido</h2>
+        <ul className="loja-revisao">
+          {itens.map((i) => <li key={`${i.produtoGuid}-${i.observacoes}`}><span>{i.quantidade}x {i.nome}</span><span>{formatarMoeda(i.preco * i.quantidade)}</span></li>)}
+        </ul>
+        <p className="loja-revisao__dados">
+          {form.nomeCliente} · {form.telefoneCliente}<br />
+          {tipoEntrega === 'ENTREGA' ? `Entrega: ${form.enderecoRua}, ${form.enderecoNumero} - ${form.enderecoBairro}` : 'Retirada na loja'}<br />
+          Pagamento: {form.formaPagamento}
+        </p>
+      </section>
       <section className="loja-resumo">
         <p><span>Subtotal</span><span>{formatarMoeda(subtotal)}</span></p>
         <p><span>Entrega</span><span>{tipoEntrega === 'ENTREGA' ? (frete?.entregavel ? formatarMoeda(taxa) : 'a calcular') : 'Retirada'}</span></p>
         <p className="loja-resumo__total"><span>Total</span><strong>{formatarMoeda(total)}</strong></p>
       </section>
+      </>
+      )}
+      </div>
 
       {erro && <p className="loja__erro" role="alert">{erro}</p>}
 
-      <footer className="loja-rodape-fixo">
-        <button type="submit" className="loja-botao" disabled={enviando || !cardapio.aberta || formas.length === 0}>
-          {enviando ? 'Enviando...' : `Enviar pedido · ${formatarMoeda(total)}`}
-        </button>
+      <footer className="loja-rodape-fixo loja-rodape-fixo--passos">
+        {passo > 0 && <button type="button" className="loja-botao loja-botao--sec" onClick={voltar}>Voltar</button>}
+        {passo < PASSOS.length - 1 ? (
+          <button type="button" className="loja-botao" onClick={avancar}>Continuar</button>
+        ) : (
+          <button type="submit" className="loja-botao" disabled={enviando || !cardapio.aberta || formas.length === 0}>
+            {enviando ? 'Enviando...' : `Enviar pedido · ${formatarMoeda(total)}`}
+          </button>
+        )}
       </footer>
     </form>
   )

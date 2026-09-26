@@ -38,6 +38,7 @@ public class EntregadorPublicoService {
     private final PagamentoPedidoService pagamentoService;
     private final LojaService lojaService;
     private final ImagemService imagemService;
+    private final com.cardapio.repository.T_PedidoTrilhaRepository trilhaRepository;
     private final ApplicationEventPublisher eventos;
 
     @Transactional
@@ -80,7 +81,8 @@ public class EntregadorPublicoService {
 
     /** "Entregue": conclui o pedido no fluxo, guarda a foto da entrega (opcional) e a hora. */
     @Transactional
-    public void entregar(UUID token, Long pedidoId, MultipartFile foto) {
+    public void entregar(UUID token, Long pedidoId, MultipartFile foto, String codigo) {
+        conferirCodigo(token, pedidoId, codigo);
         String url = foto == null || foto.isEmpty() ? null : imagemService.enviar("entregas", foto);
         mover(token, pedidoId, StatusPedido.ENTREGUE, url);
     }
@@ -96,8 +98,23 @@ public class EntregadorPublicoService {
         entregador.setUltimaLongitude(longitude);
         entregador.setPosicaoEm(LocalDateTime.now().withNano(0));
         entregadorRepository.save(entregador);
-        pedidoRepository.buscarEntregasDoEntregador(entregador.getId(), List.of(StatusPedido.SAIU_PARA_ENTREGA))
-                .forEach(p -> eventos.publishEvent(new PedidoEventos.PedidoEvento(p.getTenant(), "POSICAO", p.getId())));
+var emRota = pedidoRepository.buscarEntregasDoEntregador(entregador.getId(), List.of(StatusPedido.SAIU_PARA_ENTREGA));
+        emRota.forEach(p -> {
+            trilhaRepository.save(com.cardapio.entity.T_PedidoTrilha.builder().tenant(p.getTenant()).idPedido(p.getId())
+                    .latitude(latitude).longitude(longitude).registradoEm(LocalDateTime.now()).build());
+            eventos.publishEvent(new PedidoEventos.PedidoEvento(p.getTenant(), "POSICAO", p.getId()));
+        });
+    }
+
+    /** Prova de entrega: pedido com código só é concluído se o entregador digitar o código que o cliente recebeu. */
+    private void conferirCodigo(UUID token, Long pedidoId, String codigo) {
+        T_Entregador entregador = entregadorPorToken(token);
+        T_Pedido pedido = pedidoRepository.buscarComItensPorId(pedidoId, entregador.getTenant())
+                .filter(p -> entregador.getId().equals(p.getIdEntregador()))
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Entrega não encontrada"));
+        if (pedido.getCodigoEntrega() != null && !pedido.getCodigoEntrega().equals(codigo == null ? "" : codigo.trim())) {
+            throw new RegraNegocioException("Código de entrega incorreto. Peça o código de 4 dígitos ao cliente.");
+        }
     }
 
     private void mover(UUID token, Long pedidoId, StatusPedido categoria, String fotoUrl) {

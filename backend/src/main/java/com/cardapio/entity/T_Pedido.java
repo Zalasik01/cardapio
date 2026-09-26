@@ -104,6 +104,10 @@ public class T_Pedido extends TenantAbstract {
     /** Conta do cliente que fez o pedido pelo cardápio online (vazio nos pedidos lançados pela loja). */
     private Long idClienteConta;
 
+    /** Código de 4 dígitos que o cliente passa ao entregador: prova de que a entrega foi feita (só pedidos de entrega). */
+    @Column(length = 4)
+    private String codigoEntrega;
+
     private BigDecimal repasseEntregador;
 
     private String fotoEntregaUrl;

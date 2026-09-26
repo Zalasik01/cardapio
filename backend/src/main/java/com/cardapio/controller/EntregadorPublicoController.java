@@ -44,8 +44,9 @@ public class EntregadorPublicoController {
 
     @PostMapping(path = "/pedidos/{pedidoId}/entregue")
     public ResponseEntity<Void> entregar(@PathVariable UUID token, @PathVariable Long pedidoId,
-                                         @RequestPart(name = "foto", required = false) MultipartFile foto) {
-        service.entregar(token, pedidoId, foto);
+                                         @RequestPart(name = "foto", required = false) MultipartFile foto,
+                                         @RequestParam(name = "codigo", required = false) String codigo) {
+        service.entregar(token, pedidoId, foto, codigo);
         return ResponseEntity.noContent().build();
     }
 

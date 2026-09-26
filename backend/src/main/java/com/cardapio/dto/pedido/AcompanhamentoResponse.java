@@ -28,7 +28,11 @@ public record AcompanhamentoResponse(
         BigDecimal taxaEntrega,
         BigDecimal total,
         String destino,
-        Entregador entregador
+        Entregador entregador,
+        Double destinoLatitude,
+        Double destinoLongitude,
+        List<Ponto> trilha,
+        String codigoEntrega
 ) {
 
     /** Uma etapa da linha do tempo; concluida vale para as já passadas e atual para a situação de agora. */
@@ -36,6 +40,9 @@ public record AcompanhamentoResponse(
     }
 
     public record Item(String nome, int quantidade, BigDecimal total) {
+    }
+
+    public record Ponto(double latitude, double longitude) {
     }
 
     /** Aparece só enquanto o pedido está com o entregador; posição é a última enviada pelo celular dele. */

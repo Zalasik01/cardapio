@@ -153,6 +153,9 @@ public class PedidoService {
         if (conta != null) {
             pedido.setIdClienteConta(conta.getId());
         }
+        if (request.tipoEntrega() == TipoEntrega.ENTREGA) {
+            pedido.setCodigoEntrega(String.format("%04d", new java.security.SecureRandom().nextInt(10000)));
+        }
 
         pedido.setSubtotal(subtotal);
         pedido.setTaxaEntrega(taxaEntrega);

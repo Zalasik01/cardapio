@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { obterAcompanhamento } from '../../api/entregadoresApi'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -74,20 +74,20 @@ function AnimacaoMomento({ pedido }) {
   }
 }
 
-/** Mapa (OpenStreetMap) com a posição do entregador; sem chave de API e sem biblioteca. */
-function MapaEntregador({ entregador }) {
-  const { latitude: lat, longitude: lng } = entregador
-  const d = 0.008
-  const caixa = `${lng - d},${lat - d},${lng + d},${lat + d}`
+/** Mapa com o trajeto do entregador, a rota até a casa e a posição dele (a estimativa sobe para o cartão de status). */
+function MapaEntregador({ pedido, aoEstimar }) {
+  const { entregador } = pedido
   return (
-    <div className="pedido-mapa">
-      <iframe title="Posição do entregador" loading="lazy"
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=${caixa}&layer=mapnik&marker=${lat},${lng}`} />
-      <small>
-        Posição {haQuanto(entregador.posicaoEm)} ·{' '}
-        <a href={`https://www.google.com/maps?q=${lat},${lng}`} target="_blank" rel="noopener noreferrer">abrir no mapa</a>
-      </small>
-    </div>
+    <>
+      <MapaAcompanhamento
+        entregador={entregador}
+        destino={pedido.destinoLatitude != null ? { latitude: pedido.destinoLatitude, longitude: pedido.destinoLongitude } : null}
+        destinoTexto={pedido.destino}
+        trilha={pedido.trilha}
+        aoEstimar={aoEstimar}
+      />
+      <small className="pedido-mapa__posicao">Posição atualizada {haQuanto(entregador.posicaoEm)}</small>
+    </>
   )
 }
 
@@ -115,6 +115,7 @@ export default function PaginaAcompanhamento() {
   const { guid } = useParams()
   const [pedido, setPedido] = useState(null)
   const [erro, setErro] = useState(null)
+  const [estimativa, setEstimativa] = useState(null)
 
   const carregar = useCallback(() => {
     obterAcompanhamento(guid).then((dados) => { setPedido(dados); setErro(null) })
@@ -189,6 +190,19 @@ export default function PaginaAcompanhamento() {
             <p>{momento.frase}</p>
           </div>
           <AnimacaoMomento pedido={pedido} />
+          {emRota && estimativa && (
+            <div className="pedido-hero__previsao pedido-hero__previsao--eta">
+              <i className="fa-solid fa-route" aria-hidden="true" />
+              <span>Chega em <strong>~{estimativa.minutos} min</strong> ({hora(new Date(Date.now() + estimativa.minutos * 60000).toISOString())}) · {estimativa.km.toFixed(1).replace('.', ',')} km</span>
+            </div>
+          )}
+          {emRota && pedido.codigoEntrega && (
+            <div className="pedido-codigo">
+              <span>Código de entrega</span>
+              <strong aria-label={`Código ${pedido.codigoEntrega.split('').join(' ')}`}>{pedido.codigoEntrega}</strong>
+              <small>Passe estes 4 números ao entregador ao receber o pedido.</small>
+            </div>
+          )}
           {ativo && !emRota && minutosRestantes !== null && (
             <div className="pedido-hero__previsao">
               <i className="fa-regular fa-clock" aria-hidden="true" />
@@ -213,7 +227,7 @@ export default function PaginaAcompanhamento() {
               <span aria-hidden="true"><i className="fa-solid fa-motorcycle" /></span>
               <span><strong>{pedido.entregador.nome}</strong>{pedido.entregador.veiculo ? <small>{pedido.entregador.veiculo}</small> : null}</span>
             </p>
-            {pedido.entregador.latitude != null && <MapaEntregador entregador={pedido.entregador} />}
+            {pedido.entregador.latitude != null && <MapaEntregador pedido={pedido} aoEstimar={setEstimativa} />}
           </section>
         )}
 

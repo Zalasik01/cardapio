@@ -29,6 +29,7 @@ export function CarrinhoProvider({ slug, children }) {
         {
           produtoGuid: produto.guid,
           nome: produto.nome,
+          imagemUrl: produto.imagemUrl ?? null,
           preco: produto.preco,
           quantidade,
           observacoes,

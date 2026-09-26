@@ -1405,3 +1405,96 @@ body:has(.loja) { background: #fbf7f4; }
 .loja-historico__pedido ul li span { font-weight: 800; color: var(--cor-texto-suave); }
 
 @media (min-width: 640px) { .cliente-numeros { grid-template-columns: repeat(4, 1fr); } }
+
+/* ---------- Mapa do acompanhamento (Leaflet) e código de entrega ---------- */
+.pedido-mapa__leaflet { height: 260px; border-radius: 14px; z-index: 0; }
+.pedido-mapa__legenda { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.78rem; color: var(--cor-texto-suave); span { display: inline-flex; gap: 0.35rem; align-items: center; } }
+.pedido-mapa__posicao { color: var(--cor-texto-suave); }
+
+.mapa-pino { display: grid !important; place-items: center; border-radius: 50%; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); border: 3px solid #fff; color: #fff; }
+.mapa-pino--moto { background: #7c3aed; font-size: 1.05rem; animation: pedido-pulso-moto 1.8s infinite; }
+.mapa-pino--casa { background: #dc2626; font-size: 0.95rem; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); i { transform: rotate(45deg); } }
+@keyframes pedido-pulso-moto { 0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5); } 70% { box-shadow: 0 0 0 12px rgba(124, 58, 237, 0); } 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); } }
+
+.pedido-hero__previsao--eta { background: #f3e8ff; color: #5b21b6; i { color: #7c3aed; } }
+
+.pedido-codigo {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.15rem;
+  justify-items: center;
+  margin-top: 0.5rem;
+  padding: 0.85rem;
+  border: 2px dashed var(--cor-selo);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--cor-selo) 8%, white);
+  text-align: center;
+
+  span { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cor-texto-suave); }
+  strong { font-size: 2.2rem; letter-spacing: 0.4em; padding-left: 0.4em; font-variant-numeric: tabular-nums; }
+  small { color: var(--cor-texto-suave); }
+}
+
+/* ---------- Carrinho ---------- */
+.carrinho-total-itens { margin: 0 0 0.75rem; color: var(--cor-texto-suave); font-size: 0.9rem; strong { color: var(--cor-texto); } }
+
+.carrinho-minimo {
+  margin-bottom: 0.85rem;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  background: #fff7ed;
+  color: #9a3412;
+
+  p { display: flex; gap: 0.5rem; align-items: center; margin: 0 0 0.5rem; font-size: 0.9rem; }
+  &--ok { background: #ecfdf5; color: #047857; .carrinho-minimo__barra { background: #a7f3d0; } .carrinho-minimo__barra span { background: #10b981; } }
+}
+
+.carrinho-minimo__barra { height: 0.5rem; border-radius: 999px; background: #fed7aa; overflow: hidden; span { display: block; height: 100%; border-radius: 999px; background: #f97316; transition: width 0.3s ease; } }
+
+.carrinho-itens {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > li { display: flex; gap: 0.85rem; align-items: flex-start; padding: 0.85rem; background: var(--cor-superficie); border-radius: 18px; box-shadow: var(--sombra-cartao); }
+}
+
+.carrinho-itens__foto {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff1eb, #fde7d9);
+  color: #d6a58a;
+  font-size: 1.4rem;
+  overflow: hidden;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.carrinho-itens__info { flex: 1; min-width: 0; display: grid; gap: 0.2rem; small { color: var(--cor-texto-suave); } }
+.carrinho-itens__unitario { color: var(--cor-texto-suave); font-size: 0.8rem; }
+.carrinho-itens__total { flex: none; font-size: 1rem; }
+.carrinho-itens__info .loja-quantidade { justify-self: start; margin-top: 0.3rem; }
+
+.carrinho-mais {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding: 0.85rem;
+  border: 2px dashed var(--cor-borda);
+  border-radius: 14px;
+  color: var(--cor-primaria);
+  font-weight: 800;
+  text-decoration: none;
+
+  &:hover { border-color: var(--cor-primaria); color: var(--cor-primaria-escura); }
+}
+
+.loja-resumo__nota { color: var(--cor-texto-suave); }

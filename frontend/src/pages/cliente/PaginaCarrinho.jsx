@@ -7,7 +7,7 @@ import { formatarMoeda } from '../../utils/formatadores'
 export default function PaginaCarrinho() {
   const { cardapio, slug } = useOutletContext()
   const navigate = useNavigate()
-  const { itens, alterarQuantidade, limparCarrinho, subtotal } = useCarrinho()
+  const { itens, alterarQuantidade, limparCarrinho, subtotal, totalItens } = useCarrinho()
   const [confirmandoLimpar, setConfirmandoLimpar] = useState(false)
   const minimo = Number(cardapio.loja.valorMinimoPedido)
   const abaixoDoMinimo = minimo > 0 && subtotal < minimo
@@ -34,38 +34,59 @@ export default function PaginaCarrinho() {
 
       {itens.length === 0 ? (
         <div className="loja-vazio">
+          <i className="fa-solid fa-basket-shopping" aria-hidden="true" />
           <p>Seu carrinho está vazio.</p>
           <Link className="loja-botao" to={`/${slug}`}>Ver o cardápio</Link>
         </div>
       ) : (
         <>
-          <ul className="loja-itens">
+          <p className="carrinho-total-itens">{totalItens} {totalItens === 1 ? 'item' : 'itens'} de <strong>{cardapio.loja.nome}</strong></p>
+
+          {minimo > 0 && (
+            <div className={`carrinho-minimo${abaixoDoMinimo ? '' : ' carrinho-minimo--ok'}`}>
+              <p>
+                <i className={`fa-solid ${abaixoDoMinimo ? 'fa-bag-shopping' : 'fa-circle-check'}`} aria-hidden="true" />
+                {abaixoDoMinimo
+                  ? <>Faltam <strong>{formatarMoeda(minimo - subtotal)}</strong> para o pedido mínimo</>
+                  : 'Pedido mínimo atingido'}
+              </p>
+              <div className="carrinho-minimo__barra"><span style={{ width: `${Math.min(100, (subtotal / minimo) * 100)}%` }} /></div>
+            </div>
+          )}
+
+          <ul className="carrinho-itens">
             {itens.map((item) => (
               <li key={`${item.produtoGuid}-${item.observacoes}`}>
-                <div>
+                <span className="carrinho-itens__foto">
+                  {item.imagemUrl ? <img src={item.imagemUrl} alt="" /> : <i className="fa-solid fa-utensils" aria-hidden="true" />}
+                </span>
+                <div className="carrinho-itens__info">
                   <strong>{item.nome}</strong>
-                  {item.observacoes && <small>{item.observacoes}</small>}
-                  <span>{formatarMoeda(item.preco * item.quantidade)}</span>
+                  {item.observacoes && <small><i className="fa-regular fa-comment" aria-hidden="true" /> {item.observacoes}</small>}
+                  <span className="carrinho-itens__unitario">{formatarMoeda(item.preco)} cada</span>
+                  <div className="loja-quantidade loja-quantidade--compacta">
+                    <button type="button" aria-label={item.quantidade === 1 ? 'Remover' : 'Diminuir'}
+                            onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade - 1)}>
+                      <i className={`fa-solid ${item.quantidade === 1 ? 'fa-trash-can' : 'fa-minus'}`} />
+                    </button>
+                    <span>{item.quantidade}</span>
+                    <button type="button" aria-label="Aumentar"
+                            onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade + 1)}>
+                      <i className="fa-solid fa-plus" />
+                    </button>
+                  </div>
                 </div>
-                <div className="loja-quantidade">
-                  <button type="button" aria-label={item.quantidade === 1 ? 'Remover' : 'Diminuir'}
-                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade - 1)}>
-                    <i className={`fa-solid ${item.quantidade === 1 ? 'fa-trash-can' : 'fa-minus'}`} />
-                  </button>
-                  <span>{item.quantidade}</span>
-                  <button type="button" aria-label="Aumentar"
-                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade + 1)}>
-                    <i className="fa-solid fa-plus" />
-                  </button>
-                </div>
+                <strong className="carrinho-itens__total">{formatarMoeda(item.preco * item.quantidade)}</strong>
               </li>
             ))}
           </ul>
 
+          <Link className="carrinho-mais" to={`/${slug}`}><i className="fa-solid fa-plus" aria-hidden="true" /> Adicionar mais itens</Link>
+
           <footer className="loja-rodape-fixo loja-rodape-fixo--resumo">
             <div className="loja-rodape-fixo__resumo">
               <p><span>Subtotal</span><strong>{formatarMoeda(subtotal)}</strong></p>
-              {abaixoDoMinimo && <small className="loja-resumo__aviso">Pedido mínimo de {formatarMoeda(minimo)}: faltam {formatarMoeda(minimo - subtotal)}.</small>}
+              <small className="loja-resumo__nota">Frete e cupom são calculados no próximo passo.</small>
             </div>
             <button type="button" className="loja-botao" disabled={abaixoDoMinimo || !cardapio.aberta}
                     onClick={() => navigate(`/${slug}/checkout`)}>

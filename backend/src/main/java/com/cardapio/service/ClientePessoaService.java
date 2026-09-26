@@ -47,11 +47,18 @@ public class ClientePessoaService {
         var criada = pessoaService.criar(tenant, new PessoaRequest(TipoPessoa.FISICA, true, true, false,
                 "Cadastrado automaticamente pelo app/site (conta por telefone).", nome, null, null, null, null, null, null, null,
                 null, null, null, null, null, null,
-                List.of(new TelefoneDto(TipoTelefone.CELULAR, conta.getTelefone(), "Confirmado por código (OTP)")), null));
+                List.of(new TelefoneDto(TipoTelefone.CELULAR, mascarar(conta.getTelefone()), "Confirmado por código (OTP)")), null));
         T_Pessoa pessoa = pessoaRepository.findById(criada.id()).orElseThrow();
         pessoa.setOrigem(ORIGEM_APP_SITE);
         pessoa.setIdClienteConta(conta.getId());
         return pessoaRepository.save(pessoa).getId();
+    }
+
+    /** 47999998888 -> (47) 99999-8888 (o mesmo formato dos telefones digitados no painel). */
+    static String mascarar(String digitos) {
+        if (digitos.length() == 11) return "(" + digitos.substring(0, 2) + ") " + digitos.substring(2, 7) + "-" + digitos.substring(7);
+        if (digitos.length() == 10) return "(" + digitos.substring(0, 2) + ") " + digitos.substring(2, 6) + "-" + digitos.substring(6);
+        return digitos;
     }
 
     private static String primeiroTexto(String... opcoes) {

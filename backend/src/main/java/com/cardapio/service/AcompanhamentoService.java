@@ -28,6 +28,7 @@ public class AcompanhamentoService {
     private final FluxoPedidoService fluxoService;
     private final LojaService lojaService;
     private final PedidoEventos pedidoEventos;
+    private final com.cardapio.repository.T_PedidoTrilhaRepository trilhaRepository;
 
     @Transactional
     public AcompanhamentoResponse obter(UUID guid) {
@@ -52,6 +53,12 @@ public class AcompanhamentoService {
                     .map(e -> new Entregador(primeiroNome(e.getNome()), e.getVeiculo(), e.getUltimaLatitude(), e.getUltimaLongitude(), e.getPosicaoEm()))
                     .orElse(null);
         }
+        List<AcompanhamentoResponse.Ponto> trilha = new ArrayList<>();
+        if (pedido.getStatus() == StatusPedido.SAIU_PARA_ENTREGA) {
+            var pontos = new ArrayList<>(trilhaRepository.ultimos(pedido.getId(), org.springframework.data.domain.PageRequest.of(0, 120)));
+            java.util.Collections.reverse(pontos);
+            pontos.forEach(t -> trilha.add(new AcompanhamentoResponse.Ponto(t.getLatitude(), t.getLongitude())));
+        }
         String destino = pedido.getTipoEntrega() == TipoEntrega.ENTREGA
                 ? String.join(" - ", java.util.stream.Stream.of(pedido.getEnderecoBairro(), pedido.getEnderecoCidade())
                         .filter(x -> x != null && !x.isBlank()).toList())
@@ -61,7 +68,10 @@ public class AcompanhamentoService {
                 atual != null ? atual.getCor() : "#6b7280", pedido.getStatus(), cancelado, concluido, etapas, pedido.getDataCriacao(),
                 pedido.getTempoPreparoMinutos() == null ? null : pedido.getDataCriacao().plusMinutes(pedido.getTempoPreparoMinutos()),
                 pedido.getItens().stream().map(i -> new Item(i.getNomeProduto(), i.getQuantidade(), i.getTotalItem())).toList(),
-                pedido.getSubtotal(), pedido.getTaxaEntrega(), pedido.getTotal(), destino, entregador);
+                pedido.getSubtotal(), pedido.getTaxaEntrega(), pedido.getTotal(), destino, entregador,
+                pedido.getLatitude(), pedido.getLongitude(), trilha,
+                // o código só aparece com o pedido a caminho: é o cliente quem o passa ao entregador
+                pedido.getStatus() == StatusPedido.SAIU_PARA_ENTREGA ? pedido.getCodigoEntrega() : null);
     }
 
     /** Abre a conexão em tempo real do cliente para este pedido. */

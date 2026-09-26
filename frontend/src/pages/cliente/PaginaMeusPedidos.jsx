@@ -6,6 +6,7 @@ import { useCarrinho } from '../../context/CarrinhoContext'
 import { useCliente } from '../../context/ClienteContext'
 import { formatarMoeda } from '../../utils/formatadores'
 import { mascaraTelefone } from '../../utils/telefone'
+import EnderecosCliente from '../../components/EnderecosCliente'
 
 const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 const mesAno = (iso) => new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).replace('.', '')
@@ -66,7 +67,7 @@ export default function PaginaMeusPedidos() {
     <div className="loja-pagina">
       <header className="loja-pagina__topo">
         <Link to={`/${slug}`} aria-label="Voltar ao cardápio"><i className="fa-solid fa-arrow-left" /></Link>
-        <h1>Meus pedidos</h1>
+        <h1>Meu perfil</h1>
       </header>
 
       {!cliente ? (
@@ -85,6 +86,8 @@ export default function PaginaMeusPedidos() {
             </div>
             <button type="button" className="loja-link" onClick={sair}>Sair</button>
           </section>
+
+          <EnderecosCliente />
 
           <section className="cliente-numeros" aria-label="Seus números nesta loja">
             <div><strong>{resumo?.totalPedidos ?? '—'}</strong><small>{resumo?.totalPedidos === 1 ? 'pedido feito' : 'pedidos feitos'}</small></div>

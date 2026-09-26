@@ -391,7 +391,7 @@ export default function PaginaCardapio() {
             <BotaoCompartilhar nome={loja.nome} />
             <BotaoInstalar />
             {cliente ? (
-              <Link className="loja-compartilhar" to={`/${slug}/pedidos`}>
+              <Link className="loja-compartilhar" to={`/${slug}/perfil`}>
                 <i className="fa-solid fa-circle-user" aria-hidden="true" /> {(cliente.nome || 'Meus pedidos').split(' ')[0]}
               </Link>
             ) : (

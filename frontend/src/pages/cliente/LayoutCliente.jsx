@@ -4,6 +4,7 @@ import { buscarCardapio } from '../../api/cardapioApi'
 import { CarrinhoProvider } from '../../context/CarrinhoContext'
 import { ClienteProvider } from '../../context/ClienteContext'
 import { CardapioSkeleton } from '../../components/Skeleton'
+import NavbarLoja from '../../components/NavbarLoja'
 import '../../utils/instalarApp' // guarda o convite de instalação do navegador desde o início
 
 /** Carrega a loja e o cardápio uma vez; as telas filhas (cardápio, carrinho, checkout) recebem pelo contexto da rota. */
@@ -61,6 +62,7 @@ export default function LayoutCliente() {
         {!erro && !cardapio && <CardapioSkeleton />}
         {cardapio?.site?.mensagemTopo && <p className="loja-aviso-topo" role="status">{cardapio.site.mensagemTopo}</p>}
         {cardapio && <Outlet context={{ cardapio, slug }} />}
+        {cardapio && <NavbarLoja loja={cardapio.loja} slug={slug} />}
       </div>
     </CarrinhoProvider>
     </ClienteProvider>

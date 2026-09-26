@@ -134,6 +134,7 @@ export default function App() {
             <Route path="carrinho" element={<PaginaCarrinho />} />
             <Route path="checkout" element={<PaginaCheckout />} />
             <Route path="pedidos" element={<PaginaMeusPedidos />} />
+            <Route path="perfil" element={<PaginaMeusPedidos />} />
             <Route path="pedido/:pedidoGuid" element={<RedirecionaAcompanhamento />} />
           </Route>
         </Routes>

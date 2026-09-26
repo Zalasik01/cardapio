@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" role="img" aria-label="CoreFood">
+  <!-- versão para fundos escuros (ex.: o menu lateral #1f2937) -->
+  <rect width="64" height="64" rx="16" fill="#2563eb"/>
+  <path d="M44.2 21.4 A15.5 15.5 0 1 0 44.2 42.6" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="5" fill="#dbeafe"/>
+  <text x="78" y="43" font-family="Nunito, 'Segoe UI', Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="#ffffff">Core</tspan><tspan fill="#93c5fd">Food</tspan>
+  </text>
+</svg>

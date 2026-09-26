@@ -28,7 +28,8 @@ public record PedidoRequest(
         java.math.BigDecimal descontoValor,
         java.math.BigDecimal taxaEntrega,
         java.util.List<PagamentoRequest> pagamentos,
-        String codigoCupom
+        String codigoCupom,
+        Boolean usarCashback
 ) {
 
     /** Sem cupom (pedidos lançados pela loja e simulações). */
@@ -39,6 +40,6 @@ public record PedidoRequest(
                          java.math.BigDecimal taxaEntrega, java.util.List<PagamentoRequest> pagamentos) {
         this(tenant, nomeCliente, telefoneCliente, tipoEntrega, enderecoRua, enderecoNumero, enderecoComplemento, enderecoBairro,
                 enderecoCidade, latitude, longitude, itens, formaPagamento, observacoes, descontoTipo, descontoValor, taxaEntrega,
-                pagamentos, null);
+                pagamentos, null, null);
     }
 }

@@ -34,6 +34,7 @@ public class PedidoService {
     private final PagamentoPedidoService pagamentoService;
     private final CupomService cupomService;
     private final ClientePessoaService clientePessoaService;
+    private final FidelidadeService fidelidadeService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -47,7 +48,7 @@ public class PedidoService {
         PedidoRequest daConta = new PedidoRequest(request.tenant(), request.nomeCliente(), conta.getTelefone(),
                 request.tipoEntrega(), request.enderecoRua(), request.enderecoNumero(), request.enderecoComplemento(),
                 request.enderecoBairro(), request.enderecoCidade(), request.latitude(), request.longitude(),
-                request.itens(), request.formaPagamento(), request.observacoes(), null, null, null, null, request.codigoCupom());
+                request.itens(), request.formaPagamento(), request.observacoes(), null, null, null, null, request.codigoCupom(), request.usarCashback());
         return criar(daConta, false, conta);
     }
 
@@ -157,10 +158,19 @@ public class PedidoService {
             pedido.setCodigoEntrega(String.format("%04d", new java.security.SecureRandom().nextInt(10000)));
         }
 
+        // cashback: só o cliente logado, dentro do teto da loja, sobre o valor dos itens já com o cupom
+        BigDecimal cashback = BigDecimal.ZERO;
+        if (!pelaLoja && conta != null && Boolean.TRUE.equals(request.usarCashback())) {
+            cashback = fidelidadeService.resgatavel(tenant, conta.getId(), subtotal.subtract(desconto));
+            if (cashback.signum() <= 0) {
+                throw new RegraNegocioException("Você não tem cashback disponível para usar neste pedido");
+            }
+        }
+        pedido.setCashbackUsado(cashback);
         pedido.setSubtotal(subtotal);
         pedido.setTaxaEntrega(taxaEntrega);
         pedido.setDesconto(desconto);
-        BigDecimal base = subtotal.subtract(desconto).add(taxaEntrega);
+        BigDecimal base = subtotal.subtract(desconto).subtract(cashback).add(taxaEntrega);
         // pagamento dividido (pedidos lançados pela loja): a taxa de cada forma entra no total
         var pagamentos = pelaLoja ? pagamentoService.preparar(tenant, request.tipoEntrega(), request.pagamentos(), base)
                 : PagamentoPedidoService.Preparado.vazio();
@@ -179,6 +189,9 @@ public class PedidoService {
         if (conta != null) {
             // primeiro pedido nesta loja: garante o cliente em Clientes e Fornecedores (com o nome digitado no pedido)
             clientePessoaService.garantir(tenant, conta, request.nomeCliente());
+        }
+        if (cashback.signum() > 0) {
+            fidelidadeService.resgatar(tenant, conta.getId(), cashback, salvo.getId());
         }
         if (cupom != null) {
             cupomService.registrarUso(cupom.cupom(), salvo.getId(), conta.getId(), cupom.desconto());

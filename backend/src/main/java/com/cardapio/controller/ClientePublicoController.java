@@ -22,6 +22,8 @@ public class ClientePublicoController {
     private final HistoricoClienteService historicoService;
     private final com.cardapio.service.CupomService cupomService;
     private final com.cardapio.service.ClienteEnderecoService enderecoService;
+    private final com.cardapio.service.FidelidadeService fidelidadeService;
+    private final com.cardapio.service.LojaService lojaService;
 
     public record SolicitarCodigoRequest(@NotBlank String telefone) {
     }
@@ -78,6 +80,21 @@ public class ClientePublicoController {
                                                                          @PathVariable Long id) {
         enderecoService.remover(contaService.autenticar(auth), id);
         return org.springframework.http.ResponseEntity.noContent().build();
+    }
+
+    /** Saldo, validade e extrato do cashback do cliente nesta loja. */
+    @GetMapping("/fidelidade")
+    public com.cardapio.service.FidelidadeService.Carteira fidelidade(@RequestHeader(value = "Authorization", required = false) String auth,
+                                                                      @RequestParam String slug) {
+        return fidelidadeService.carteira(lojaService.buscarPorSlug(slug).getGuid(), contaService.autenticar(auth));
+    }
+
+    /** Quanto do cashback dá para usar num pedido cujos itens (com cupom) valem "base". */
+    @GetMapping("/fidelidade/resgatavel")
+    public java.util.Map<String, java.math.BigDecimal> resgatavel(@RequestHeader(value = "Authorization", required = false) String auth,
+                                                                 @RequestParam String slug, @RequestParam java.math.BigDecimal base) {
+        var conta = contaService.autenticar(auth);
+        return java.util.Map.of("valor", fidelidadeService.resgatavel(lojaService.buscarPorSlug(slug).getGuid(), conta.getId(), base));
     }
 
     @GetMapping("/resumo")

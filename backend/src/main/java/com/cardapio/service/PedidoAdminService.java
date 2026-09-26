@@ -43,6 +43,7 @@ public class PedidoAdminService {
     private final T_PedidoRepository pedidoRepository;
     private final ApplicationEventPublisher eventos;
     private final PushService pushService;
+    private final FidelidadeService fidelidadeService;
     private final PedidoService pedidoService;
     private final NotificacaoService notificacaoService;
     private final PedidoEdicaoService edicaoService;
@@ -163,6 +164,11 @@ public class PedidoAdminService {
         pedido.setIdSituacao(destino.id());
         pedidoRepository.save(pedido);
         pushService.situacaoDoPedido(pedido, destino.nome());
+        if (novoStatus == StatusPedido.ENTREGUE) {
+            fidelidadeService.creditarPedidoEntregue(pedido);
+        } else if (novoStatus == StatusPedido.CANCELADO) {
+            fidelidadeService.estornarPedidoCancelado(pedido);
+        }
         eventos.publishEvent(new PedidoEventos.PedidoEvento(tenant, "STATUS", pedido.getId()));
         return resposta(pedido);
     }

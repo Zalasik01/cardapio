@@ -79,6 +79,11 @@ public class T_Pedido extends TenantAbstract {
     /** Código do cupom aplicado (o desconto dele já está em "desconto"). */
     private String codigoCupom;
 
+    /** Quanto do valor do pedido foi pago com o cashback do cliente. */
+    @Column(nullable = false)
+    @lombok.Builder.Default
+    private BigDecimal cashbackUsado = BigDecimal.ZERO;
+
     @Column(nullable = false)
     @Builder.Default
     private BigDecimal desconto = BigDecimal.ZERO;

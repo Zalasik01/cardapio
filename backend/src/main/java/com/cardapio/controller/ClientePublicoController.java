@@ -75,6 +75,13 @@ public class ClientePublicoController {
         return enderecoService.salvar(contaService.autenticar(auth), request);
     }
 
+    @PutMapping("/enderecos/{id}")
+    public com.cardapio.service.ClienteEnderecoService.EnderecoResponse atualizarEndereco(
+            @RequestHeader(value = "Authorization", required = false) String auth, @PathVariable Long id,
+            @RequestBody com.cardapio.service.ClienteEnderecoService.EnderecoRequest request) {
+        return enderecoService.atualizar(contaService.autenticar(auth), id, request);
+    }
+
     @DeleteMapping("/enderecos/{id}")
     public org.springframework.http.ResponseEntity<Void> removerEndereco(@RequestHeader(value = "Authorization", required = false) String auth,
                                                                          @PathVariable Long id) {

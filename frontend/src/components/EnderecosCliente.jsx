@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Dialog } from 'primereact/dialog'
-import { listarEnderecosCliente, removerEnderecoCliente, salvarEnderecoCliente } from '../api/cardapioApi'
+import { atualizarEnderecoCliente, listarEnderecosCliente, removerEnderecoCliente, salvarEnderecoCliente } from '../api/cardapioApi'
 import { buscarCoordenadas, buscarEnderecoPorCep } from '../api/cepApi'
 import { mascaraCep } from '../utils/telefone'
 
 const VAZIO = { apelido: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '' }
 
-/** Formulário de novo endereço: o CEP preenche rua, bairro e cidade; as coordenadas (para frete e mapa) são buscadas ao salvar. */
-function DialogoEndereco({ aoFechar, aoSalvo }) {
-  const [form, setForm] = useState(VAZIO)
+/** Formulário de endereço (novo ou existente): o CEP preenche rua, bairro e cidade; as coordenadas (para frete e mapa) são buscadas ao salvar. */
+function DialogoEndereco({ endereco, aoFechar, aoSalvo }) {
+  const editando = !!endereco
+  const [form, setForm] = useState(() => (endereco ? { ...VAZIO, ...Object.fromEntries(Object.entries(endereco).map(([k, v]) => [k, v ?? ''])) } : VAZIO))
   const [buscando, setBuscando] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState(null)
@@ -37,7 +38,9 @@ function DialogoEndereco({ aoFechar, aoSalvo }) {
     setErro(null)
     try {
       const coordenadas = await buscarCoordenadas({ rua: form.rua, bairro: form.bairro, cidade: form.cidade, estado: form.estado })
-      const salvo = await salvarEnderecoCliente({ ...form, ...coordenadas })
+      // sem achar o lugar no mapa, mantém as coordenadas que o endereço já tinha
+      const dados = { ...form, latitude: coordenadas?.latitude ?? endereco?.latitude ?? null, longitude: coordenadas?.longitude ?? endereco?.longitude ?? null }
+      const salvo = editando ? await atualizarEnderecoCliente(endereco.id, dados) : await salvarEnderecoCliente(dados)
       aoSalvo(salvo)
     } catch (err) {
       setErro(err.mensagem || 'Não foi possível salvar o endereço.')
@@ -47,7 +50,7 @@ function DialogoEndereco({ aoFechar, aoSalvo }) {
   }
 
   return (
-    <Dialog visible header="Novo endereço" onHide={aoFechar} className="loja-dialogo" dismissableMask draggable={false} style={{ width: 'min(28rem, 96vw)' }}>
+    <Dialog visible header={editando ? 'Editar endereço' : 'Novo endereço'} onHide={aoFechar} className="loja-dialogo" dismissableMask draggable={false} style={{ width: 'min(28rem, 96vw)' }}>
       <form className="loja-login" onSubmit={salvar}>
         <label className="loja-campo">Nome do endereço
           <input required maxLength={40} placeholder="Casa, Trabalho..." value={form.apelido} onChange={campo('apelido')} />
@@ -85,7 +88,7 @@ function DialogoEndereco({ aoFechar, aoSalvo }) {
 /** "Meus endereços" no perfil do cliente: lista, adiciona e remove os endereços salvos (usados no checkout). */
 export default function EnderecosCliente() {
   const [enderecos, setEnderecos] = useState(null)
-  const [novo, setNovo] = useState(false)
+  const [dialogo, setDialogo] = useState(null) // null = fechado; 'novo' ou o endereço em edição
   const [confirmando, setConfirmando] = useState(null)
   const [erro, setErro] = useState(null)
 
@@ -107,7 +110,7 @@ export default function EnderecosCliente() {
     <section id="enderecos" className="cliente-enderecos" aria-label="Meus endereços">
       <header>
         <h2><i className="fa-solid fa-location-dot" aria-hidden="true" /> Meus endereços</h2>
-        <button type="button" className="loja-link" onClick={() => setNovo(true)}><i className="fa-solid fa-plus" aria-hidden="true" /> Adicionar</button>
+        <button type="button" className="loja-link" onClick={() => setDialogo('novo')}><i className="fa-solid fa-plus" aria-hidden="true" /> Adicionar</button>
       </header>
       {erro && <p className="loja__erro" role="alert">{erro}</p>}
       {enderecos === null && !erro && <p className="texto-suave">Carregando...</p>}
@@ -121,6 +124,9 @@ export default function EnderecosCliente() {
               <small>{e.rua}, {e.numero}{e.complemento ? ` — ${e.complemento}` : ''}</small>
               <small>{e.bairro}{e.cidade ? `, ${e.cidade}` : ''}</small>
             </div>
+            <button type="button" className="cliente-enderecos__remover" aria-label={`Editar endereço ${e.apelido}`} onClick={() => setDialogo(e)}>
+              <i className="fa-regular fa-pen-to-square" aria-hidden="true" />
+            </button>
             {confirmando === e.id ? (
               <span className="cliente-enderecos__confirma">
                 <button type="button" className="loja-link" onClick={() => remover(e.id)}>Remover</button>
@@ -134,7 +140,13 @@ export default function EnderecosCliente() {
           </li>
         ))}
       </ul>
-      {novo && <DialogoEndereco aoFechar={() => setNovo(false)} aoSalvo={(salvo) => { setEnderecos((atual) => [salvo, ...(atual ?? [])]); setNovo(false) }} />}
+      {dialogo && (
+        <DialogoEndereco endereco={dialogo === 'novo' ? null : dialogo} aoFechar={() => setDialogo(null)}
+                         aoSalvo={(salvo) => {
+                           setEnderecos((atual) => (dialogo === 'novo' ? [salvo, ...(atual ?? [])] : atual.map((x) => (x.id === salvo.id ? salvo : x))))
+                           setDialogo(null)
+                         }} />
+      )}
     </section>
   )
 }

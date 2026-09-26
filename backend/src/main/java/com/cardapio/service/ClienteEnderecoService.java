@@ -52,6 +52,25 @@ public class ClienteEnderecoService {
     }
 
     @Transactional
+    public EnderecoResponse atualizar(S_ClienteConta conta, Long id, EnderecoRequest r) {
+        S_ClienteEndereco e = repository.findByIdAndIdClienteContaAndDeletadoFalse(id, conta.getId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Endereço não encontrado"));
+        if (texto(r.apelido()) == null || texto(r.rua()) == null || texto(r.numero()) == null || texto(r.bairro()) == null) {
+            throw new RegraNegocioException("Informe o nome do endereço, a rua, o número e o bairro");
+        }
+        e.setApelido(texto(r.apelido()));
+        e.setCep(texto(r.cep()));
+        e.setRua(texto(r.rua()));
+        e.setNumero(texto(r.numero()));
+        e.setComplemento(texto(r.complemento()));
+        e.setBairro(texto(r.bairro()));
+        e.setCidade(texto(r.cidade()));
+        e.setLatitude(r.latitude());
+        e.setLongitude(r.longitude());
+        return EnderecoResponse.of(repository.save(e));
+    }
+
+    @Transactional
     public void remover(S_ClienteConta conta, Long id) {
         S_ClienteEndereco e = repository.findByIdAndIdClienteContaAndDeletadoFalse(id, conta.getId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Endereço não encontrado"));

@@ -1724,6 +1724,10 @@ body:has(.loja) { background: #fbf7f4; }
 .loja:has(.loja-nav) { padding-bottom: 8.5rem; }
 .loja:has(.loja-nav) .loja-carrinho-barra { bottom: calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem); }
 
+// carrinho: o rodapé de ação (subtotal + Continuar) fica acima da navegação do celular
+.loja:has(.loja-nav) .loja-rodape-fixo { bottom: calc(3.5rem + env(safe-area-inset-bottom)); }
+.loja:has(.loja-nav) .loja-pagina:has(.loja-rodape-fixo--resumo) { padding-bottom: 13rem; }
+
 .loja-menu.p-sidebar { width: min(20rem, 88vw); font-family: 'Nunito', sans-serif; }
 .loja-menu__lista { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
 
@@ -1777,6 +1781,8 @@ body:has(.loja) { background: #fbf7f4; }
   .loja:has(.loja-nav) { padding-top: 3.5rem; padding-bottom: 3rem; }
   .loja:has(.loja-nav) .loja-barra-busca { top: 3.5rem; }
   .loja-sacola { top: 4.5rem; }
+  .loja:has(.loja-nav) .loja-rodape-fixo { bottom: 0; }
+  .loja:has(.loja-nav) .loja-pagina:has(.loja-rodape-fixo--resumo) { padding-bottom: 9rem; }
 }
 
 /* ---------- Meus endereços (perfil) ---------- */

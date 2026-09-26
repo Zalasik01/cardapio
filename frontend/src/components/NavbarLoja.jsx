@@ -8,7 +8,7 @@ import { useInstalarApp } from '../utils/instalarApp'
 /**
  * Barra de navegação do cardápio: embaixo no celular (Início, Carrinho, Perfil e o menu ☰) e no topo no computador.
  * As opções do menu ☰ ficam numa lista (ITENS_MENU) para acrescentar novas no futuro sem mexer no resto.
- * Some no carrinho e no checkout, que têm o próprio rodapé de ação e o botão de voltar.
+ * Some só no checkout (etapas com o próprio rodapé de ação); no carrinho o rodapé de ação sobe para ficar acima dela.
  */
 export default function NavbarLoja({ loja, slug }) {
   const { pathname } = useLocation()
@@ -20,7 +20,7 @@ export default function NavbarLoja({ loja, slug }) {
   const [copiado, setCopiado] = useState(false)
   const [ajudaIphone, setAjudaIphone] = useState(false)
 
-  if (/\/(carrinho|checkout)$/.test(pathname)) return null
+  if (/\/(checkout)$/.test(pathname)) return null
 
   const base = `/${slug}`
   const irPara = (destino) => { setMenuAberto(false); navigate(destino) }

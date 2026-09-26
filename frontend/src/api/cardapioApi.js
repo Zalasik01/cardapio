@@ -39,4 +39,5 @@ export const validarCupom = ({ tenant, codigo, tipoEntrega, taxaEntrega, itens }
 // ---- endereços salvos na conta do cliente
 export const listarEnderecosCliente = () => http.get('/publico/cliente/enderecos').then((res) => res.data)
 export const salvarEnderecoCliente = (endereco) => http.post('/publico/cliente/enderecos', endereco).then((res) => res.data)
+export const atualizarEnderecoCliente = (id, endereco) => http.put(`/publico/cliente/enderecos/${id}`, endereco).then((res) => res.data)
 export const removerEnderecoCliente = (id) => http.delete(`/publico/cliente/enderecos/${id}`)

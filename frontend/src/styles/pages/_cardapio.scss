@@ -114,6 +114,7 @@
     border-radius: 999px;
     border: 1px solid var(--cor-borda);
     background: var(--cor-superficie);
+    color: var(--cor-texto);
     font: inherit;
     font-size: 0.85rem;
     font-weight: 600;
@@ -279,11 +280,15 @@
   button {
     display: grid;
     place-items: center;
+    flex: none;
     width: 2.2rem;
     height: 2.2rem;
+    min-height: 0;
+    padding: 0;
     border-radius: 50%;
     border: 1px solid var(--cor-borda);
     background: var(--cor-superficie);
+    color: var(--cor-texto);
     cursor: pointer;
 
     &:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -310,6 +315,8 @@
 }
 
 .loja-itens {
+  .loja-quantidade span { color: var(--cor-texto); }
+
   list-style: none;
   margin: 0;
   padding: 0;

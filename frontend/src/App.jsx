@@ -8,7 +8,6 @@ import LayoutCliente from './pages/cliente/LayoutCliente'
 import PaginaCardapio from './pages/cliente/PaginaCardapio'
 import PaginaCarrinho from './pages/cliente/PaginaCarrinho'
 import PaginaCheckout from './pages/cliente/PaginaCheckout'
-import PaginaConfirmacaoPedido from './pages/cliente/PaginaConfirmacaoPedido'
 
 import PaginaLogin from './pages/admin/PaginaLogin'
 import LayoutAdmin from './pages/admin/LayoutAdmin'

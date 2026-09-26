@@ -34,7 +34,10 @@ public class AcompanhamentoPublicoController {
 
     /** Aviso em tempo real: chega "atualizado" sempre que a situação, o entregador ou a posição mudam. */
     @GetMapping(path = "/eventos", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter eventos(@PathVariable UUID guid) {
+    public SseEmitter eventos(@PathVariable UUID guid, jakarta.servlet.http.HttpServletResponse resposta) {
+        // sem isto, proxies e túneis seguram a resposta e o cliente só recebe os eventos em lote
+        resposta.setHeader("Cache-Control", "no-cache, no-transform");
+        resposta.setHeader("X-Accel-Buffering", "no");
         return service.eventos(guid);
     }
 }

@@ -45,10 +45,11 @@ export const obterPainelEntregador = (token) => http.get(`/publico/entregador/${
 
 export const entregadorSaiu = (token, pedidoId) => http.post(`/publico/entregador/${token}/pedidos/${pedidoId}/saiu`)
 
-/** Conclui a entrega; foto é um File opcional (comprovante). */
-export const entregadorEntregou = (token, pedidoId, foto) => {
+/** Conclui a entrega; foto é um File opcional (comprovante) e codigo é o de 4 dígitos que o cliente recebeu (prova de entrega). */
+export const entregadorEntregou = (token, pedidoId, foto, codigo) => {
   const dados = new FormData()
   if (foto) dados.append('foto', foto)
+  if (codigo) dados.append('codigo', codigo)
   return http.post(`/publico/entregador/${token}/pedidos/${pedidoId}/entregue`, dados)
 }
 

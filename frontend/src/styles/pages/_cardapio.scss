@@ -1141,7 +1141,7 @@
   align-items: center;
   margin: 0 0 0.75rem;
 
-  > span:first-child { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #f3e8ff; color: #7c3aed; }
+  > span:first-child { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #fee2e2; color: #dc2626; }
   > span:last-child { display: grid; small { color: var(--cor-texto-suave); } }
 }
 
@@ -1412,11 +1412,11 @@ body:has(.loja) { background: #fbf7f4; }
 .pedido-mapa__posicao { color: var(--cor-texto-suave); }
 
 .mapa-pino { display: grid !important; place-items: center; border-radius: 50%; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); border: 3px solid #fff; color: #fff; }
-.mapa-pino--moto { background: #7c3aed; font-size: 1.05rem; animation: pedido-pulso-moto 1.8s infinite; }
-.mapa-pino--casa { background: #dc2626; font-size: 0.95rem; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); i { transform: rotate(45deg); } }
-@keyframes pedido-pulso-moto { 0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5); } 70% { box-shadow: 0 0 0 12px rgba(124, 58, 237, 0); } 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); } }
+.mapa-pino--moto { background: #dc2626; font-size: 1.05rem; animation: pedido-pulso-moto 1.8s infinite; }
+.mapa-pino--casa { background: #292524; font-size: 0.95rem; }
+@keyframes pedido-pulso-moto { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); } 70% { box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
 
-.pedido-hero__previsao--eta { background: #f3e8ff; color: #5b21b6; i { color: #7c3aed; } }
+.pedido-hero__previsao--eta { background: #fff1f2; color: #9f1239; i { color: #dc2626; } }
 
 .pedido-codigo {
   grid-column: 1 / -1;
@@ -1512,3 +1512,31 @@ body:has(.loja) { background: #fbf7f4; }
 
 .loja-troco__valor { font-size: 1.3rem !important; font-weight: 800 !important; }
 .loja-campo .p-inputnumber { width: 100%; }
+
+.pedido-avisos {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem;
+  border: 2px dashed var(--cor-primaria);
+  border-radius: 14px;
+  background: #fff5f5;
+  color: var(--cor-primaria-escura);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover { background: #fee2e2; color: var(--cor-primaria-escura); }
+  &--ligado { border-style: solid; border-color: #a7f3d0; background: #ecfdf5; color: #047857; cursor: default; }
+}
+
+// cor de cada momento do pedido: sempre da paleta do cardápio (independe da cor configurada na situação da loja)
+.pedido-hero--PENDENTE { --cor-selo: #d97706; }
+.pedido-hero--CONFIRMADO { --cor-selo: #ca8a04; }
+.pedido-hero--EM_PREPARO { --cor-selo: #dc2626; }
+.pedido-hero--SAIU_PARA_ENTREGA { --cor-selo: #ea580c; }
+.pedido-hero--ENTREGUE { --cor-selo: #15803d; }
+.pedido-hero--CANCELADO { --cor-selo: #78716c; }

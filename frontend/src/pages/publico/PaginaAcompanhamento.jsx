@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { obterAcompanhamento } from '../../api/entregadoresApi'
+import MapaAcompanhamento from '../../components/MapaAcompanhamento'
 import { formatarMoeda } from '../../utils/formatadores'
+import { ativarPush, pushAtivo, pushSuportado } from '../../utils/push'
 
-const POLLING_MS = 30000
+// A conexão em tempo real (SSE) nem sempre chega ao celular (túneis e proxies seguram a resposta), então a consulta
+// periódica é a rede de segurança: rápida enquanto o pedido está em andamento, lenta depois que termina.
+const POLLING_ATIVO_MS = 5000
+const POLLING_FINAL_MS = 60000
 
 const hora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
@@ -116,6 +121,26 @@ export default function PaginaAcompanhamento() {
   const [pedido, setPedido] = useState(null)
   const [erro, setErro] = useState(null)
   const [estimativa, setEstimativa] = useState(null)
+  const encerradoRef = useRef(false)
+  const [avisos, setAvisos] = useState(null) // null = verificando; true/false = ligado/desligado
+
+  // service worker do cardápio (recebe os avisos mesmo com a página fechada) e estado dos avisos neste aparelho
+  useEffect(() => {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw-loja.js', { scope: '/' }).catch(() => {})
+    if (!pushSuportado()) {
+      setAvisos(false)
+      return
+    }
+    pushAtivo().then(setAvisos).catch(() => setAvisos(false))
+  }, [])
+
+  async function ligarAvisos() {
+    try {
+      setAvisos(await ativarPush(`/publico/acompanhamento/${guid}/push`))
+    } catch {
+      setAvisos(false)
+    }
+  }
 
   const carregar = useCallback(() => {
     obterAcompanhamento(guid).then((dados) => { setPedido(dados); setErro(null) })
@@ -124,7 +149,19 @@ export default function PaginaAcompanhamento() {
 
   useEffect(() => {
     carregar()
-    const intervalo = setInterval(carregar, POLLING_MS) // reserva caso a conexão em tempo real caia
+    let intervalo
+    const agendar = () => {
+      clearInterval(intervalo)
+      intervalo = setInterval(carregar, encerradoRef.current ? POLLING_FINAL_MS : POLLING_ATIVO_MS)
+    }
+    agendar()
+    // ao voltar para a aba/app (o celular congela os temporizadores em segundo plano), atualiza na hora
+    const aoVoltar = () => {
+      if (document.visibilityState === 'visible') carregar()
+    }
+    document.addEventListener('visibilitychange', aoVoltar)
+    window.addEventListener('online', carregar)
+    const reagendar = setInterval(agendar, 15000)
     let fonte
     try {
       fonte = new EventSource(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/publico/acompanhamento/${guid}/eventos`)
@@ -135,8 +172,15 @@ export default function PaginaAcompanhamento() {
     return () => {
       clearInterval(intervalo)
       fonte?.close()
+      clearInterval(reagendar)
+      document.removeEventListener('visibilitychange', aoVoltar)
+      window.removeEventListener('online', carregar)
     }
   }, [guid, carregar])
+
+  useEffect(() => {
+    encerradoRef.current = !!pedido && (pedido.concluido || pedido.cancelado)
+  }, [pedido])
 
   useEffect(() => {
     if (pedido) document.title = `Pedido ${pedido.numero} - ${pedido.loja}`
@@ -182,7 +226,7 @@ export default function PaginaAcompanhamento() {
       </header>
 
       <div className="pedido-corpo">
-        <section className={`pedido-hero pedido-hero--${pedido.categoria}`} style={{ '--cor-selo': pedido.cor }} aria-live="polite">
+        <section className={`pedido-hero pedido-hero--${pedido.categoria}`} aria-live="polite">
           <span className="pedido-hero__icone" aria-hidden="true"><i className={`fa-solid ${momento.icone}`} /></span>
           <div>
             <small>Olá, {pedido.cliente}!</small>
@@ -248,6 +292,13 @@ export default function PaginaAcompanhamento() {
             {pedido.tipoEntrega === 'ENTREGA' ? `Entrega em ${pedido.destino || 'seu endereço'}` : 'Retirada na loja'}
           </p>
         </section>
+
+        {ativo && avisos === false && pushSuportado() && Notification.permission !== 'denied' && (
+          <button type="button" className="pedido-avisos" onClick={ligarAvisos}>
+            <i className="fa-solid fa-bell" aria-hidden="true" /> Avisar quando meu pedido mudar de situação
+          </button>
+        )}
+        {ativo && avisos === true && <p className="pedido-avisos pedido-avisos--ligado"><i className="fa-solid fa-bell" aria-hidden="true" /> Você será avisado a cada mudança.</p>}
 
         <section className="pedido-ajuda">
           {pedido.lojaTelefone && (

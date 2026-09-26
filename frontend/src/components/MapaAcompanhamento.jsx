@@ -8,7 +8,7 @@ const VELOCIDADE_MEDIA_KMH = 25 // reserva, quando o serviço de rotas não resp
 
 /** Ícones do mapa (ícone de HTML, sem imagens: evita o problema clássico dos ícones do Leaflet com bundlers). */
 const iconeMoto = L.divIcon({ className: 'mapa-pino mapa-pino--moto', html: '<i class="fa-solid fa-motorcycle"></i>', iconSize: [40, 40], iconAnchor: [20, 20] })
-const iconeCasa = L.divIcon({ className: 'mapa-pino mapa-pino--casa', html: '<i class="fa-solid fa-house"></i>', iconSize: [36, 36], iconAnchor: [18, 32] })
+const iconeCasa = L.divIcon({ className: 'mapa-pino mapa-pino--casa', html: '<i class="fa-solid fa-house"></i>', iconSize: [36, 36], iconAnchor: [18, 18] })
 
 function distanciaKm(a, b) {
   const rad = (g) => (g * Math.PI) / 180

@@ -122,7 +122,7 @@ export default function PaginaMeusPedidos() {
 
           <ul className="loja-historico">
             {visiveis.map((p) => (
-              <li key={p.guid} className={`loja-historico__pedido${p.cancelado ? ' loja-historico__pedido--cancelado' : ''}`} style={{ '--cor-selo': p.cor ?? '#6b7280' }}>
+              <li key={p.guid} className={`loja-historico__pedido${p.cancelado ? ' loja-historico__pedido--cancelado' : ''}`} style={{ '--cor-selo': p.cancelado ? '#78716c' : p.concluido ? '#15803d' : '#dc2626' }}>
                 <header>
                   <strong>Pedido {p.numero}</strong>
                   <span className="loja-historico__situacao">{p.situacao}</span>

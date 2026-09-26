@@ -154,3 +154,35 @@
 .acompanhamento__aviso { margin: 2rem 0; padding: 1rem; border-radius: 6px; background: #fee2e2; color: #991b1b; text-align: center; }
 
 .entregador__conclusao .entregador__botao { flex: 0 0 auto; }
+
+// ---- página do entregador: offline, código de entrega e avisos ----
+.entregador__offline { display: flex; gap: 0.6rem; align-items: center; margin: 0 0 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; background: #fef3c7; color: #92400e; font-size: 0.9rem; font-weight: 600; }
+.entregador__avisos { width: 100%; margin-bottom: 0.75rem; }
+.entregador__pendente { display: flex; gap: 0.5rem; align-items: center; margin: 0 0 0.5rem; color: #b45309; font-size: 0.85rem; font-weight: 700; }
+.entregador__cartao--pendente { border-left: 4px solid #f59e0b; }
+
+.entregador__codigo {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  input { min-height: 3.2rem; border: 2px solid #c7d2fe; border-radius: 12px; font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5em; text-align: center; padding: 0 0 0 0.5em; }
+  input:focus { outline: 3px solid #dbeafe; border-color: #2563eb; }
+}
+
+// ---- página do entregador: offline, código de entrega e avisos ----
+.entregador__offline { display: flex; gap: 0.6rem; align-items: center; margin: 0 0 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; background: #fef3c7; color: #92400e; font-size: 0.9rem; font-weight: 600; }
+.entregador__avisos { width: 100%; margin-bottom: 0.75rem; }
+.entregador__pendente { display: flex; gap: 0.5rem; align-items: center; margin: 0 0 0.5rem; color: #b45309; font-size: 0.85rem; font-weight: 700; }
+.entregador__cartao--pendente { border-left: 4px solid #f59e0b; }
+
+.entregador__codigo {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  input { min-height: 3.2rem; border: 2px solid #c7d2fe; border-radius: 12px; font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5em; text-align: center; padding: 0 0 0 0.5em; }
+  input:focus { outline: 3px solid #dbeafe; border-color: #2563eb; }
+}

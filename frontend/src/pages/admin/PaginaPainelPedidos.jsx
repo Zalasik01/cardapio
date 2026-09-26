@@ -83,7 +83,7 @@ function CartaoBase({ pedido, agora, novo, atualizando, aoAvancar, aoCancelar, a
       )}
       <ul className="painel-cartao__itens">
         {pedido.itens.slice(0, ITENS_NO_CARTAO).map((item, i) => (
-          <li key={i}>{item.quantidade}x {item.nomeProduto}</li>
+          <li key={i}>{item.quantidade}x {item.nomeProduto}{item.opcoes?.length > 0 && <small> ({item.opcoes.map((o) => o.nome).join(', ')})</small>}</li>
         ))}
         {restantes > 0 && <li className="painel-cartao__mais">+ {restantes} {restantes === 1 ? 'item' : 'itens'}</li>}
       </ul>

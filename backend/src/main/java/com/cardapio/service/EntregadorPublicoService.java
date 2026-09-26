@@ -156,7 +156,7 @@ var emRota = pedidoRepository.buscarEntregasDoEntregador(entregador.getId(), Lis
         String destinoMapa = String.join(", ", java.util.stream.Stream.of(p.getEnderecoRua(), p.getEnderecoNumero(), p.getEnderecoBairro(),
                         p.getEnderecoCidade() != null ? p.getEnderecoCidade() : loja.getEnderecoCidade(), mesmaCidade ? loja.getEnderecoEstado() : null, "Brasil")
                 .filter(x -> x != null && !x.isBlank()).toList());
-        var itens = p.getItens().stream().map(i -> new ItemEntrega(i.getNomeProduto(), i.getQuantidade(), i.getObservacoes())).toList();
+        var itens = p.getItens().stream().map(i -> new ItemEntrega(i.getNomeProduto() + (i.getOpcoes().isEmpty() ? "" : " (" + i.resumoOpcoes() + ")"), i.getQuantidade(), i.getObservacoes())).toList();
         var pagamentos = pagamentoService.doPedido(p.getId()).stream().map(PagamentoPedidoService::resposta).toList();
         return new EntregaCelular(p.getId(), p.getNomeCliente(), p.getTelefoneCliente(), endereco, p.getEnderecoBairro() + (p.getEnderecoCidade() != null ? " - " + p.getEnderecoCidade() : ""), destinoMapa,
                 p.getObservacoes(), itens, p.getTotal(), pagamentos, p.getFormaPagamento(),

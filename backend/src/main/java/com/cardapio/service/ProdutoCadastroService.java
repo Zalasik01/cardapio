@@ -49,6 +49,7 @@ public class ProdutoCadastroService {
     private final T_CategoriaRepository categoriaRepository;
     private final T_PessoaRepository pessoaRepository;
     private final LojaService lojaService;
+    private final OpcaoService opcaoService;
 
     /** Categoria do cardápio para o campo de seleção. */
     public record OpcaoCategoria(Long id, String nome) {
@@ -89,6 +90,9 @@ public class ProdutoCadastroService {
         produto.setCodigo(codigo);
         produto = produtoRepository.save(produto);
         salvarComposicao(produto, request, tenant);
+        if (produto.getTipo() == TipoProduto.FINAL) {
+            opcaoService.definirGruposDoProduto(produto, request.gruposOpcaoIds());
+        }
         return montarResposta(produto);
     }
 
@@ -102,6 +106,9 @@ public class ProdutoCadastroService {
         preencher(produto, request, tenant);
         produtoRepository.save(produto);
         salvarComposicao(produto, request, tenant);
+        if (produto.getTipo() == TipoProduto.FINAL) {
+            opcaoService.definirGruposDoProduto(produto, request.gruposOpcaoIds());
+        }
         return montarResposta(produto);
     }
 
@@ -298,7 +305,8 @@ public class ProdutoCadastroService {
                 p.getFornecedor() == null ? null : p.getFornecedor().getId(), nomePessoa(p.getFornecedor()),
                 p.getTempoPreparoMinutos(), p.getPrecoPromocional(), p.isDestaque(),
                 p.getDisponivelDias(), p.getDisponivelDas(), p.getDisponivelAte(), p.getSelos(), p.getAlergenos(), p.getPromoDias(),
-                p.getPromoInicio(), p.getPromoFim(), p.getEsgotadoAte());
+                p.getPromoInicio(), p.getPromoFim(), p.getEsgotadoAte(),
+                p.getTipo() == TipoProduto.FINAL ? opcaoService.idsDosGruposDoProduto(p.getId()) : List.of());
     }
 
     private String nomePessoa(T_Pessoa pessoa) {

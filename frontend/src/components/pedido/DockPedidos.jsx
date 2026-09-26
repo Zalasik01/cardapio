@@ -18,6 +18,8 @@ import {
 } from '../../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgSuccess, dispatchMsgWarn } from '../../store/dispatchMsg'
 import { formatarMoeda } from '../../utils/formatadores'
+import { erroDasOpcoes, opcoesEscolhidas, somaOpcoes } from '../../utils/opcoes'
+import OpcoesProduto from '../OpcoesProduto'
 import { TIPOS_ENTREGA } from '../../utils/pedido'
 
 const PERMISSOES_CRIAR = ['PEDIDOS_INCLUIR', 'PAINEL_PEDIDOS_INCLUIR']
@@ -35,6 +37,7 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
   const { rascunho } = janela
   const [frete, setFrete] = useState(null) // { entregavel, taxa, mensagem } do bairro informado
   const [enviando, setEnviando] = useState(false)
+  const [escolhendo, setEscolhendo] = useState(null) // { produto, ids } enquanto o operador escolhe adicionais/variações
   const [statusCep, setStatusCep] = useState(null) // texto de apoio da busca do CEP
   const [sugestoesClientes, setSugestoesClientes] = useState([])
   const definir = (campo) => (valor) => atualizar(janela.id, { [campo]: valor })
@@ -154,18 +157,43 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
     }
   }
 
+  const chaveItem = (i) => `${i.guid}|${[...(i.opcoes ?? [])].sort((a, b) => a - b).join(',')}`
+
+  function incluirItem(produto, ids) {
+    const escolhidas = opcoesEscolhidas(produto.grupos, ids)
+    const novo = {
+      guid: produto.guid, nome: produto.nome, preco: Number(produto.preco) + somaOpcoes(produto.grupos, ids), quantidade: 1,
+      opcoes: ids, resumo: escolhidas.map((o) => o.nome).join(', '),
+    }
+    const existente = rascunho.itens.find((i) => chaveItem(i) === chaveItem(novo))
+    definir('itens')(existente
+      ? rascunho.itens.map((i) => (chaveItem(i) === chaveItem(novo) ? { ...i, quantidade: i.quantidade + 1 } : i))
+      : [...rascunho.itens, novo])
+  }
+
   function adicionarProduto(guid) {
     const produto = produtos.find((p) => p.guid === guid)
     if (!produto) return
-    const existente = rascunho.itens.find((i) => i.guid === guid)
-    definir('itens')(existente
-      ? rascunho.itens.map((i) => (i.guid === guid ? { ...i, quantidade: i.quantidade + 1 } : i))
-      : [...rascunho.itens, { guid, nome: produto.nome, preco: Number(produto.preco), quantidade: 1 }])
+    if (produto.grupos?.length) {
+      setEscolhendo({ produto, ids: [] })
+      return
+    }
+    incluirItem(produto, [])
   }
 
-  function mudarQuantidade(guid, delta) {
+  function confirmarOpcoes() {
+    const erro = erroDasOpcoes(escolhendo.produto.grupos, escolhendo.ids)
+    if (erro) {
+      dispatchMsgWarn(erro)
+      return
+    }
+    incluirItem(escolhendo.produto, escolhendo.ids)
+    setEscolhendo(null)
+  }
+
+  function mudarQuantidade(chave, delta) {
     definir('itens')(rascunho.itens
-      .map((i) => (i.guid === guid ? { ...i, quantidade: i.quantidade + delta } : i))
+      .map((i) => (chaveItem(i) === chave ? { ...i, quantidade: i.quantidade + delta } : i))
       .filter((i) => i.quantidade > 0))
   }
 
@@ -203,7 +231,7 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
         descontoTipo: desconto > 0 ? tipoDesconto : null,
         descontoValor: desconto > 0 ? descontoValor : null,
         observacoes: rascunho.observacoes.trim() || null,
-        itens: rascunho.itens.map((i) => ({ produtoGuid: i.guid, quantidade: i.quantidade, observacoes: i.observacoes ?? null })),
+        itens: rascunho.itens.map((i) => ({ produtoGuid: i.guid, quantidade: i.quantidade, observacoes: i.observacoes ?? null, opcoes: i.opcoes ?? [] })),
       }
       const pedido = janela.pedidoId
         ? await editarPedido(loja.tenant, janela.pedidoId, dados)
@@ -291,17 +319,27 @@ function JanelaPedido({ janela, indice, produtos, formasPagamento, taxaBase }) {
                       placeholder="Adicionar item" emptyMessage="Nenhum produto" emptyFilterMessage="Nenhum produto"
                       itemTemplate={(p) => <span>{p.nome} <small className="dock-janela__preco">{formatarMoeda(p.preco)}</small></span>}
                       onChange={(e) => adicionarProduto(e.value)} />
+            {escolhendo && (
+              <div className="dock-janela__opcoes">
+                <strong>{escolhendo.produto.nome}</strong>
+                <OpcoesProduto grupos={escolhendo.produto.grupos} valor={escolhendo.ids} aoAlterar={(ids) => setEscolhendo({ ...escolhendo, ids })} />
+                <div className="dock-janela__opcoes-acoes">
+                  <Button type="button" label="Cancelar" text severity="secondary" size="small" onClick={() => setEscolhendo(null)} />
+                  <Button type="button" label="Adicionar" icon="pi pi-plus" size="small" onClick={confirmarOpcoes} />
+                </div>
+              </div>
+            )}
             {rascunho.itens.length > 0 && (
               <ul className="dock-janela__itens">
                 {rascunho.itens.map((item) => (
-                  <li key={item.guid}>
-                    <span className="dock-janela__item-nome">{item.nome}</span>
+                  <li key={chaveItem(item)}>
+                    <span className="dock-janela__item-nome">{item.nome}{item.resumo && <small className="dock-janela__item-opcoes">{item.resumo}</small>}</span>
                     <span className="dock-janela__qtd">
-                      <button type="button" aria-label={`Diminuir ${item.nome}`} onClick={() => mudarQuantidade(item.guid, -1)}>
+                      <button type="button" aria-label={`Diminuir ${item.nome}`} onClick={() => mudarQuantidade(chaveItem(item), -1)}>
                         <i className={item.quantidade === 1 ? 'fa-solid fa-trash' : 'fa-solid fa-minus'} aria-hidden="true" />
                       </button>
                       {item.quantidade}
-                      <button type="button" aria-label={`Aumentar ${item.nome}`} onClick={() => mudarQuantidade(item.guid, 1)}>
+                      <button type="button" aria-label={`Aumentar ${item.nome}`} onClick={() => mudarQuantidade(chaveItem(item), 1)}>
                         <i className="fa-solid fa-plus" aria-hidden="true" />
                       </button>
                     </span>

@@ -285,3 +285,26 @@
 
 .vendas-hora__coluna--pico span { background: #2563eb; }
 .vendas-hora__barras { margin-bottom: 1.4rem; }
+
+// Cadastro de grupo de opções (adicionais e variações)
+.grupo-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+
+  &__linha {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 9rem auto auto;
+    align-items: center;
+    gap: 0.5rem;
+
+    @media (max-width: 720px) {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+  }
+
+  &__ordem { display: inline-flex; }
+  &__preco { width: 100%; }
+}
+.grupo-opcoes ~ .texto-auxiliar { margin-top: 0.75rem; }

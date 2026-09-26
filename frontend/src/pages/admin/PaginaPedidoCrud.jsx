@@ -174,7 +174,7 @@ export default function PaginaPedidoCrud() {
 
       <SecaoCrud id="secao-itens" titulo="Itens">
         <DataTable value={pedido.itens} emptyMessage="Sem itens." className="tabela-dados">
-          <Column header="Produto" field="nomeProduto" />
+          <Column header="Produto" body={(i) => (i.opcoes?.length ? `${i.nomeProduto} (${i.opcoes.map((o) => o.nome).join(', ')})` : i.nomeProduto)} />
           <Column header="Quantidade" field="quantidade" />
           <Column header="Preço" body={(item) => formatarMoeda(item.precoUnitario)} />
           <Column header="Total" body={(item) => formatarMoeda(item.totalItem)} />

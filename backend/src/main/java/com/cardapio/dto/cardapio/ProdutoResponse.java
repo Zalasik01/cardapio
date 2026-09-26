@@ -30,13 +30,14 @@ public record ProdutoResponse(
         String motivoIndisponivel,
         List<String> selos,
         String alergenos,
-        String promocaoQuando
+        String promocaoQuando,
+        List<com.cardapio.service.OpcaoService.GrupoPublico> grupos
 ) {
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
     private static final String[] DIAS = {"", "seg", "ter", "qua", "qui", "sex", "sáb", "dom"};
 
     /** agora = data/hora na loja (a promoção por horário e a disponibilidade dependem dela). */
-    public static ProdutoResponse of(T_Produto p, LocalDateTime agora) {
+    public static ProdutoResponse of(T_Produto p, LocalDateTime agora, List<com.cardapio.service.OpcaoService.GrupoPublico> grupos) {
         boolean esgotado = p.esgotado(agora);
         boolean fora = !esgotado && p.foraDoHorario(agora);
         String motivo = esgotado ? "Esgotado hoje"
@@ -48,7 +49,8 @@ public record ProdutoResponse(
                 p.getOrdemExibicao(), esgotado || fora, motivo, lista(p.getSelos()),
                 p.getAlergenos() == null || p.getAlergenos().isBlank() ? null : p.getAlergenos(),
                 promo && (p.getPromoInicio() != null || (p.getPromoDias() != null && !p.getPromoDias().isBlank()))
-                        ? "Promoção " + janela(p.getPromoDias(), p.getPromoInicio(), p.getPromoFim()) : null);
+                        ? "Promoção " + janela(p.getPromoDias(), p.getPromoInicio(), p.getPromoFim()) : null,
+                grupos == null ? List.of() : grupos);
     }
 
     private static List<String> lista(String csv) {

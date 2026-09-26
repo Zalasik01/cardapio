@@ -69,7 +69,7 @@ public class AcompanhamentoService {
                 primeiroNome(pedido.getNomeCliente()), atual != null ? atual.getNome() : pedido.getStatus().name(),
                 atual != null ? atual.getCor() : "#6b7280", pedido.getStatus(), cancelado, concluido, etapas, pedido.getDataCriacao(),
                 pedido.getTempoPreparoMinutos() == null ? null : pedido.getDataCriacao().plusMinutes(pedido.getTempoPreparoMinutos()),
-                pedido.getItens().stream().map(i -> new Item(i.getNomeProduto(), i.getQuantidade(), i.getTotalItem())).toList(),
+                pedido.getItens().stream().map(i -> new Item(i.getNomeProduto() + (i.getOpcoes().isEmpty() ? "" : " (" + i.resumoOpcoes() + ")"), i.getQuantidade(), i.getTotalItem())).toList(),
                 pedido.getSubtotal(), pedido.getTaxaEntrega(), pedido.getTotal(), destino, entregador,
                 pedido.getLatitude(), pedido.getLongitude(), trilha,
                 // o código só aparece com o pedido a caminho: é o cliente quem o passa ao entregador

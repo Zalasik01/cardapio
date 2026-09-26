@@ -12,11 +12,17 @@ public record ItemPedidoResponse(
         BigDecimal precoUnitario,
         Integer quantidade,
         BigDecimal totalItem,
-        String observacoes
+        String observacoes,
+        java.util.List<OpcaoEscolhida> opcoes
 ) {
+
+    public record OpcaoEscolhida(String grupo, String nome, BigDecimal preco) {
+    }
+
     public static ItemPedidoResponse of(I_ItemPedido i) {
         return new ItemPedidoResponse(
                 i.getGuid(), i.getProduto().getGuid(), i.getNomeProduto(), i.getPrecoUnitario(),
-                i.getQuantidade(), i.getTotalItem(), i.getObservacoes());
+                i.getQuantidade(), i.getTotalItem(), i.getObservacoes(),
+                i.getOpcoes().stream().map(o -> new OpcaoEscolhida(o.getNomeGrupo(), o.getNomeOpcao(), o.getPreco())).toList());
     }
 }

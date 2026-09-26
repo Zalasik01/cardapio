@@ -50,9 +50,12 @@ public record PedidoAdminResponse(
         java.util.UUID guid
 ) {
 
-    public record Item(java.util.UUID produtoGuid, String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes) {
+    public record Item(java.util.UUID produtoGuid, String nomeProduto, BigDecimal precoUnitario, Integer quantidade, BigDecimal totalItem, String observacoes,
+                       java.util.List<ItemPedidoResponse.OpcaoEscolhida> opcoes, java.util.List<Long> opcaoIds) {
         static Item of(I_ItemPedido i) {
-            return new Item(i.getProduto() != null ? i.getProduto().getGuid() : null, i.getNomeProduto(), i.getPrecoUnitario(), i.getQuantidade(), i.getTotalItem(), i.getObservacoes());
+            return new Item(i.getProduto() != null ? i.getProduto().getGuid() : null, i.getNomeProduto(), i.getPrecoUnitario(), i.getQuantidade(), i.getTotalItem(), i.getObservacoes(),
+                    i.getOpcoes().stream().map(o -> new ItemPedidoResponse.OpcaoEscolhida(o.getNomeGrupo(), o.getNomeOpcao(), o.getPreco())).toList(),
+                    i.getOpcoes().stream().map(com.cardapio.entity.I_ItemPedidoOpcao::getIdOpcao).toList());
         }
     }
 

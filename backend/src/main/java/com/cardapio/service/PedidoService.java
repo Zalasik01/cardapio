@@ -35,6 +35,7 @@ public class PedidoService {
     private final CupomService cupomService;
     private final ClientePessoaService clientePessoaService;
     private final FidelidadeService fidelidadeService;
+    private final OpcaoService opcaoService;
 
     /** Pedido feito pelo cliente no cardápio: respeita o horário de funcionamento e o valor mínimo. */
     @Transactional
@@ -102,7 +103,11 @@ public class PedidoService {
                         : "Fora do horário de venda: " + produto.getNome());
             }
 
-            BigDecimal totalItem = produto.precoVenda(agoraNaLoja).multiply(BigDecimal.valueOf(itemRequest.quantidade()))
+            // adicionais e variações: validados aqui e somados ao preço unitário do item
+            var escolhas = opcaoService.resolver(produto, itemRequest.opcoes());
+            BigDecimal precoUnitario = produto.precoVenda(agoraNaLoja).add(escolhas.adicional());
+
+            BigDecimal totalItem = precoUnitario.multiply(BigDecimal.valueOf(itemRequest.quantidade()))
                     .setScale(2, RoundingMode.HALF_UP);
 
             I_ItemPedido item = I_ItemPedido.builder()
@@ -110,12 +115,16 @@ public class PedidoService {
                     .pedido(pedido)
                     .produto(produto)
                     .nomeProduto(produto.getNome())
-                    .precoUnitario(produto.precoVenda(agoraNaLoja))
+                    .precoUnitario(precoUnitario)
                     .quantidade(itemRequest.quantidade())
                     .totalItem(totalItem)
                     .observacoes(itemRequest.observacoes())
                     .build();
 
+            escolhas.opcoes().forEach(o -> {
+                o.setItem(item);
+                item.getOpcoes().add(o);
+            });
             pedido.getItens().add(item);
             produtosDoPedido.add(produto);
             itensAvaliacao.add(new CupomService.ItemAvaliacao(produto, itemRequest.quantidade()));

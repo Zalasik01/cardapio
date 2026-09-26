@@ -22,7 +22,7 @@ public class HistoricoClienteService {
     private final LojaService lojaService;
     private final FluxoPedidoService fluxoService;
 
-    public record ItemHistorico(UUID produtoGuid, String nome, int quantidade, BigDecimal precoPago, String observacoes) {
+    public record ItemHistorico(UUID produtoGuid, String nome, int quantidade, BigDecimal precoPago, String observacoes, List<Long> opcoes) {
     }
 
     public record PedidoHistorico(UUID guid, Long numero, LocalDateTime data, String situacao, String cor, boolean cancelado,
@@ -53,8 +53,9 @@ public class HistoricoClienteService {
             return new PedidoHistorico(p.getGuid(), p.getId(), p.getDataCriacao(), info != null ? info.nome() : p.getStatus().name(),
                     info != null ? info.cor() : null, p.getStatus() == StatusPedido.CANCELADO, p.getStatus() == StatusPedido.ENTREGUE,
                     p.getTipoEntrega().name(), p.getTotal(),
-                    p.getItens().stream().map(i -> new ItemHistorico(i.getProduto().getGuid(), i.getNomeProduto(), i.getQuantidade(),
-                            i.getPrecoUnitario(), i.getObservacoes())).toList());
+                    p.getItens().stream().map(i -> new ItemHistorico(i.getProduto().getGuid(), i.getNomeProduto() + (i.getOpcoes().isEmpty() ? "" : " (" + i.resumoOpcoes() + ")"), i.getQuantidade(),
+                            i.getPrecoUnitario(), i.getObservacoes(),
+                            i.getOpcoes().stream().map(com.cardapio.entity.I_ItemPedidoOpcao::getIdOpcao).toList())).toList());
         }).toList();
     }
 }

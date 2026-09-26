@@ -1823,3 +1823,40 @@ body:has(.loja) { background: #fbf7f4; }
 
 .pedido-anim--entregue { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
 .pedido-anim--entregue span { top: 45%; }
+
+/* ---------- Adicionais e variações ---------- */
+.opcoes-produto { display: grid; gap: 0.85rem; margin: 0.5rem 0; }
+
+.opcoes-produto__grupo {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 14px;
+
+  legend { display: flex; gap: 0.6rem; align-items: center; padding: 0 0.35rem; strong { font-size: 0.95rem; } span { padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--cor-fundo); color: var(--cor-texto-suave); font-size: 0.7rem; font-weight: 800; } .obrigatorio { background: #fee2e2; color: #b91c1c; } }
+  small { color: var(--cor-texto-suave); }
+  p { margin: 0; color: var(--cor-erro, #b91c1c); font-size: 0.8rem; font-weight: 700; }
+  &--erro { border-color: #ef4444; background: #fef2f2; }
+}
+
+.opcoes-produto__opcao {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+
+  input { width: 1.15rem; height: 1.15rem; accent-color: var(--cor-primaria); }
+  span { flex: 1; font-weight: 600; em { color: var(--cor-texto-suave); font-weight: 400; } }
+  strong { color: var(--cor-texto-suave); font-size: 0.85rem; }
+  &:hover:not(.bloqueada) { background: var(--cor-fundo); }
+  &.ativo { background: var(--cor-primaria-suave); }
+  &.bloqueada { opacity: 0.5; cursor: not-allowed; }
+}
+
+.carrinho-itens__opcoes { color: var(--cor-texto-suave); }
+.loja-revisao__opcoes { color: var(--cor-texto-suave); font-size: 0.8rem; }

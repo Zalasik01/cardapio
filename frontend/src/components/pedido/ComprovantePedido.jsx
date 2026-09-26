@@ -77,7 +77,7 @@ export default function ComprovantePedido({ pedido, via, loja }) {
         {pedido.itens.map((item, i) => (
           <div key={i} className="comprovante__item">
             <div className={cozinha ? 'comprovante__item-nome comprovante__item-nome--grande' : 'comprovante__item-nome'}>
-              <span>{item.quantidade}x {item.nomeProduto}</span>
+              <span>{item.quantidade}x {item.nomeProduto}{item.opcoes?.length > 0 && <small> ({item.opcoes.map((o) => o.nome).join(', ')})</small>}</span>
               <span>{formatarMoeda(item.totalItem)}</span>
             </div>
             <div className="comprovante__unit">{item.quantidade} x {formatarMoeda(item.precoUnitario)}</div>

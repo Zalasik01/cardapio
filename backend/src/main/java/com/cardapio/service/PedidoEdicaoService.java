@@ -42,6 +42,7 @@ public class PedidoEdicaoService {
 
     private final T_PedidoRepository pedidoRepository;
     private final T_ProdutoRepository produtoRepository;
+    private final OpcaoService opcaoService;
     private final T_PedidoAlteracaoRepository alteracaoRepository;
     private final PedidoService pedidoService;
     private final PagamentoPedidoService pagamentoService;
@@ -89,15 +90,15 @@ public class PedidoEdicaoService {
         pedido.setObservacoes(vazioParaNulo(request.observacoes()));
 
         // itens: quem já estava mantém o preço de quando o pedido foi feito; itens novos usam o preço de hoje
-        Map<UUID, I_ItemPedido> existentes = new LinkedHashMap<>();
-        pedido.getItens().forEach(item -> existentes.put(item.getProduto().getGuid(), item));
-        Map<UUID, ItemPedidoRequest> pedidos = new LinkedHashMap<>();
+        Map<String, I_ItemPedido> existentes = new LinkedHashMap<>();
+        pedido.getItens().forEach(item -> existentes.put(chaveDoItem(item), item));
+        Map<String, ItemPedidoRequest> pedidos = new LinkedHashMap<>();
         for (ItemPedidoRequest item : request.itens()) {
-            pedidos.merge(item.produtoGuid(), item, (a, b) -> new ItemPedidoRequest(a.produtoGuid(),
-                    a.quantidade() + b.quantidade(), a.observacoes() != null ? a.observacoes() : b.observacoes()));
+            pedidos.merge(item.chave(), item, (a, b) -> new ItemPedidoRequest(a.produtoGuid(),
+                    a.quantidade() + b.quantidade(), a.observacoes() != null ? a.observacoes() : b.observacoes(), a.opcoes()));
         }
 
-        for (Map.Entry<UUID, I_ItemPedido> antigo : existentes.entrySet()) {
+        for (Map.Entry<String, I_ItemPedido> antigo : existentes.entrySet()) {
             if (!pedidos.containsKey(antigo.getKey())) {
                 I_ItemPedido removido = antigo.getValue();
                 mudancas.add("Removido: " + removido.getQuantidade() + "x " + removido.getNomeProduto());
@@ -106,16 +107,22 @@ public class PedidoEdicaoService {
         }
         BigDecimal subtotal = BigDecimal.ZERO;
         for (ItemPedidoRequest novo : pedidos.values()) {
-            I_ItemPedido item = existentes.get(novo.produtoGuid());
+            I_ItemPedido item = existentes.get(novo.chave());
             if (item == null) {
                 T_Produto produto = produtoRepository.findByGuidAndTenant(novo.produtoGuid(), tenant)
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + novo.produtoGuid()));
                 if (!produto.isAtivo() || !produto.isDisponivel() || produto.getTipo() != TipoProduto.FINAL) {
                     throw new RegraNegocioException("Produto indisponível: " + produto.getNome());
                 }
+                var escolhas = opcaoService.resolver(produto, novo.opcoes());
                 item = I_ItemPedido.builder().tenant(tenant).pedido(pedido).produto(produto).nomeProduto(produto.getNome())
-                        .precoUnitario(produto.precoVenda()).quantidade(novo.quantidade())
+                        .precoUnitario(produto.precoVenda().add(escolhas.adicional())).quantidade(novo.quantidade())
                         .observacoes(vazioParaNulo(novo.observacoes())).build();
+                final I_ItemPedido itemNovo = item;
+                escolhas.opcoes().forEach(o -> {
+                    o.setItem(itemNovo);
+                    itemNovo.getOpcoes().add(o);
+                });
                 pedido.getItens().add(item);
                 mudancas.add("Adicionado: " + novo.quantidade() + "x " + produto.getNome());
             } else {
@@ -237,6 +244,12 @@ public class PedidoEdicaoService {
 
     private String rotuloTipo(TipoEntrega tipo) {
         return tipo == TipoEntrega.ENTREGA ? "Entrega" : "Retirada";
+    }
+
+    /** Mesma chave das linhas do pedido enviado: produto + opções escolhidas. */
+    private static String chaveDoItem(I_ItemPedido item) {
+        return item.getProduto().getGuid() + "|" + item.getOpcoes().stream().map(o -> o.getIdOpcao()).filter(Objects::nonNull).sorted()
+                .map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
     }
 
     private String endereco(String rua, String numero, String complemento, String bairro, String cidade) {

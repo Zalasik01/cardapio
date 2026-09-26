@@ -4,6 +4,8 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { Dialog } from 'primereact/dialog'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
+import OpcoesProduto from '../../components/OpcoesProduto'
+import { chaveDoItem, erroDasOpcoes, opcoesEscolhidas, resumoOpcoes, somaOpcoes } from '../../utils/opcoes'
 import { useCliente } from '../../context/ClienteContext'
 import { listarPedidosCliente } from '../../api/clienteApi'
 import { useInstalarApp } from '../../utils/instalarApp'
@@ -172,9 +174,17 @@ function DialogoProduto({ produto, aoFechar, centralizado }) {
   const { adicionarItem } = useCarrinho()
   const [quantidade, setQuantidade] = useState(1)
   const [observacao, setObservacao] = useState('')
+  const [escolhidas, setEscolhidas] = useState([])
+  const [tentou, setTentou] = useState(false)
+  const grupos = produto.grupos ?? []
+  const precoUnitario = Number(produto.preco) + somaOpcoes(grupos, escolhidas)
 
   function adicionar() {
-    adicionarItem(produto, quantidade, observacao.trim())
+    if (erroDasOpcoes(grupos, escolhidas)) {
+      setTentou(true)
+      return
+    }
+    adicionarItem(produto, quantidade, observacao.trim(), opcoesEscolhidas(grupos, escolhidas))
     aoFechar()
   }
 
@@ -191,6 +201,7 @@ function DialogoProduto({ produto, aoFechar, centralizado }) {
         <h2>{produto.nome}</h2>
         {produto.descricao && <p className="loja-dialogo__descricao">{produto.descricao}</p>}
         <p className="loja-dialogo__preco">{formatarMoeda(produto.preco)}</p>
+        {grupos.length > 0 && <OpcoesProduto grupos={grupos} valor={escolhidas} aoAlterar={setEscolhidas} mostrarErro={tentou} />}
         <label className="loja-campo">
           Alguma observação?
           <textarea rows={2} maxLength={200} value={observacao} onChange={(e) => setObservacao(e.target.value)}
@@ -209,7 +220,7 @@ function DialogoProduto({ produto, aoFechar, centralizado }) {
         </div>
         <button type="button" className="loja-botao" onClick={adicionar}>
           <span>Adicionar</span>
-          <strong>{formatarMoeda(produto.preco * quantidade)}</strong>
+          <strong>{formatarMoeda(precoUnitario * quantidade)}</strong>
         </button>
       </div>
     </Dialog>
@@ -247,20 +258,21 @@ function SacolaLateral({ slug, minimo, aberta }) {
         <>
           <ul className="loja-sacola__itens">
             {itens.map((item) => (
-              <li key={`${item.produtoGuid}-${item.observacoes}`}>
+              <li key={chaveDoItem(item)}>
                 <div>
                   <strong>{item.nome}</strong>
+                  {item.opcoes?.length > 0 && <small>{resumoOpcoes(item.opcoes)}</small>}
                   {item.observacoes && <small>{item.observacoes}</small>}
                   <span>{formatarMoeda(item.preco * item.quantidade)}</span>
                 </div>
                 <div className="loja-quantidade loja-quantidade--compacta">
                   <button type="button" aria-label={item.quantidade === 1 ? 'Remover' : 'Diminuir'}
-                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade - 1)}>
+                          onClick={() => alterarQuantidade(item, item.quantidade - 1)}>
                     <i className={`fa-solid ${item.quantidade === 1 ? 'fa-trash-can' : 'fa-minus'}`} />
                   </button>
                   <span>{item.quantidade}</span>
                   <button type="button" aria-label="Aumentar"
-                          onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade + 1)}>
+                          onClick={() => alterarQuantidade(item, item.quantidade + 1)}>
                     <i className="fa-solid fa-plus" />
                   </button>
                 </div>

@@ -6,6 +6,7 @@ import { useCarrinho } from '../../context/CarrinhoContext'
 import { useCliente } from '../../context/ClienteContext'
 import { formatarMoeda } from '../../utils/formatadores'
 import { mascaraTelefone } from '../../utils/telefone'
+import { erroDasOpcoes, opcoesEscolhidas } from '../../utils/opcoes'
 import EnderecosCliente from '../../components/EnderecosCliente'
 
 const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -53,8 +54,13 @@ export default function PaginaMeusPedidos() {
     const indisponiveis = []
     pedido.itens.forEach((item) => {
       const produto = produtos.get(item.produtoGuid)
-      if (produto && !produto.indisponivel) adicionarItem(produto, item.quantidade, item.observacoes ?? '')
-      else indisponiveis.push(item.nome)
+      // as opções do pedido antigo só voltam se ainda existirem e estiverem disponíveis; senão o item precisa ser escolhido de novo
+      const ids = (item.opcoes ?? []).filter((id) => produto?.grupos?.some((g) => g.opcoes.some((o) => o.id === id && o.disponivel)))
+      if (produto && !produto.indisponivel && !erroDasOpcoes(produto.grupos, ids)) {
+        adicionarItem(produto, item.quantidade, item.observacoes ?? '', opcoesEscolhidas(produto.grupos, ids))
+      } else {
+        indisponiveis.push(item.nome)
+      }
     })
     if (indisponiveis.length > 0) {
       setAviso(`Não estão disponíveis agora: ${indisponiveis.join(', ')}.`)

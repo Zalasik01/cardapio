@@ -53,6 +53,19 @@ public class T_Produto extends TenantAbstract {
     @Builder.Default
     private BigDecimal custoUnitario = BigDecimal.ZERO;
 
+    /** Ingrediente com controle de estoque: pedidos dão baixa pela composição dos produtos. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean controlaEstoque = false;
+
+    @Column(nullable = false, precision = 14, scale = 3)
+    @Builder.Default
+    private BigDecimal estoqueAtual = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 14, scale = 3)
+    @Builder.Default
+    private BigDecimal estoqueMinimo = BigDecimal.ZERO;
+
     /** Fornecedor do ingrediente (uma pessoa cadastrada como fornecedor), opcional. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_fornecedor")

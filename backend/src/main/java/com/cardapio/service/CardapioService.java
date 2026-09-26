@@ -30,6 +30,7 @@ public class CardapioService {
     private final AvaliacaoService avaliacaoService;
     private final FidelidadeService fidelidadeService;
     private final SiteLojaService siteService;
+    private final OpcaoService opcaoService;
     private final T_FormaPagamentoRepository formaPagamentoRepository;
 
     @Transactional(readOnly = true)
@@ -42,13 +43,15 @@ public class CardapioService {
                 tenant, com.cardapio.entity.TipoProduto.FINAL);
         List<T_Categoria> categorias = categoriaRepository.findByTenantAndAtivoTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(tenant);
 
+        var gruposPorProduto = opcaoService.publicosPorProduto(produtos.stream().map(T_Produto::getId).toList());
+
         List<CardapioResponse.CategoriaComProdutosResponse> categoriasComProdutos = categorias.stream()
                 .map(categoria -> new CardapioResponse.CategoriaComProdutosResponse(
                         categoria.getGuid(),
                         categoria.getNome(),
                         produtos.stream()
                                 .filter(p -> p.getCategoria().getId().equals(categoria.getId()))
-                                .map(p -> ProdutoResponse.of(p, agora))
+                                .map(p -> ProdutoResponse.of(p, agora, gruposPorProduto.get(p.getId())))
                                 .collect(Collectors.toList())))
                 .filter(c -> !c.produtos().isEmpty())
                 .sorted(Comparator.comparing(CardapioResponse.CategoriaComProdutosResponse::nome))

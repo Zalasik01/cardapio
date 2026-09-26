@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
 import { buscarPessoas } from '../../api/pessoasApi'
+import { listarGruposOpcaoAtivos } from '../../api/gruposOpcaoApi'
 import {
   atualizarProdutoCadastro, criarProdutoCadastro, excluirProdutoCadastro, listarCategoriasCadastro,
   codigoProdutoDisponivel, obterProdutoCadastro, obterProximoCodigo,
@@ -44,7 +45,7 @@ const FORM_VAZIO = {
   precoPromocional: null,
   destaque: false,
   disponivelDias: [], disponivelDas: null, disponivelAte: null, selos: [], alergenos: '',
-  promoDias: [], promoInicio: null, promoFim: null,
+  promoDias: [], promoInicio: null, promoFim: null, gruposOpcaoIds: [],
   disponivel: true,
   composicao: [],
   // ingrediente
@@ -69,6 +70,7 @@ function paraFormulario(produto) {
     disponivelDias: diasParaLista(produto.disponivelDias), disponivelDas: horaParaData(produto.disponivelDas), disponivelAte: horaParaData(produto.disponivelAte),
     selos: produto.selos ? produto.selos.split(',') : [], alergenos: produto.alergenos ?? '',
     promoDias: diasParaLista(produto.promoDias), promoInicio: horaParaData(produto.promoInicio), promoFim: horaParaData(produto.promoFim),
+    gruposOpcaoIds: produto.gruposOpcaoIds ?? [],
     disponivel: produto.disponivel,
     composicao: (produto.composicao ?? []).map((item) => ({ ...item, _id: `item-${item.ingredienteId}` })),
     custoUnitario: produto.custoUnitario ?? 0,
@@ -98,6 +100,7 @@ function paraRequisicao(form, tipo) {
       disponivelDias: diasParaCsv(form.disponivelDias), disponivelDas: dataParaHora(form.disponivelDas), disponivelAte: dataParaHora(form.disponivelAte),
       selos: form.selos.length ? form.selos.join(',') : null, alergenos: form.alergenos.trim() || null,
       promoDias: diasParaCsv(form.promoDias), promoInicio: dataParaHora(form.promoInicio), promoFim: dataParaHora(form.promoFim),
+      gruposOpcaoIds: form.gruposOpcaoIds,
       disponivel: form.disponivel,
       composicao: form.composicao.map(({ ingredienteId, quantidade }) => ({ ingredienteId, quantidade })),
     }
@@ -128,6 +131,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
   const [carregando, setCarregando] = useState(editando)
   const [salvando, setSalvando] = useState(false)
   const [categorias, setCategorias] = useState([])
+  const [gruposOpcao, setGruposOpcao] = useState([])
   const [sugestoesFornecedor, setSugestoesFornecedor] = useState([])
   const [erroCodigo, setErroCodigo] = useState(null)
   const consultaCodigo = useRef(0) // ignora respostas de consultas antigas
@@ -139,6 +143,7 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
 
   useEffect(() => {
     if (tipo === 'FINAL') listarCategoriasCadastro(loja.tenant).then(setCategorias).catch(() => setCategorias([]))
+    listarGruposOpcaoAtivos(loja.tenant).then(setGruposOpcao).catch(() => setGruposOpcao([]))
   }, [tipo, loja.tenant])
 
   // produto novo: o código já vem preenchido com o próximo da sequência (pode ser alterado)
@@ -337,6 +342,11 @@ export default function PaginaProdutoCadastroCrud({ tipo }) {
             </Campo>
             <Campo id="promoFim" rotulo="Promoção até" tamanho={2}>
               <Calendar inputId="promoFim" value={form.promoFim} timeOnly hourFormat="24" onChange={(e) => definir('promoFim')(e.value)} />
+            </Campo>
+            <Campo id="gruposOpcao" rotulo="Adicionais e variações" tamanho={12}
+                   ajuda="Grupos que o cliente escolhe neste produto (tamanho, adicionais, ponto da carne). Cadastre em Cardápio > Adicionais e variações.">
+              <MultiSelect inputId="gruposOpcao" value={form.gruposOpcaoIds} options={gruposOpcao} optionLabel="nome" optionValue="id"
+                           display="chip" placeholder="Nenhum" emptyMessage="Nenhum grupo cadastrado" onChange={(e) => definir('gruposOpcaoIds')(e.value)} />
             </Campo>
             <Campo id="selos" rotulo="Selos" tamanho={6}>
               <MultiSelect inputId="selos" value={form.selos} options={SELOS_PRODUTO} optionLabel="rotulo" optionValue="valor"

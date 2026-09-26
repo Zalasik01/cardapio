@@ -44,7 +44,8 @@ public record ProdutoCadastroRequest(
         @Size(max = 300) String alergenos,
         @Size(max = 20) String promoDias,
         java.time.LocalTime promoInicio,
-        java.time.LocalTime promoFim
+        java.time.LocalTime promoFim,
+        java.util.List<Long> gruposOpcaoIds
 ) {
 
     /** Um ingrediente da composição e a quantidade dele (na unidade do ingrediente). */

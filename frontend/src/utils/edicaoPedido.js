@@ -1,5 +1,6 @@
 import { obterProdutosParaPedido } from '../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgWarn } from '../store/dispatchMsg'
+import { opcoesEscolhidas, somaOpcoes } from './opcoes'
 
 /** Texto do selo "Editado": as mudanças da edição mais recente, uma por linha (usado no tooltip). */
 export function resumoUltimaEdicao(pedido) {
@@ -34,6 +35,7 @@ export function rascunhoDoPedido(pedido) {
     itens: pedido.itens.map((item) => ({
       guid: item.produtoGuid, nome: item.nomeProduto, preco: Number(item.precoUnitario), quantidade: item.quantidade,
       observacoes: item.observacoes ?? null,
+      opcoes: item.opcaoIds ?? [], resumo: (item.opcoes ?? []).map((o) => o.nome).join(', '),
     })),
   }
 }
@@ -49,7 +51,12 @@ export async function repetirPedido(tenant, pedido, abrirNovo) {
   pedido.itens.forEach((item) => {
     const produto = atuais.get(item.produtoGuid)
     if (produto) {
-      itens.push({ guid: produto.guid, nome: produto.nome, preco: Number(produto.preco), quantidade: item.quantidade, observacoes: item.observacoes ?? null })
+      const disponiveis = new Set((produto.grupos ?? []).flatMap((g) => g.opcoes.filter((o) => o.disponivel).map((o) => o.id)))
+      const ids = (item.opcaoIds ?? []).filter((id) => disponiveis.has(id))
+      itens.push({
+        guid: produto.guid, nome: produto.nome, preco: Number(produto.preco) + somaOpcoes(produto.grupos, ids), quantidade: item.quantidade,
+        observacoes: item.observacoes ?? null, opcoes: ids, resumo: opcoesEscolhidas(produto.grupos, ids).map((o) => o.nome).join(', '),
+      })
     } else {
       ausentes.push(item.nomeProduto)
     }

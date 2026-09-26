@@ -50,6 +50,7 @@ public class PedidoAdminService {
     private final FluxoPedidoService fluxoService;
     private final com.cardapio.repository.T_EntregadorRepository entregadorRepository;
     private final PagamentoPedidoService pagamentoService;
+    private final OpcaoService opcaoService;
     private final com.cardapio.repository.T_PedidoPagamentoRepository pagamentoRepository;
     private final com.cardapio.repository.T_PedidoAlteracaoRepository alteracaoRepository;
     private final T_ProdutoRepository produtoRepository;
@@ -111,15 +112,19 @@ public class PedidoAdminService {
     }
 
     /** Produto que a loja pode lançar num pedido (produto final ativo e disponível). */
-    public record ProdutoParaPedido(java.util.UUID guid, String nome, BigDecimal preco, String categoria) {
+    public record ProdutoParaPedido(java.util.UUID guid, String nome, BigDecimal preco, String categoria,
+                                java.util.List<OpcaoService.GrupoPublico> grupos) {
     }
 
     @Transactional(readOnly = true)
     public List<ProdutoParaPedido> produtosParaPedido(UUID tenant) {
-        return produtoRepository.findByTenantOrderByOrdemExibicaoAsc(tenant).stream()
-                .filter(produto -> produto.isAtivo() && produto.isDisponivel())
+        List<com.cardapio.entity.T_Produto> ativos = produtoRepository.findByTenantOrderByOrdemExibicaoAsc(tenant).stream()
+                .filter(produto -> produto.isAtivo() && produto.isDisponivel()).toList();
+        Map<Long, List<OpcaoService.GrupoPublico>> grupos = opcaoService.publicosPorProduto(ativos.stream().map(com.cardapio.entity.T_Produto::getId).toList());
+        return ativos.stream()
                 .map(produto -> new ProdutoParaPedido(produto.getGuid(), produto.getNome(), produto.precoVenda(),
-                        produto.getCategoria() != null ? produto.getCategoria().getNome() : null))
+                        produto.getCategoria() != null ? produto.getCategoria().getNome() : null,
+                        grupos.getOrDefault(produto.getId(), List.of())))
                 .toList();
     }
 

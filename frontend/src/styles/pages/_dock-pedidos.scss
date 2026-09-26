@@ -255,3 +255,16 @@ body:has(.crud__rodape) .dock-pedidos {
   cursor: pointer;
   outline: none;
 }
+
+.dock-janela__item-opcoes { display: block; color: #6b7280; font-size: 0.75rem; }
+
+.dock-janela__opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+.dock-janela__opcoes-acoes { display: flex; justify-content: flex-end; gap: 0.5rem; }

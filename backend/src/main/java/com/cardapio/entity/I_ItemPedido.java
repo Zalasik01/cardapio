@@ -47,4 +47,15 @@ public class I_ItemPedido extends TenantAbstract {
     private BigDecimal totalItem;
 
     private String observacoes;
+
+    /** Adicionais e variações escolhidos (o preço unitário já os inclui). */
+    @jakarta.persistence.OneToMany(mappedBy = "item", fetch = jakarta.persistence.FetchType.EAGER, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Fetch(org.hibernate.annotations.FetchMode.SUBSELECT)
+    @lombok.Builder.Default
+    private java.util.List<I_ItemPedidoOpcao> opcoes = new java.util.ArrayList<>();
+
+    /** "Bacon, Queijo extra" (vazio sem opções): para telas e impressões que mostram o item em uma linha. */
+    public String resumoOpcoes() {
+        return opcoes.stream().map(I_ItemPedidoOpcao::getNomeOpcao).collect(java.util.stream.Collectors.joining(", "));
+    }
 }

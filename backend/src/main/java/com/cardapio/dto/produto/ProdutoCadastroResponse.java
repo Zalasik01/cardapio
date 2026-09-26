@@ -37,7 +37,8 @@ public record ProdutoCadastroResponse(
         String promoDias,
         java.time.LocalTime promoInicio,
         java.time.LocalTime promoFim,
-        java.time.LocalDateTime esgotadoAte
+        java.time.LocalDateTime esgotadoAte,
+        java.util.List<Long> gruposOpcaoIds
 ) {
 
     public record ItemComposicao(

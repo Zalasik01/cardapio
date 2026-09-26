@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
+import { chaveDoItem, resumoOpcoes } from '../../utils/opcoes'
 
 /** Carrinho do cliente: ajusta quantidades, remove itens e segue para o checkout. */
 export default function PaginaCarrinho() {
@@ -56,22 +57,23 @@ export default function PaginaCarrinho() {
 
           <ul className="carrinho-itens">
             {itens.map((item) => (
-              <li key={`${item.produtoGuid}-${item.observacoes}`}>
+              <li key={chaveDoItem(item)}>
                 <span className="carrinho-itens__foto">
                   {item.imagemUrl ? <img src={item.imagemUrl} alt="" /> : <i className="fa-solid fa-utensils" aria-hidden="true" />}
                 </span>
                 <div className="carrinho-itens__info">
                   <strong>{item.nome}</strong>
+                  {item.opcoes?.length > 0 && <small className="carrinho-itens__opcoes">{resumoOpcoes(item.opcoes)}</small>}
                   {item.observacoes && <small><i className="fa-regular fa-comment" aria-hidden="true" /> {item.observacoes}</small>}
                   <span className="carrinho-itens__unitario">{formatarMoeda(item.preco)} cada</span>
                   <div className="loja-quantidade loja-quantidade--compacta">
                     <button type="button" aria-label={item.quantidade === 1 ? 'Remover' : 'Diminuir'}
-                            onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade - 1)}>
+                            onClick={() => alterarQuantidade(item, item.quantidade - 1)}>
                       <i className={`fa-solid ${item.quantidade === 1 ? 'fa-trash-can' : 'fa-minus'}`} />
                     </button>
                     <span>{item.quantidade}</span>
                     <button type="button" aria-label="Aumentar"
-                            onClick={() => alterarQuantidade(item.produtoGuid, item.observacoes, item.quantidade + 1)}>
+                            onClick={() => alterarQuantidade(item, item.quantidade + 1)}>
                       <i className="fa-solid fa-plus" />
                     </button>
                   </div>

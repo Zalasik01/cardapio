@@ -8,6 +8,7 @@ import { buscarEnderecoPorCep } from '../../api/cepApi'
 import { mascaraTelefone } from '../../utils/telefone'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
+import { chaveDoItem, resumoOpcoes } from '../../utils/opcoes'
 import { useCliente } from '../../context/ClienteContext'
 
 const somenteDigitos = (v) => v.replace(/\D/g, '')
@@ -239,7 +240,7 @@ export default function PaginaCheckout() {
         enderecoCidade: entrega ? form.enderecoCidade : null,
         latitude: entrega ? frete?.latitude : null,
         longitude: entrega ? frete?.longitude : null,
-        itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade, observacoes: i.observacoes })),
+        itens: itens.map((i) => ({ produtoGuid: i.produtoGuid, quantidade: i.quantidade, observacoes: i.observacoes, opcoes: (i.opcoes ?? []).map((o) => o.id) })),
         formaPagamento: textoPagamento,
         observacoes: form.observacoes,
         codigoCupom: cupom?.codigo ?? null,
@@ -464,7 +465,7 @@ export default function PaginaCheckout() {
       <section className="loja-bloco">
         <h2>Confira seu pedido</h2>
         <ul className="loja-revisao">
-          {itens.map((i) => <li key={`${i.produtoGuid}-${i.observacoes}`}><span>{i.quantidade}x {i.nome}</span><span>{formatarMoeda(i.preco * i.quantidade)}</span></li>)}
+          {itens.map((i) => <li key={chaveDoItem(i)}><span>{i.quantidade}x {i.nome}{i.opcoes?.length > 0 && <small className="loja-revisao__opcoes"> ({resumoOpcoes(i.opcoes)})</small>}</span><span>{formatarMoeda(i.preco * i.quantidade)}</span></li>)}
         </ul>
         <p className="loja-revisao__dados">
           {form.nomeCliente} · {form.telefoneCliente}<br />

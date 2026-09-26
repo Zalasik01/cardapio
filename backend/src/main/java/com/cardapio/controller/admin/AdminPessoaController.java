@@ -24,6 +24,7 @@ import java.util.UUID;
 public class AdminPessoaController {
 
     private final PessoaService pessoaService;
+    private final com.cardapio.service.PerfilClienteService perfilClienteService;
 
     @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_LEITURA')")
     @GetMapping
@@ -52,6 +53,13 @@ public class AdminPessoaController {
     @GetMapping("/{id}")
     public PessoaResponse obter(@PathVariable UUID tenant, @PathVariable Long id) {
         return pessoaService.obter(tenant, id);
+    }
+
+    /** Números e pedidos do cliente na loja (aba "Histórico" do cadastro). */
+    @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_LEITURA')")
+    @GetMapping("/{id}/perfil-cliente")
+    public com.cardapio.service.PerfilClienteService.PerfilCliente perfilCliente(@PathVariable UUID tenant, @PathVariable Long id) {
+        return perfilClienteService.perfil(tenant, id);
     }
 
     @PreAuthorize("@perm.tem('CLIENTES_FORNECEDORES_INCLUIR')")

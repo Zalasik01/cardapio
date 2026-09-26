@@ -75,6 +75,13 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
             + "group by 1 order by 1", nativeQuery = true)
     List<Object[]> vendasPorHora(@Param("tenant") UUID tenant, @Param("de") LocalDateTime de, @Param("ate") LocalDateTime ate);
 
+    /** Pedidos de um cliente da loja: pelo telefone (ignorando a máscara) ou pela conta do cardápio online, do mais novo para o mais antigo. */
+    @Query("select p from T_Pedido p where p.tenant = :tenant and p.deletado = false and ("
+            + "replace(replace(replace(replace(p.telefoneCliente, '(', ''), ')', ''), ' ', ''), '-', '') in :telefones "
+            + "or (:conta is not null and p.idClienteConta = :conta)) order by p.dataCriacao desc")
+    List<T_Pedido> pedidosDoClienteDaLoja(@Param("tenant") UUID tenant, @Param("telefones") Collection<String> telefones,
+                                          @Param("conta") Long conta, org.springframework.data.domain.Pageable limite);
+
     long countByTenantAndDeletadoFalseAndStatusIn(UUID tenant, Collection<StatusPedido> status);
 
     long countByIdClienteContaAndTenantAndDeletadoFalseAndStatusNot(Long idClienteConta, UUID tenant, StatusPedido status);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Tooltip } from 'primereact/tooltip'
 import { useAuth } from '../../context/AuthContext'
 import { obterVendasPorHora } from '../../api/pedidosApi'
 import { dispatchMsgError } from '../../store/dispatchMsg'
@@ -31,6 +32,7 @@ export default function VendasPorHora({ periodo }) {
 
   return (
     <div className="vendas-hora">
+      <Tooltip target=".vendas-hora__coluna" position="top" />
       <p className="vendas-hora__resumo">
         Pico às <strong>{String(pico.hora).padStart(2, '0')}h</strong> · {pico.pedidos} pedido(s) · {formatarMoeda(pico.valor)}
       </p>

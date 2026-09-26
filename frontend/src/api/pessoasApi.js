@@ -11,6 +11,10 @@ export const buscarPessoas = (tenant, { page = 0, size = 10, ...filtros }) => {
   return http.get(base(tenant), { params }).then((res) => res.data)
 }
 
+/** Números e pedidos do cliente na loja (aba Histórico do cadastro). */
+export const obterPerfilCliente = (tenant, id) =>
+  http.get(`${base(tenant)}/${id}/perfil-cliente`).then((res) => res.data)
+
 export const obterPessoa = (tenant, id) =>
   http.get(`${base(tenant)}/${id}`).then((res) => res.data)
 

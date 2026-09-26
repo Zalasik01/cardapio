@@ -16,6 +16,7 @@ import {
 } from '../../api/pessoasApi'
 import CrudPagina from '../../components/crud/CrudPagina'
 import CampoAtivo from '../../components/crud/CampoAtivo'
+import HistoricoCliente from '../../components/pessoa/HistoricoCliente'
 import Endereco from '../../components/crud/Endereco'
 import RodapeCrud from '../../components/crud/RodapeCrud'
 import { Campo, GradeCampos, SecaoCrud } from '../../components/crud/Campo'
@@ -374,6 +375,8 @@ export default function PaginaPessoaCrud() {
           </Campo>
         </GradeCampos>
       </SecaoCrud>
+
+      {editando && form.cliente && <HistoricoCliente tenant={loja.tenant} pessoaId={id} />}
 
       <DialogoCpfExistente
         existente={cpfExistente}

@@ -543,3 +543,25 @@ fieldset.crud__somente-leitura {
 .avaliacao__dialogo-acoes { display: flex; gap: 0.5rem; justify-content: flex-end; }
 .estrelas { display: inline-flex; gap: 0.12em; color: #d1d5db; }
 .estrelas__cheia { color: #f59e0b; }
+
+// ---- Histórico do cliente (cadastro de clientes) ----
+.perfil-cliente__numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+
+  > div { display: grid; gap: 0.15rem; padding: 0.7rem 0.85rem; border-radius: 10px; background: #f8fafc; border: 1px solid var(--cor-borda); }
+  strong { font-size: 1.15rem; }
+  small { color: var(--cor-texto-suave); }
+}
+
+.perfil-cliente__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th, td { padding: 0.5rem 0.6rem; text-align: left; border-bottom: 1px solid var(--cor-borda); }
+  th { color: var(--cor-texto-suave); font-size: 0.8rem; font-weight: 700; }
+  .direita { text-align: right; }
+}

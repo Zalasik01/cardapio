@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { useCarrinho } from '../../context/CarrinhoContext'
 import { formatarMoeda } from '../../utils/formatadores'
@@ -6,7 +7,8 @@ import { formatarMoeda } from '../../utils/formatadores'
 export default function PaginaCarrinho() {
   const { cardapio, slug } = useOutletContext()
   const navigate = useNavigate()
-  const { itens, alterarQuantidade, subtotal } = useCarrinho()
+  const { itens, alterarQuantidade, limparCarrinho, subtotal } = useCarrinho()
+  const [confirmandoLimpar, setConfirmandoLimpar] = useState(false)
   const minimo = Number(cardapio.loja.valorMinimoPedido)
   const abaixoDoMinimo = minimo > 0 && subtotal < minimo
 
@@ -15,6 +17,19 @@ export default function PaginaCarrinho() {
       <header className="loja-pagina__topo">
         <Link to={`/${slug}`} aria-label="Voltar ao cardápio"><i className="fa-solid fa-arrow-left" /></Link>
         <h1>Seu carrinho</h1>
+        {itens.length > 0 && (
+          confirmandoLimpar ? (
+            <span className="loja-limpar" role="alert">
+              Limpar tudo?
+              <button type="button" className="loja-link" onClick={() => { limparCarrinho(); setConfirmandoLimpar(false) }}>Sim, limpar</button>
+              <button type="button" className="loja-link loja-link--suave" onClick={() => setConfirmandoLimpar(false)}>Não</button>
+            </span>
+          ) : (
+            <button type="button" className="loja-limpar loja-link" onClick={() => setConfirmandoLimpar(true)}>
+              <i className="fa-regular fa-trash-can" aria-hidden="true" /> Limpar carrinho
+            </button>
+          )
+        )}
       </header>
 
       {itens.length === 0 ? (
@@ -47,12 +62,11 @@ export default function PaginaCarrinho() {
             ))}
           </ul>
 
-          <div className="loja-resumo">
-            <p><span>Subtotal</span><strong>{formatarMoeda(subtotal)}</strong></p>
-            {abaixoDoMinimo && <small className="loja-resumo__aviso">Pedido mínimo de {formatarMoeda(minimo)}: faltam {formatarMoeda(minimo - subtotal)}.</small>}
-          </div>
-
-          <footer className="loja-rodape-fixo">
+          <footer className="loja-rodape-fixo loja-rodape-fixo--resumo">
+            <div className="loja-rodape-fixo__resumo">
+              <p><span>Subtotal</span><strong>{formatarMoeda(subtotal)}</strong></p>
+              {abaixoDoMinimo && <small className="loja-resumo__aviso">Pedido mínimo de {formatarMoeda(minimo)}: faltam {formatarMoeda(minimo - subtotal)}.</small>}
+            </div>
             <button type="button" className="loja-botao" disabled={abaixoDoMinimo || !cardapio.aberta}
                     onClick={() => navigate(`/${slug}/checkout`)}>
               {cardapio.aberta ? 'Continuar' : 'Loja fechada'}

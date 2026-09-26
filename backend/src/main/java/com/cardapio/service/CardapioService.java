@@ -26,12 +26,14 @@ public class CardapioService {
     private final T_ProdutoRepository produtoRepository;
     private final LojaService lojaService;
     private final FuncionamentoService funcionamentoService;
+    private final com.cardapio.repository.T_PedidoRepository pedidoRepository;
     private final T_FormaPagamentoRepository formaPagamentoRepository;
 
     @Transactional(readOnly = true)
     public CardapioResponse buscarCardapioPublico(String slug) {
         S_Loja loja = lojaService.buscarPorSlug(slug);
         UUID tenant = loja.getGuid();
+        java.time.LocalDateTime agora = java.time.LocalDateTime.now(java.time.ZoneId.of(loja.getFusoHorario()));
 
         List<T_Produto> produtos = produtoRepository.findByTenantAndTipoAndAtivoTrueAndDisponivelTrueAndDeletadoFalseOrderByOrdemExibicaoAsc(
                 tenant, com.cardapio.entity.TipoProduto.FINAL);
@@ -43,7 +45,7 @@ public class CardapioService {
                         categoria.getNome(),
                         produtos.stream()
                                 .filter(p -> p.getCategoria().getId().equals(categoria.getId()))
-                                .map(ProdutoResponse::of)
+                                .map(p -> ProdutoResponse.of(p, agora))
                                 .collect(Collectors.toList())))
                 .filter(c -> !c.produtos().isEmpty())
                 .sorted(Comparator.comparing(CardapioResponse.CategoriaComProdutosResponse::nome))
@@ -55,7 +57,13 @@ public class CardapioService {
                         f.getTaxaFixa(), f.isAceitaEntrega(), f.isAceitaRetirada()))
                 .toList();
 
-        return new CardapioResponse(LojaResponse.of(loja), situacao.aberta(), situacao.proximaMudanca(), formas, categoriasComProdutos);
+        // os mais pedidos dos últimos 30 dias (só os que ainda estão no cardápio), calculados pelas vendas
+        var noCardapio = produtos.stream().map(T_Produto::getGuid).collect(Collectors.toSet());
+        List<UUID> maisVendidos = pedidoRepository.maisVendidos(tenant, agora.minusDays(30), org.springframework.data.domain.PageRequest.of(0, 12))
+                .stream().filter(noCardapio::contains).limit(8).toList();
+
+        return new CardapioResponse(LojaResponse.of(loja), situacao.aberta(), situacao.motivo(), situacao.pausadoAte(),
+                maisVendidos, situacao.proximaMudanca(), formas, categoriasComProdutos);
     }
 
     /** Manifesto do PWA da loja: nome, cores, ícone (logo da loja, se houver) e a página inicial dela. */

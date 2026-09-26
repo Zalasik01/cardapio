@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { useAuth } from '../../context/AuthContext'
-import { rascunhoDoPedido } from '../../utils/edicaoPedido'
+import { rascunhoDoPedido, repetirPedido } from '../../utils/edicaoPedido'
 import { buscarPedidos, excluirPedido, obterPedido } from '../../api/pedidosApi'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
@@ -74,6 +74,14 @@ export default function PaginaPedidos() {
     }
   }
 
+  async function repetir(pedido) {
+    try {
+      await repetirPedido(loja.tenant, await obterPedido(loja.tenant, pedido.id), abrirNovo)
+    } catch (e) {
+      dispatchMsgError(e.mensagem)
+    }
+  }
+
   function excluir(pedido) {
     confirmar({
       mensagem: `Excluir o pedido ${pedido.id}? Ele deixa de aparecer nas listas e no painel.`,
@@ -111,6 +119,7 @@ export default function PaginaPedidos() {
       acoesExtras={(pedido) => [
         ...(pode('PEDIDOS_ALTERAR') && pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO'
           ? [{ label: 'Editar', icon: 'pi pi-pencil', command: () => editar(pedido) }] : []),
+        ...(pode('PEDIDOS_INCLUIR') ? [{ label: 'Repetir pedido', icon: 'pi pi-replay', command: () => repetir(pedido) }] : []),
         { label: 'Imprimir para a cozinha', icon: 'pi pi-print', command: () => imprimir(pedido, 'COZINHA') },
         { label: 'Imprimir para entrega', icon: 'pi pi-print', command: () => imprimir(pedido, 'ENTREGA') },
         ...(pode('PEDIDOS_EXCLUIR') ? [{ label: 'Excluir', icon: 'pi pi-trash', command: () => excluir(pedido) }] : []),

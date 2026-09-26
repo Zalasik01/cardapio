@@ -50,6 +50,26 @@ function BotaoCompartilhar({ nome }) {
 }
 
 /** Preço do produto; em promoção mostra o normal riscado e o percentual de desconto. */
+/** Selos e restrições alimentares dos produtos (o código vem do cadastro do produto). */
+export const SELOS = {
+  VEGANO: { rotulo: 'Vegano', icone: 'fa-leaf' },
+  VEGETARIANO: { rotulo: 'Vegetariano', icone: 'fa-seedling' },
+  SEM_GLUTEN: { rotulo: 'Sem glúten', icone: 'fa-wheat-awn-circle-exclamation' },
+  SEM_LACTOSE: { rotulo: 'Sem lactose', icone: 'fa-droplet-slash' },
+  PICANTE: { rotulo: 'Picante', icone: 'fa-pepper-hot' },
+}
+
+function Selos({ selos }) {
+  if (!selos?.length) return null
+  return (
+    <span className="loja-selos">
+      {selos.filter((s) => SELOS[s]).map((s) => (
+        <span key={s} className="loja-selos__item"><i className={`fa-solid ${SELOS[s].icone}`} aria-hidden="true" /> {SELOS[s].rotulo}</span>
+      ))}
+    </span>
+  )
+}
+
 function Preco({ produto }) {
   if (!produto.precoOriginal) return <span className="loja-produto__preco">{formatarMoeda(produto.preco)}</span>
   const desconto = Math.round((1 - produto.preco / produto.precoOriginal) * 100)
@@ -58,6 +78,7 @@ function Preco({ produto }) {
       {formatarMoeda(produto.preco)}
       <s>{formatarMoeda(produto.precoOriginal)}</s>
       <em>-{desconto}%</em>
+      {produto.promocaoQuando && <small className="loja-produto__quando">{produto.promocaoQuando}</small>}
     </span>
   )
 }
@@ -80,7 +101,7 @@ function Carrossel({ titulo, icone, produtos, aoAbrir, desabilitado }) {
       <div ref={faixa} className="loja-carrossel__faixa">
         <div className="loja-carrossel__trilho">
         {produtos.map((p) => (
-          <button key={p.guid} type="button" className="loja-destaque" disabled={desabilitado} onClick={() => aoAbrir(p)}
+          <button key={p.guid} type="button" className="loja-destaque" disabled={desabilitado || p.indisponivel} onClick={() => aoAbrir(p)}
                   aria-label={`${p.nome}, ${formatarMoeda(p.preco)}`}>
             <span className="loja-destaque__foto">
               {p.imagemUrl ? <img src={p.imagemUrl} alt="" loading="lazy" /> : <i className="fa-solid fa-utensils" aria-hidden="true" />}
@@ -97,19 +118,21 @@ function Carrossel({ titulo, icone, produtos, aoAbrir, desabilitado }) {
 }
 
 function CartaoProduto({ produto, noCarrinho, aoAbrir, desabilitado }) {
+  const bloqueado = desabilitado || produto.indisponivel
   return (
-    <button type="button" className="loja-produto" onClick={() => aoAbrir(produto)} disabled={desabilitado}
+    <button type="button" className={`loja-produto${produto.indisponivel ? ' loja-produto--indisponivel' : ''}`} onClick={() => aoAbrir(produto)} disabled={bloqueado}
             aria-label={`${produto.nome}, ${formatarMoeda(produto.preco)}${noCarrinho ? `, ${noCarrinho} no carrinho` : ''}`}>
       <span className="loja-produto__texto">
         <strong>{produto.nome}</strong>
         {produto.descricao && <small>{produto.descricao}</small>}
-        <Preco produto={produto} />
+        <Selos selos={produto.selos} />
+        {produto.indisponivel ? <span className="loja-produto__aviso">{produto.motivoIndisponivel}</span> : <Preco produto={produto} />}
       </span>
       <span className="loja-produto__foto">
         {produto.imagemUrl
           ? <img src={produto.imagemUrl} alt="" loading="lazy" />
           : <i className="fa-solid fa-utensils" aria-hidden="true" />}
-        {!desabilitado && (
+        {!bloqueado && (
           <span className={`loja-produto__mais${noCarrinho ? ' loja-produto__mais--qtd' : ''}`} aria-hidden="true">
             {noCarrinho || <i className="fa-solid fa-plus" />}
           </span>
@@ -278,7 +301,7 @@ function useCategoriaAtiva(guids) {
 /** Cardápio digital da loja (/:slug): capa com situação, busca, categorias e barra do carrinho. */
 export default function PaginaCardapio() {
   const { cardapio, slug } = useOutletContext()
-  const { loja, aberta, proximaMudanca, categorias } = cardapio
+  const { loja, aberta, proximaMudanca, categorias, motivoFechado, pausadoAte } = cardapio
   const { itens, totalItens, subtotal } = useCarrinho()
   const { cliente, abrirLogin } = useCliente()
   const [historico, setHistorico] = useState([])
@@ -287,16 +310,31 @@ export default function PaginaCardapio() {
   const chips = useRef(null)
   const telaLarga = useTelaLarga()
 
+  const [selosAtivos, setSelosAtivos] = useState([])
+  const selosDisponiveis = useMemo(
+    () => Object.keys(SELOS).filter((s) => categorias.some((c) => c.produtos.some((p) => p.selos?.includes(s)))),
+    [categorias],
+  )
+  const alternarSelo = (s) => setSelosAtivos((atual) => (atual.includes(s) ? atual.filter((x) => x !== s) : [...atual, s]))
+
   const filtradas = useMemo(() => {
     const termo = semAcento(busca.trim())
-    if (!termo) return categorias
+    if (!termo && selosAtivos.length === 0) return categorias
     return categorias
-      .map((c) => ({ ...c, produtos: c.produtos.filter((p) => semAcento(`${p.nome} ${p.descricao ?? ''}`).includes(termo)) }))
+      .map((c) => ({
+        ...c,
+        produtos: c.produtos.filter((p) => (!termo || semAcento(`${p.nome} ${p.descricao ?? ''}`).includes(termo))
+          && selosAtivos.every((s) => p.selos?.includes(s))),
+      }))
       .filter((c) => c.produtos.length > 0)
-  }, [categorias, busca])
+  }, [categorias, busca, selosAtivos])
 
   const quantidades = useMemo(() => itens.reduce((mapa, i) => ({ ...mapa, [i.produtoGuid]: (mapa[i.produtoGuid] ?? 0) + i.quantidade }), {}), [itens])
   const todos = useMemo(() => categorias.flatMap((c) => c.produtos), [categorias])
+  const maisVendidos = useMemo(() => {
+    const porGuid = new Map(todos.map((p) => [p.guid, p]))
+    return (cardapio.maisVendidos ?? []).map((g) => porGuid.get(g)).filter(Boolean)
+  }, [todos, cardapio.maisVendidos])
   const destaques = useMemo(() => todos.filter((p) => p.destaque && !p.precoOriginal), [todos])
   const promocoes = useMemo(() => todos.filter((p) => p.precoOriginal), [todos])
   // "Peça novamente": produtos dos pedidos anteriores do cliente logado (os mais recentes primeiro)
@@ -313,7 +351,7 @@ export default function PaginaCardapio() {
     historico.forEach((pedido) => pedido.itens.forEach((i) => vistos.add(i.produtoGuid)))
     return [...vistos].map((g) => porGuid.get(g)).filter(Boolean).slice(0, 10)
   }, [todos, historico])
-  const mostrarBlocos = !busca.trim()
+  const mostrarBlocos = !busca.trim() && selosAtivos.length === 0
   const guids = useMemo(() => filtradas.map((c) => c.guid), [filtradas])
   const [ativa, setAtiva] = useCategoriaAtiva(guids)
 
@@ -344,9 +382,9 @@ export default function PaginaCardapio() {
             {loja.descricao && <p>{loja.descricao}</p>}
           </div>
           <div className="loja-capa__status">
-            <span className={`loja-selo ${aberta ? 'loja-selo--aberta' : 'loja-selo--fechada'}`}>
+            <span className={`loja-selo ${aberta ? 'loja-selo--aberta' : motivoFechado ? 'loja-selo--pausada' : 'loja-selo--fechada'}`}>
               <span className="loja-selo__ponto" aria-hidden="true" />
-              {aberta ? 'Aberta agora' : 'Fechada'}
+              {aberta ? 'Aberta agora' : motivoFechado === 'PAUSADA' ? 'Pedidos pausados' : motivoFechado === 'LOTADA' ? 'Muito movimento' : 'Fechada'}
             </span>
             <BotaoCompartilhar nome={loja.nome} />
             <BotaoInstalar />
@@ -376,6 +414,15 @@ export default function PaginaCardapio() {
           <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
           <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar pratos e bebidas" aria-label="Buscar no cardápio" />
         </label>
+        {selosDisponiveis.length > 0 && (
+          <div className="loja-filtros-selo" role="group" aria-label="Filtrar por restrição">
+            {selosDisponiveis.map((s) => (
+              <button key={s} type="button" aria-pressed={selosAtivos.includes(s)} className={selosAtivos.includes(s) ? 'ativo' : ''} onClick={() => alternarSelo(s)}>
+                <i className={`fa-solid ${SELOS[s].icone}`} aria-hidden="true" /> {SELOS[s].rotulo}
+              </button>
+            ))}
+          </div>
+        )}
         {!busca && categorias.length > 1 && (
           <nav ref={chips} className="loja-categorias" aria-label="Categorias">
             {categorias.map((c) => (
@@ -391,7 +438,13 @@ export default function PaginaCardapio() {
       {!aberta && (
         <p className="loja-aviso" role="status">
           <i className="fa-solid fa-store-slash" aria-hidden="true" />
-          <span>A loja está fechada agora. Dê uma olhada no cardápio e faça seu pedido quando ela abrir.</span>
+          <span>
+            {motivoFechado === 'PAUSADA'
+              ? `Pausamos os pedidos por um momento${pausadoAte ? ` (voltamos por volta das ${horaCurta(pausadoAte)})` : ''}. Você pode ver o cardápio.`
+              : motivoFechado === 'LOTADA'
+                ? 'Estamos com muitos pedidos agora. Tente de novo em alguns minutos.'
+                : 'A loja está fechada agora. Dê uma olhada no cardápio e faça seu pedido quando ela abrir.'}
+          </span>
         </p>
       )}
 
@@ -399,6 +452,7 @@ export default function PaginaCardapio() {
         {mostrarBlocos && (
           <>
             <Carrossel titulo="Peça novamente" icone="fa-rotate-right" produtos={pecaNovamente} aoAbrir={setProduto} desabilitado={!aberta} />
+            <Carrossel titulo="Mais pedidos" icone="fa-trophy" produtos={maisVendidos} aoAbrir={setProduto} desabilitado={!aberta} />
             <Carrossel titulo="Promoções" icone="fa-tags" produtos={promocoes} aoAbrir={setProduto} desabilitado={!aberta} />
             <Carrossel titulo="Destaques" icone="fa-fire" produtos={destaques} aoAbrir={setProduto} desabilitado={!aberta} />
           </>

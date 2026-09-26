@@ -36,6 +36,7 @@ public class FuncionamentoService {
     private final S_LojaRepository lojaRepository;
     private final S_LojaHorarioRepository horarioRepository;
     private final LojaService lojaService;
+    private final com.cardapio.repository.T_PedidoRepository pedidoRepository;
 
     private record Intervalo(LocalDateTime inicio, LocalDateTime fim) {
         boolean contem(LocalDateTime momento) {
@@ -94,21 +95,66 @@ public class FuncionamentoService {
         ModoFuncionamento modo = loja.getModoFuncionamento();
 
         if (modo != ModoFuncionamento.AUTOMATICO) {
-            return new FuncionamentoResponse(modo, modo == ModoFuncionamento.ABERTA, horarios.isEmpty(), null, lista);
+            return montar(loja, modo, modo == ModoFuncionamento.ABERTA, horarios.isEmpty(), null, lista);
         }
         if (horarios.isEmpty()) {
-            return new FuncionamentoResponse(modo, true, true, null, lista);
+            return montar(loja, modo, true, true, null, lista);
         }
 
         LocalDateTime agora = LocalDateTime.now(ZoneId.of(loja.getFusoHorario()));
         List<Intervalo> intervalos = intervalos(horarios, agora.toLocalDate());
         Intervalo atual = intervalos.stream().filter(i -> i.contem(agora)).findFirst().orElse(null);
         if (atual != null) {
-            return new FuncionamentoResponse(modo, true, false, atual.fim(), lista);
+            return montar(loja, modo, true, false, atual.fim(), lista);
         }
         LocalDateTime proxima = intervalos.stream().map(Intervalo::inicio).filter(i -> i.isAfter(agora))
                 .min(Comparator.naturalOrder()).orElse(null);
-        return new FuncionamentoResponse(modo, false, false, proxima, lista);
+        return montar(loja, modo, false, false, proxima, lista);
+    }
+
+    /**
+     * Monta a resposta somando ao horário duas travas temporárias: a pausa manual ("cozinha cheia, volto em 30 min")
+     * e o limite de pedidos em preparo. Com qualquer uma ativa a loja não recebe pedidos, mesmo dentro do horário.
+     */
+    private FuncionamentoResponse montar(S_Loja loja, ModoFuncionamento modo, boolean aberta, boolean semHorarios,
+                                         LocalDateTime proxima, List<HorarioDto> lista) {
+        LocalDateTime agora = LocalDateTime.now(ZoneId.of(loja.getFusoHorario()));
+        LocalDateTime pausadoAte = loja.getPedidosPausadosAte() != null && agora.isBefore(loja.getPedidosPausadosAte())
+                ? loja.getPedidosPausadosAte() : null;
+        String motivo = null;
+        if (pausadoAte != null) {
+            motivo = "PAUSADA";
+        } else if (loja.getLimitePedidosEmPreparo() != null && pedidoRepository.countByTenantAndDeletadoFalseAndStatusIn(
+                loja.getGuid(), List.of(com.cardapio.entity.StatusPedido.PENDENTE, com.cardapio.entity.StatusPedido.CONFIRMADO,
+                        com.cardapio.entity.StatusPedido.EM_PREPARO)) >= loja.getLimitePedidosEmPreparo()) {
+            motivo = "LOTADA";
+        }
+        return new FuncionamentoResponse(modo, aberta && motivo == null, semHorarios, proxima, lista, pausadoAte,
+                loja.getLimitePedidosEmPreparo(), aberta ? motivo : null);
+    }
+
+    /** Pausa os pedidos por alguns minutos (ou retoma, com minutos vazio). */
+    @Transactional
+    public FuncionamentoResponse pausar(UUID tenant, Integer minutos) {
+        S_Loja loja = lojaService.buscarPorTenant(tenant);
+        if (minutos != null && (minutos < 1 || minutos > 720)) {
+            throw new RegraNegocioException("A pausa deve ser de 1 a 720 minutos");
+        }
+        loja.setPedidosPausadosAte(minutos == null ? null : LocalDateTime.now(ZoneId.of(loja.getFusoHorario())).plusMinutes(minutos));
+        lojaRepository.save(loja);
+        return situacao(loja, false);
+    }
+
+    /** Limite de pedidos em preparo (vazio = sem limite). */
+    @Transactional
+    public FuncionamentoResponse definirLimite(UUID tenant, Integer limite) {
+        S_Loja loja = lojaService.buscarPorTenant(tenant);
+        if (limite != null && limite < 1) {
+            throw new RegraNegocioException("O limite deve ser de pelo menos 1 pedido");
+        }
+        loja.setLimitePedidosEmPreparo(limite);
+        lojaRepository.save(loja);
+        return situacao(loja, true);
     }
 
     /** Intervalos concretos (com data) do dia anterior até DIAS_A_FRENTE dias adiante: o anterior pega quem passa da meia-noite. */

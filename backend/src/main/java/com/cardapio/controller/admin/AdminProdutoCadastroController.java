@@ -90,6 +90,17 @@ public class AdminProdutoCadastroController {
         return produtoService.atualizar(tenant, id, request);
     }
 
+    public record EsgotadoRequest(boolean esgotado) {
+    }
+
+    /** "Acabou hoje" / "voltou": sem mexer nos demais dados. */
+    @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_ALTERAR')")
+    @PutMapping("/{id}/esgotado")
+    public ResponseEntity<Void> alterarEsgotado(@PathVariable UUID tenant, @PathVariable Long id, @RequestBody EsgotadoRequest request) {
+        produtoService.alterarEsgotado(tenant, id, request.esgotado());
+        return ResponseEntity.noContent().build();
+    }
+
     /** Ativa ou inativa o produto sem mexer nos demais dados. */
     @PreAuthorize("@perm.tem('PRODUTOS_FINAIS_INATIVAR', 'INGREDIENTES_INATIVAR')")
     @PutMapping("/{id}/ativo")

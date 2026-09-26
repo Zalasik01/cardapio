@@ -28,7 +28,16 @@ public record ProdutoCadastroResponse(
         String fornecedorNome,
         Integer tempoPreparoMinutos,
         BigDecimal precoPromocional,
-        boolean destaque
+        boolean destaque,
+        String disponivelDias,
+        java.time.LocalTime disponivelDas,
+        java.time.LocalTime disponivelAte,
+        String selos,
+        String alergenos,
+        String promoDias,
+        java.time.LocalTime promoInicio,
+        java.time.LocalTime promoFim,
+        java.time.LocalDateTime esgotadoAte
 ) {
 
     public record ItemComposicao(

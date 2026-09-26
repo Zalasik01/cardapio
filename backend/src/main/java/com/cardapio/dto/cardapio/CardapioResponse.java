@@ -10,6 +10,9 @@ import java.util.UUID;
 public record CardapioResponse(
         LojaResponse loja,
         boolean aberta,
+        String motivoFechado,
+        LocalDateTime pausadoAte,
+        List<UUID> maisVendidos,
         LocalDateTime proximaMudanca,
         List<FormaPagamentoPublica> formasPagamento,
         List<CategoriaComProdutosResponse> categorias

@@ -1206,3 +1206,61 @@ body:has(.loja) { background: #fbf7f4; }
 .loja-resumo__desconto { color: var(--cor-sucesso); font-weight: 700; }
 
 .loja-passos-ios { display: grid; gap: 0.75rem; margin: 0; padding-left: 1.25rem; color: var(--cor-texto); line-height: 1.5; }
+
+/* ---------- Carrinho: limpar e subtotal no rodapé ---------- */
+.loja-pagina__topo .loja-limpar { margin-left: auto; font-size: 0.85rem; display: inline-flex; gap: 0.5rem; align-items: center; color: var(--cor-texto-suave); }
+.loja-link--suave { color: var(--cor-texto-suave); }
+
+.loja-rodape-fixo--resumo {
+  display: grid;
+  gap: 0.6rem;
+
+  .loja-rodape-fixo__resumo {
+    display: grid;
+    gap: 0.15rem;
+    width: 100%;
+    max-width: 728px;
+    margin: 0 auto;
+
+    p { display: flex; justify-content: space-between; margin: 0; font-size: 1.05rem; }
+  }
+}
+
+.loja-pagina:has(.loja-rodape-fixo--resumo) { padding-bottom: 9rem; }
+
+/* ---------- Selos, filtros e indisponível ---------- */
+.loja-selos { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.loja-selos__item { display: inline-flex; gap: 0.3rem; align-items: center; padding: 0.1rem 0.5rem; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 0.72rem; font-weight: 700; }
+.loja-produto__quando { flex-basis: 100%; color: var(--cor-texto-suave); font-weight: 600; }
+.loja-produto__aviso { margin-top: auto; padding-top: 0.25rem; color: #b45309; font-size: 0.85rem; font-weight: 800; }
+.loja-produto--indisponivel { opacity: 0.65; .loja-produto__foto img { filter: grayscale(1); } }
+.loja-selo--pausada { background: #fef3c7; color: #b45309; }
+
+.loja-filtros-selo {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+
+  button {
+    flex: none;
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    background: #fff;
+    color: #047857;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: #ecfdf5; color: #047857; }
+    &.ativo, &.ativo:hover { background: #047857; border-color: #047857; color: #fff; }
+  }
+}

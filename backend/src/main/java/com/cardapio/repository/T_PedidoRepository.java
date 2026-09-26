@@ -63,6 +63,14 @@ public interface T_PedidoRepository extends JpaRepository<T_Pedido, Long>, JpaSp
     @Query("select p from T_Pedido p where p.deletado = false and p.tempoPreparoMinutos is not null and p.status in :status")
     List<T_Pedido> buscarComPrazo(@Param("status") Collection<StatusPedido> status);
 
+    /** Produtos mais pedidos da loja desde uma data (fora os cancelados), do mais vendido para o menos. */
+    @Query("select i.produto.guid from I_ItemPedido i where i.pedido.tenant = :tenant and i.pedido.deletado = false "
+            + "and i.pedido.status <> com.cardapio.entity.StatusPedido.CANCELADO and i.pedido.dataCriacao >= :desde "
+            + "group by i.produto.guid order by sum(i.quantidade) desc")
+    List<UUID> maisVendidos(@Param("tenant") UUID tenant, @Param("desde") LocalDateTime desde, org.springframework.data.domain.Pageable limite);
+
+    long countByTenantAndDeletadoFalseAndStatusIn(UUID tenant, Collection<StatusPedido> status);
+
     long countByIdClienteContaAndTenantAndDeletadoFalseAndStatusNot(Long idClienteConta, UUID tenant, StatusPedido status);
 
     /** Histórico do cliente numa loja: mais recentes primeiro, com os itens. */

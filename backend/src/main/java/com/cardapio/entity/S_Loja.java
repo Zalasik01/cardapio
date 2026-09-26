@@ -56,6 +56,12 @@ public class S_Loja extends SystemAbstract {
     @Builder.Default
     private String fusoHorario = "America/Sao_Paulo";
 
+    /** Pedidos pausados até esta data/hora (cozinha cheia); vazio = não está pausada. */
+    private java.time.LocalDateTime pedidosPausadosAte;
+
+    /** Quantos pedidos em preparo a cozinha aguenta; acima disso o cardápio para de aceitar. Vazio = sem limite. */
+    private Integer limitePedidosEmPreparo;
+
     /** CNPJ da empresa, so digitos (opcional). */
     @Column(length = 18)
     private String cnpj;

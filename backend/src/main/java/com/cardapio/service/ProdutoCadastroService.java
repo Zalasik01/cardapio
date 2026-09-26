@@ -48,6 +48,7 @@ public class ProdutoCadastroService {
     private final T_ProdutoIngredienteRepository composicaoRepository;
     private final T_CategoriaRepository categoriaRepository;
     private final T_PessoaRepository pessoaRepository;
+    private final LojaService lojaService;
 
     /** Categoria do cardápio para o campo de seleção. */
     public record OpcaoCategoria(Long id, String nome) {
@@ -109,6 +110,15 @@ public class ProdutoCadastroService {
     public void alterarAtivo(UUID tenant, Long id, boolean ativo) {
         T_Produto produto = buscarProduto(tenant, id);
         produto.setAtivo(ativo);
+        produtoRepository.save(produto);
+    }
+
+    /** "Acabou hoje": tira do cardápio até o fim do dia na loja (volta sozinho); esgotado=false volta na hora. */
+    @Transactional
+    public void alterarEsgotado(UUID tenant, Long id, boolean esgotado) {
+        T_Produto produto = buscarProduto(tenant, id);
+        var fuso = java.time.ZoneId.of(lojaService.buscarPorTenant(tenant).getFusoHorario());
+        produto.setEsgotadoAte(esgotado ? java.time.LocalDate.now(fuso).plusDays(1).atStartOfDay() : null);
         produtoRepository.save(produto);
     }
 
@@ -200,6 +210,17 @@ public class ProdutoCadastroService {
             }
             produto.setPrecoPromocional(r.precoPromocional() != null && r.precoPromocional().signum() > 0 ? r.precoPromocional() : null);
             produto.setDestaque(Boolean.TRUE.equals(r.destaque()));
+            if ((r.disponivelDas() == null) != (r.disponivelAte() == null) || (r.promoInicio() == null) != (r.promoFim() == null)) {
+                throw new RegraNegocioException("Informe o horário de início e o de fim");
+            }
+            produto.setDisponivelDias(vazioParaNulo(r.disponivelDias()));
+            produto.setDisponivelDas(r.disponivelDas());
+            produto.setDisponivelAte(r.disponivelAte());
+            produto.setSelos(vazioParaNulo(r.selos()));
+            produto.setAlergenos(vazioParaNulo(r.alergenos()));
+            produto.setPromoDias(vazioParaNulo(r.promoDias()));
+            produto.setPromoInicio(r.promoInicio());
+            produto.setPromoFim(r.promoFim());
             produto.setDisponivel(r.disponivel() == null || r.disponivel());
             produto.setCustoUnitario(BigDecimal.ZERO);
             produto.setFornecedor(null);
@@ -210,6 +231,14 @@ public class ProdutoCadastroService {
             produto.setTempoPreparoMinutos(null);
             produto.setPrecoPromocional(null);
             produto.setDestaque(false);
+            produto.setDisponivelDias(null);
+            produto.setDisponivelDas(null);
+            produto.setDisponivelAte(null);
+            produto.setSelos(null);
+            produto.setAlergenos(null);
+            produto.setPromoDias(null);
+            produto.setPromoInicio(null);
+            produto.setPromoFim(null);
             produto.setDisponivel(true);
             produto.setCustoUnitario(r.custoUnitario() == null ? BigDecimal.ZERO : r.custoUnitario());
             produto.setFornecedor(r.fornecedorId() == null ? null : buscarFornecedor(tenant, r.fornecedorId()));
@@ -267,7 +296,9 @@ public class ProdutoCadastroService {
                 p.getCategoria() == null ? null : p.getCategoria().getNome(),
                 p.getPreco(), p.getImagemUrl(), p.isDisponivel(), composicao, custoEstimado, p.getCustoUnitario(),
                 p.getFornecedor() == null ? null : p.getFornecedor().getId(), nomePessoa(p.getFornecedor()),
-                p.getTempoPreparoMinutos(), p.getPrecoPromocional(), p.isDestaque());
+                p.getTempoPreparoMinutos(), p.getPrecoPromocional(), p.isDestaque(),
+                p.getDisponivelDias(), p.getDisponivelDas(), p.getDisponivelAte(), p.getSelos(), p.getAlergenos(), p.getPromoDias(),
+                p.getPromoInicio(), p.getPromoFim(), p.getEsgotadoAte());
     }
 
     private String nomePessoa(T_Pessoa pessoa) {

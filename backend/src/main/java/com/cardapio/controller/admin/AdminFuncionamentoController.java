@@ -23,6 +23,13 @@ public class AdminFuncionamentoController {
     public record ModoRequest(@NotNull ModoFuncionamento modo) {
     }
 
+    /** minutos vazio = retomar os pedidos. */
+    public record PausaRequest(Integer minutos) {
+    }
+
+    public record LimiteRequest(Integer limite) {
+    }
+
     /** Modo, estado atual e a lista de horários (tela Minha loja). */
     @PreAuthorize("@perm.tem('MINHA_LOJA_LEITURA')")
     @GetMapping
@@ -40,6 +47,19 @@ public class AdminFuncionamentoController {
     @PutMapping
     public FuncionamentoResponse salvar(@PathVariable UUID tenant, @Valid @RequestBody FuncionamentoRequest request) {
         return funcionamentoService.salvar(tenant, request);
+    }
+
+    /** "Pausar pedidos por 30 min" (cozinha cheia) ou retomar. */
+    @PreAuthorize("@perm.tem('MINHA_LOJA_HORARIO')")
+    @PutMapping("/pausa")
+    public FuncionamentoResponse pausar(@PathVariable UUID tenant, @RequestBody PausaRequest request) {
+        return funcionamentoService.pausar(tenant, request.minutos());
+    }
+
+    @PreAuthorize("@perm.tem('MINHA_LOJA_HORARIO')")
+    @PutMapping("/limite")
+    public FuncionamentoResponse limite(@PathVariable UUID tenant, @RequestBody LimiteRequest request) {
+        return funcionamentoService.definirLimite(tenant, request.limite());
     }
 
     /** Abrir/fechar agora ou voltar ao horário automático. */

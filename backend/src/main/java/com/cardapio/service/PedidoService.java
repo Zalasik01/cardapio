@@ -68,6 +68,7 @@ public class PedidoService {
             throw new RegraNegocioException("A loja está fechada no momento. Confira o horário de funcionamento.");
         }
 
+        java.time.LocalDateTime agoraNaLoja = java.time.LocalDateTime.now(java.time.ZoneId.of(loja.getFusoHorario()));
         T_Pedido pedido = T_Pedido.builder()
                 .tenant(tenant)
                 .nomeCliente(request.nomeCliente())
@@ -94,8 +95,12 @@ public class PedidoService {
             if (!produto.isAtivo() || !produto.isDisponivel() || produto.getTipo() != com.cardapio.entity.TipoProduto.FINAL) {
                 throw new RegraNegocioException("Produto indisponível: " + produto.getNome());
             }
+            if (!pelaLoja && !produto.vendavelAgora(agoraNaLoja)) {
+                throw new RegraNegocioException(produto.esgotado(agoraNaLoja) ? "Esgotado hoje: " + produto.getNome()
+                        : "Fora do horário de venda: " + produto.getNome());
+            }
 
-            BigDecimal totalItem = produto.precoVenda().multiply(BigDecimal.valueOf(itemRequest.quantidade()))
+            BigDecimal totalItem = produto.precoVenda(agoraNaLoja).multiply(BigDecimal.valueOf(itemRequest.quantidade()))
                     .setScale(2, RoundingMode.HALF_UP);
 
             I_ItemPedido item = I_ItemPedido.builder()
@@ -103,7 +108,7 @@ public class PedidoService {
                     .pedido(pedido)
                     .produto(produto)
                     .nomeProduto(produto.getNome())
-                    .precoUnitario(produto.precoVenda())
+                    .precoUnitario(produto.precoVenda(agoraNaLoja))
                     .quantidade(itemRequest.quantidade())
                     .totalItem(totalItem)
                     .observacoes(itemRequest.observacoes())

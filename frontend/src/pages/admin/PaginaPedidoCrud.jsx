@@ -7,7 +7,7 @@ import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
 import { useAuth } from '../../context/AuthContext'
 import { useChatPedidos } from '../../context/ChatPedidosContext'
-import { rascunhoDoPedido } from '../../utils/edicaoPedido'
+import { rascunhoDoPedido, repetirPedido } from '../../utils/edicaoPedido'
 import { useImpressaoPedido } from '../../context/ImpressaoPedidoContext'
 import { dispatchMsgError, dispatchMsgSuccess } from '../../store/dispatchMsg'
 import { confirmar } from '../../utils/confirmar'
@@ -43,7 +43,7 @@ export default function PaginaPedidoCrud() {
   const navigate = useNavigate()
   const { definirMigalha } = useOutletContext()
   const { imprimir } = useImpressaoPedido()
-  const { abrirEdicao } = useChatPedidos()
+  const { abrirEdicao, abrirNovo } = useChatPedidos()
 
   const [pedido, setPedido] = useState(null)
   const [atualizando, setAtualizando] = useState(false)
@@ -225,6 +225,10 @@ export default function PaginaPedidoCrud() {
           {pode('PEDIDOS_ALTERAR') && pedidoAberto && (
             <Button type="button" label="Editar" icon="pi pi-pencil" severity="secondary" outlined
                     onClick={() => abrirEdicao(pedido, rascunhoDoPedido(pedido))} />
+          )}
+          {pode('PEDIDOS_INCLUIR') && (
+            <Button type="button" label="Repetir" icon="pi pi-replay" severity="secondary" outlined disabled={!pedido}
+                    onClick={() => repetirPedido(loja.tenant, pedido, abrirNovo).catch((e) => dispatchMsgError(e.mensagem))} />
           )}
           <Button type="button" label="Link p/ cliente" icon="pi pi-link" severity="secondary" outlined disabled={!pedido}
                   onClick={copiarLinkAcompanhamento} />

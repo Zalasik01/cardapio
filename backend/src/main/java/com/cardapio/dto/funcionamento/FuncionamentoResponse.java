@@ -16,6 +16,9 @@ public record FuncionamentoResponse(
         boolean aberta,
         boolean semHorarios,
         LocalDateTime proximaMudanca,
-        List<HorarioDto> horarios
+        List<HorarioDto> horarios,
+        LocalDateTime pausadoAte,
+        Integer limitePedidosEmPreparo,
+        String motivo
 ) {
 }

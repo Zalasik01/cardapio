@@ -1,3 +1,6 @@
+import { obterProdutosParaPedido } from '../api/pedidosApi'
+import { dispatchMsgError, dispatchMsgWarn } from '../store/dispatchMsg'
+
 /** Texto do selo "Editado": as mudanças da edição mais recente, uma por linha (usado no tooltip). */
 export function resumoUltimaEdicao(pedido) {
   const ultima = pedido.alteracoes?.[0]
@@ -33,4 +36,29 @@ export function rascunhoDoPedido(pedido) {
       observacoes: item.observacoes ?? null,
     })),
   }
+}
+
+/**
+ * Abre uma janela de NOVO pedido com os dados de um pedido anterior (cliente, entrega e itens). Os itens entram com o
+ * preço de hoje; o que saiu do cardápio fica de fora (com aviso). Pagamento, desconto e taxa de entrega recomeçam.
+ */
+export async function repetirPedido(tenant, pedido, abrirNovo) {
+  const atuais = new Map((await obterProdutosParaPedido(tenant)).map((p) => [p.guid, p]))
+  const itens = []
+  const ausentes = []
+  pedido.itens.forEach((item) => {
+    const produto = atuais.get(item.produtoGuid)
+    if (produto) {
+      itens.push({ guid: produto.guid, nome: produto.nome, preco: Number(produto.preco), quantidade: item.quantidade, observacoes: item.observacoes ?? null })
+    } else {
+      ausentes.push(item.nomeProduto)
+    }
+  })
+  if (itens.length === 0) {
+    dispatchMsgError('Nenhum item deste pedido está mais disponível no cardápio.')
+    return
+  }
+  if (ausentes.length > 0) dispatchMsgWarn(`Ficaram de fora (indisponíveis): ${ausentes.join(', ')}.`)
+  const base = rascunhoDoPedido(pedido)
+  abrirNovo({ ...base, itens, pagamentos: [], formaLegada: null, descontoTipo: 'PERCENTUAL', descontoValor: null, taxaEntrega: null })
 }

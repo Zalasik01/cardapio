@@ -36,7 +36,15 @@ public record ProdutoCadastroRequest(
         Long fornecedorId,
         @jakarta.validation.constraints.Positive Integer tempoPreparoMinutos,
         @PositiveOrZero BigDecimal precoPromocional,
-        Boolean destaque
+        Boolean destaque,
+        @Size(max = 20) String disponivelDias,
+        java.time.LocalTime disponivelDas,
+        java.time.LocalTime disponivelAte,
+        @Size(max = 200) String selos,
+        @Size(max = 300) String alergenos,
+        @Size(max = 20) String promoDias,
+        java.time.LocalTime promoInicio,
+        java.time.LocalTime promoFim
 ) {
 
     /** Um ingrediente da composição e a quantidade dele (na unidade do ingrediente). */
